@@ -11,6 +11,15 @@ namespace nova {
 
 namespace detail {
 
+    [[nodiscard]] auto summaryHeader() {
+        return utl::joinStr("",
+            "\n",
+            utl::colorize(term_colors::strong::darkblue, "----==[ "),
+            utl::colorize(term_colors::strong::blue, "SUMMARY"),
+            utl::colorize(term_colors::strong::darkblue, " ]==----")
+        );
+    };
+
     struct TestCase;
 
     /**
@@ -52,22 +61,26 @@ namespace detail {
     // ------------------------------==[ Comparison callables ]==-----------------------------------
 
     struct eq_comp {
-        static constexpr auto message = "=";
+        static constexpr auto symbol = "=";
+        static constexpr auto message = "is equal to";
 
-        template <class Lhs, class Rhs> requires std::equality_comparable_with<Lhs, Rhs>
+        template <class Expected, class Actual>
+            requires std::equality_comparable_with<Expected, Actual>
         [[nodiscard]] constexpr
-        bool operator()(Lhs&& lhs, Rhs&& rhs) const noexcept {
-            return std::forward<Lhs>(lhs) == std::forward<Rhs>(rhs);
+        bool operator()(Expected&& expected, Actual&& actual) const noexcept {
+            return std::forward<Expected>(expected) == std::forward<Actual>(actual);
         }
     };
 
     struct lt_comp {
-        static constexpr auto message = "<";
+        static constexpr auto symbol = "<";
+        static constexpr auto message = "is less than";
 
-        template <class Lhs, class Rhs> requires std::totally_ordered_with<Lhs, Rhs>
+        template <class Expected, class Actual>
+            requires std::totally_ordered_with<Expected, Actual>
         [[nodiscard]] constexpr
-        bool operator()(Lhs&& lhs, Rhs&& rhs) const noexcept {
-            return std::forward<Lhs>(lhs) < std::forward<Rhs>(rhs);
+        bool operator()(Expected&& expected, Actual&& actual) const noexcept {
+            return std::forward<Expected>(expected) < std::forward<Actual>(actual);
         }
     };
 
@@ -81,8 +94,6 @@ namespace detail {
         void operator=(Callable func) {     // NOLINT: hijacked assigment operator (hence void return type)
             utl::print(" ", "Running", name);
 
-            // Lifetime extension of the checker to print its message at the end of this block
-            // and not before the status printing
             const auto checker = func();
 
             result = checker;
@@ -90,7 +101,8 @@ namespace detail {
                 utl::println("", "   ", utl::colorize(term_colors::green, utf::checkMark));
             }
             else {
-                utl::println("", "   ", utl::colorize(term_colors::red, utf::ballot));
+                utl::println("", "   ", utl::colorize(term_colors::strong::red, utf::ballot));
+                utl::println(checker.msg());
             }
 
             detail::testCom().registerTestCase(*this);
@@ -98,26 +110,27 @@ namespace detail {
     };
 
     inline void TestCom::printSummary() {
-        // TODO: name of the failed tests
-        utl::println(" ",
-            "Failed tests:",
-            std::ranges::count_if(m_tests, [](const TestCase& test) { return !test.result; })
+        const auto fails = std::ranges::count_if(m_tests, [](const TestCase& test) { return !test.result; });
+        utl::println("\n",
+            summaryHeader(),
+            utl::indent(2,
+                fails > 0
+                    ? utl::joinStr(" ", fails, "tests failed out of", m_tests.size())
+                    : utl::joinStr(" ", m_tests.size(), "tests successfully completed")
+            )
         );
     }
 
-    template <class Lhs, class Rhs, class Pred>
-        requires
-            stringable<Lhs> &&
-            stringable<Rhs> &&
-            std::predicate<Pred, Lhs, Rhs>
+    template <utl::stringable Expected, utl::stringable Actual, class Pred>
+        requires std::predicate<Pred, Expected, Actual>
     class Check {
     public:
         constexpr Check(
-                Lhs&& lhs, Rhs&& rhs, Pred&& p,
+                Expected&& expected, Actual&& actual, Pred&& p,
                 const std::source_location& location = std::source_location::current()
         ) noexcept
-            : m_lhs(std::forward<Lhs>(lhs))
-            , m_rhs(std::forward<Rhs>(rhs))
+            : m_expected(std::forward<Expected>(expected))
+            , m_actual(std::forward<Actual>(actual))
             , m_pred(std::forward<Pred>(p))
             , m_loc(location)
         {}
@@ -127,21 +140,43 @@ namespace detail {
         Check& operator=(const Check&) = delete;
         Check& operator=(Check&&)      = delete;
 
-        ~Check() noexcept {
-            // TODO: pretty formatting compound types
-            if (not *this) {
-                utl::println("", "Expectation failed at ", utl::colorize(term_colors::blue, m_loc));
-                utl::println(" ", m_lhs, Pred::message, m_rhs);
+        ~Check() = default;
+
+        [[nodiscard]] std::string msg() const {
+            return utl::joinStr("\n",
+                utl::joinStr("",
+                    "Expectation ", utl::colorize(term_colors::red, "failure"), " at ",
+                    utl::colorize(term_colors::strong::black, m_loc)
+                ),
+                diffMsg()
+            );
+        }
+
+        [[nodiscard]] auto diffMsg() const {
+            if constexpr (!std::is_compound_v<Expected> && !std::is_compound_v<Actual>) {
+                return utl::joinStr(" ",
+                    utl::colorize(term_colors::blue, m_expected),
+                    Pred::symbol,
+                    utl::colorize(term_colors::strong::red, m_actual)
+                );
+            }
+            else {
+                return utl::joinStr("\n",
+                    "The expected...",
+                    utl::colorize(term_colors::blue, m_expected),
+                    utl::joinStr(" ", Pred::message, "the actual..."),
+                    utl::colorize(term_colors::strong::red, m_actual)
+                );
             }
         }
 
-        operator bool() const noexcept {
-            return m_pred(m_lhs, m_rhs);
+        [[nodiscard]] operator bool() const noexcept {
+            return m_pred(m_expected, m_actual);
         }
 
     private:
-        Lhs m_lhs;
-        Rhs m_rhs;
+        Expected m_expected;
+        Actual m_actual;
         Pred m_pred;
         std::source_location m_loc;
     };
@@ -150,23 +185,23 @@ namespace detail {
 
 // --------------------------------------==[ Wrappers ]==-------------------------------------------
 
-template <class Lhs, class Rhs>
-struct eq : public detail::Check<Lhs, Rhs, detail::eq_comp> {
-    constexpr eq(Lhs&& lhs, Rhs&& rhs) noexcept
-        : detail::Check<Lhs, Rhs, detail::eq_comp>(
-            std::forward<Lhs>(lhs),
-            std::forward<Rhs>(rhs),
+template <class Expected, class Actual>
+struct eq : public detail::Check<Expected, Actual, detail::eq_comp> {
+    constexpr eq(Expected&& expected, Actual&& actual) noexcept
+        : detail::Check<Expected, Actual, detail::eq_comp>(
+            std::forward<Expected>(expected),
+            std::forward<Actual>(actual),
             detail::eq_comp()
         )
     {}
 };
 
-template <class Lhs, class Rhs>
-struct lt : public detail::Check<Lhs, Rhs, detail::lt_comp> {
-    constexpr lt(Lhs&& lhs, Rhs&& rhs) noexcept
-        : detail::Check<Lhs, Rhs, detail::lt_comp>(
-            std::forward<Lhs>(lhs),
-            std::forward<Rhs>(rhs),
+template <class Expected, class Actual>
+struct lt : public detail::Check<Expected, Actual, detail::lt_comp> {
+    constexpr lt(Expected&& expected, Actual&& actual) noexcept
+        : detail::Check<Expected, Actual, detail::lt_comp>(
+            std::forward<Expected>(expected),
+            std::forward<Actual>(actual),
             detail::lt_comp()
         )
     {}

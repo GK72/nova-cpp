@@ -2,36 +2,30 @@
 
 using namespace nova::literals;
 
-struct Type {
-    int value;
+struct Point {
+    int x;      // NOLINT(misc-non-private-member-variables-in-classes)
+    int y;      // NOLINT(misc-non-private-member-variables-in-classes)
+
+    auto operator<=>(const Point&) const = default;
 };
 
-auto toString(Type x) {
-    return utl::joinStr(" ", "Type's value:", x.value);
-}
-
-bool operator==(Type lhs, Type rhs) {
-    return lhs.value == rhs.value;
+auto toString(Point p) {
+    return utl::joinStr("\n",
+        utl::joinStr(" ", "x =", p.x),
+        utl::joinStr(" ", "y =", p.y)
+    );
 }
 
 int main() {
-    "example test 1"_test = []{
+    "example test - success"_test = []{
         return nova::eq(2, 2);
     };
 
-    "example test 2"_test = []{
-        return nova::eq(1, 2);
-    };
-
-    "example test 3"_test = []{
-        return nova::lt(1, 2);
-    };
-
-    "example test 4"_test = []{
+    "example test - less than error message"_test = []{
         return nova::lt(2, 2);
     };
 
-    "example test 5"_test = []{
-        return nova::eq(Type{ 1 }, Type{ 2 });
+    "example test - compound type error message"_test = []{
+        return nova::eq(Point{ 1, 3 }, Point{ 2, 4 });
     };
 }

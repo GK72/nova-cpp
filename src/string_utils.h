@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <concepts>
+#include <numeric>
 #include <string>
 #include <string_view>
 #include <iostream>         // TODO(C++20): use format lib
@@ -72,6 +75,11 @@ namespace term_colors {
 
 namespace utl {
 
+[[nodiscard]] auto accumulate(const auto& range, auto op) {
+    using namespace std::literals::string_literals;
+    return std::accumulate(std::begin(range), std::end(range), ""s, op);
+}
+
 template <class T> requires std::is_fundamental_v<T>
 [[nodiscard]] std::string toString(T x) {
     return std::to_string(x);
@@ -96,8 +104,45 @@ template <class T, class ...Ts>
 }
 
 template <class ...Ts>
-std::string colorize(const std::string& color, Ts&&... args) {
+[[nodiscard]] std::string colorize(const std::string& color, Ts&&... args) {
     return joinStr("", color, args..., term_colors::def);
+}
+
+[[nodiscard]] std::vector<std::string> strSplit(const std::string& str, std::string_view split) {
+    std::vector<std::string> parts;
+    size_t start = 0;
+    size_t end = 0;
+
+    while (end = str.find(split, end), end != std::string::npos) {
+        parts.push_back(str.substr(start, end - start));
+        end += split.size();
+        start = end;
+    }
+    parts.push_back(str.substr(start));
+
+    return parts;
+}
+
+[[nodiscard]] std::string repeat(std::string_view sv, int n) {
+    std::string ret;
+    std::ranges::generate_n(std::back_inserter(ret), n, [&sv]{ return sv.back(); });
+    return ret;
+}
+
+[[nodiscard]] std::string&& replace_all(std::string&& str, std::string_view what, std::string_view with) {
+    auto pos = str.find(what, 0);
+    while (pos != std::string::npos) {
+        str.replace(pos, what.size(), with);
+        pos = str.find(what, pos);
+    }
+    return std::move(str);
+}
+
+[[nodiscard]] std::string indent(int n, const std::string& str) {
+    return accumulate(
+        strSplit(str, "\n"),
+        [n](const auto& init, const auto& x) { return init + repeat(" ", n) + x; }
+    );
 }
 
 template <class T, class ...Ts>
@@ -115,8 +160,6 @@ void println(T&& x) {
     std::cout << toString(x) << '\n';
 }
 
-} // namespace utl
-
 template <class T>
 concept generic_stringable = requires(const std::remove_reference_t<T>& x) {
     { utl::toString(x) };
@@ -129,3 +172,5 @@ concept user_stringable = requires(const std::remove_reference_t<T>& x) {
 
 template <class T>
 concept stringable = generic_stringable<T> || user_stringable<T>;
+
+} // namespace utl
