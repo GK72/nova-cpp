@@ -1,6 +1,8 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <concepts>
 #include <numeric>
 #include <string>
@@ -75,6 +77,14 @@ namespace term_colors {
 
 namespace utl {
 
+template <class T, class ...Ts>
+[[nodiscard]] std::string joinStr(const std::string& separator, T&& first, Ts&&... args);
+
+template <class ...Ts> struct Lambdas : Ts... {
+    Lambdas(Ts&& ...t) : Ts(std::forward<Ts>(t))... {}
+    using Ts::operator()...;
+};
+
 [[nodiscard]] auto accumulate(const auto& range, auto op) {
     using namespace std::literals::string_literals;
     return std::accumulate(std::begin(range), std::end(range), ""s, op);
@@ -83,6 +93,32 @@ namespace utl {
 template <class T> requires std::is_fundamental_v<T>
 [[nodiscard]] std::string toString(T x) {
     return std::to_string(x);
+}
+
+template <class T> requires std::is_convertible_v<T, std::chrono::nanoseconds>
+[[nodiscard]] std::string toString(T x) {
+    auto suffix = Lambdas{
+        [](std::chrono::nanoseconds x)      { return "ns"; },
+        [](std::chrono::microseconds x)     { return "us"; },
+        [](std::chrono::milliseconds x)     { return "ms"; },
+        [](std::chrono::seconds x)          { return "s"; }
+    };
+
+    const int digits = std::log10(x.count());
+    if (digits > 11) {
+        const auto y = std::chrono::duration_cast<std::chrono::seconds>(x);
+        return joinStr(" ", y.count(), suffix(y));
+    }
+    else if (digits > 7) {
+        const auto y = std::chrono::duration_cast<std::chrono::milliseconds>(x);
+        return joinStr(" ", y.count(), suffix(y));
+    }
+    else if (digits > 4) {
+        const auto y = std::chrono::duration_cast<std::chrono::microseconds>(x);
+        return joinStr(" ", y.count(), suffix(y));
+    }
+    return joinStr(" ", x.count(), suffix(x));
+
 }
 
 [[nodiscard]] std::string toString(const char* x) {

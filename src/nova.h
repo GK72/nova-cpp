@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <source_location>
@@ -37,6 +38,9 @@ namespace detail {
         ~TestCom() {
             printSummary();
         }
+
+        // TODO: testcases should not run themselves if we would like to filter them
+        //       and not run them all
 
         void registerTestCase(const TestCase& test) {
             m_tests.push_back(test);
@@ -93,15 +97,21 @@ namespace detail {
         template <class Callable>
         void operator=(Callable func) {     // NOLINT: hijacked assigment operator (hence void return type)
             utl::print(" ", "Running", name);
+            auto t1 = std::chrono::system_clock::now();
 
+            // TODO: inject time threshold here via checker?
             const auto checker = func();
+            auto t2 = std::chrono::system_clock::now();
 
             result = checker;
             if (result) {
-                utl::println("", "   ", utl::colorize(term_colors::green, utf::checkMark));
+                utl::print("", "   ", utl::colorize(term_colors::green, utf::checkMark));
+                utl::println("", "  ", utl::colorize(term_colors::strong::black, t2 - t1));
             }
             else {
-                utl::println("", "   ", utl::colorize(term_colors::strong::red, utf::ballot));
+                // TODO: register timer threshold and make it fail here if it exceeds it
+                utl::print("", "   ", utl::colorize(term_colors::strong::red, utf::ballot));
+                utl::println("", "  ", utl::colorize(term_colors::strong::black, t2 - t1));
                 utl::println(checker.msg());
             }
 
