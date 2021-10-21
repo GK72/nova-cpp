@@ -15,4 +15,4 @@ set_project_warnings(project_warnings)
 
 include(cmake/settings.cmake)
 
-add_subdirectory(examples)
+add_subdirectory(tests)
