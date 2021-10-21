@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <thread>
+#include <utility>
 #include <vector>
 
 using namespace std::literals::chrono_literals;
@@ -10,7 +11,7 @@ using namespace nova::literals;
 int main() {
     "example test - timer (s)"_test = []{
         std::this_thread::sleep_for(2s);
-        return nova::eq(1, 1);
+        return nova::TestCfg{ nova::eq(1, 1), 1s };
     };
 
     "example test - timer (ms)"_test = []{

@@ -6,11 +6,39 @@
 #include <string_view>
 #include <vector>
 
+#include "detector.h"
 #include "string_utils.h"
 
 namespace nova {
 
+struct test_cfg_tag {};
+
+template <class T>
+struct TestCfg {
+    using tag_test_cfg = test_cfg_tag;
+    T comp;
+    std::chrono::nanoseconds timeLimit { 0 };
+};
+
 namespace detail {
+
+    template <class T> using has_tag_testCfg = typename T::tag_test_cfg;
+
+    template <class T>
+    decltype(auto) createTestCfg(T&& x) {
+        using namespace std::literals::chrono_literals;
+        return TestCfg<T>{ std::forward<T>(x), 0ns };
+    }
+
+    template <class T>
+    decltype(auto) wrap_in_cfg(const T& x) {
+        if constexpr (!utl::is_detected_v<has_tag_testCfg, T>) {
+            return createTestCfg(x);
+        }
+        else {
+            return x;
+        }
+    }
 
     [[nodiscard]] auto summaryHeader() {
         return utl::joinStr("",
@@ -96,23 +124,36 @@ namespace detail {
 
         template <class Callable>
         void operator=(Callable func) {     // NOLINT: hijacked assigment operator (hence void return type)
+            using namespace std::literals::chrono_literals;
+
             utl::print(" ", "Running", name);
             auto t1 = std::chrono::system_clock::now();
 
-            // TODO: inject time threshold here via checker?
-            const auto checker = func();
-            auto t2 = std::chrono::system_clock::now();
+            decltype(auto) checker = wrap_in_cfg(func());
+            const auto elapsedTime = std::chrono::system_clock::now() - t1;
 
-            result = checker;
+            result = checker.comp;
             if (result) {
-                utl::print("", "   ", utl::colorize(term_colors::green, utf::checkMark));
-                utl::println("", "  ", utl::colorize(term_colors::strong::black, t2 - t1));
+                if (checker.timeLimit > 0ns && elapsedTime > checker.timeLimit) {
+                    utl::print("", "   ", utl::colorize(term_colors::strong::red, utf::ballot));
+                    utl::print("", "   ", utl::colorize(term_colors::strong::black, elapsedTime));
+                    utl::println("", "   ",
+                        utl::colorize(
+                            term_colors::red,
+                            utl::joinStr(" ", "Exceeded", checker.timeLimit)
+                        )
+                    );
+                    result = false;
+                }
+                else {
+                    utl::print("", "   ", utl::colorize(term_colors::green, utf::checkMark));
+                    utl::println("", "   ", utl::colorize(term_colors::strong::black, elapsedTime));
+                }
             }
             else {
-                // TODO: register timer threshold and make it fail here if it exceeds it
                 utl::print("", "   ", utl::colorize(term_colors::strong::red, utf::ballot));
-                utl::println("", "  ", utl::colorize(term_colors::strong::black, t2 - t1));
-                utl::println(checker.msg());
+                utl::println("", "   ", utl::colorize(term_colors::strong::black, elapsedTime));
+                utl::println(checker.comp.msg());
             }
 
             detail::testCom().registerTestCase(*this);
