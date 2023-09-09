@@ -1,6 +1,4 @@
 function(set_project_warnings project_name)
-    option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
-
     set(MSVC_WARNINGS
         /W4     # Baseline reasonable warnings
         /w14242 # 'identfier': conversion from 'type1' to 'type1', possible loss
@@ -54,7 +52,7 @@ function(set_project_warnings project_name)
         -Wformat=2                      # warn on security issues around functions that format output (ie printf)
     )
 
-    if (WARNINGS_AS_ERRORS)
+    if (NOT SUPPRESS_COMPILER_WERROR)
         set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
         set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
     endif()

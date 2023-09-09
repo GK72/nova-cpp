@@ -6,13 +6,13 @@ endif()
 
 project("Nova")
 
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 20)
-
 add_library(project_warnings INTERFACE)
-include(cmake/compilerWarnings.cmake)
+include(cmake/compiler-warnings.cmake)
 set_project_warnings(project_warnings)
 
 include(cmake/settings.cmake)
 
-add_subdirectory(tests)
+add_subdirectory(include)
+
+enable_testing()
+add_subdirectory(unit-tests)
