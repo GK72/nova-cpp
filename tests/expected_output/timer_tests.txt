@@ -1,7 +1,0 @@
-Running example test - timer (s).*✓.*
-Running example test - timer (ms).*✓.*
-Running example test - timer (us).*✓.*
-Running example test - timer (ns).*✓.*
-.*
-.*
-.*
