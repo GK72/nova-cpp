@@ -12,7 +12,7 @@ The commits are following the [Conventional Commits](https://www.conventionalcom
 # Building the library
 
 The library is developed by the latest and greatest tools on Arch Linux.
-Currently, there is no guarantees in which environment it works. The general
+Currently, there are no guarantees in which environment it works. The general
 aim is to be cross-platform working on any major compiler vendor.
 
 # Project structure
