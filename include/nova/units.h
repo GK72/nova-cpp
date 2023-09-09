@@ -5,7 +5,7 @@
 
 namespace nova::units {
 
-template <typename Rep, typename Measure = std::ratio<1>> class unit;
+template <typename Rep, typename Ratio = std::ratio<1>> class measurement;
 
 namespace detail {
     template <typename R1, typename R2>
@@ -21,14 +21,14 @@ namespace detail {
 // -----------------------------==[ Common_Type Specialization ]==----------------------------------
 
 namespace std {
-    template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+    template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
     struct common_type<
-        nova::units::unit<Rep1, Measure1>,
-        nova::units::unit<Rep2, Measure2>>
+        nova::units::measurement<Rep1, Ratio1>,
+        nova::units::measurement<Rep2, Ratio2>>
     {
-        using type = nova::units::unit<
+        using type = nova::units::measurement<
             typename common_type<Rep1, Rep2>::type,
-            typename nova::units::detail::ratioGCD<Measure1, Measure2>::type>;
+            typename nova::units::detail::ratioGCD<Ratio1, Ratio2>::type>;
     };
 } // namespace std
 
@@ -37,28 +37,31 @@ namespace nova::units {
 // -------------------------------------==[ Type Trait ]==------------------------------------------
 
 template <typename T>
-struct is_unit : std::false_type {};
+struct is_measurement : std::false_type {};
 
-template <typename Rep, typename Measure>
-struct is_unit<unit<Rep, Measure>> : std::true_type {};
+template <typename Rep, typename Ratio>
+struct is_measurement<measurement<Rep, Ratio>> : std::true_type {};
 
-template <typename Rep, typename Measure>
-struct is_unit<const unit<Rep, Measure>> : std::true_type {};
+template <typename Rep, typename Ratio>
+struct is_measurement<const measurement<Rep, Ratio>> : std::true_type {};
 
-template <typename Rep, typename Measure>
-struct is_unit<volatile unit<Rep, Measure>> : std::true_type {};
+template <typename Rep, typename Ratio>
+struct is_measurement<volatile measurement<Rep, Ratio>> : std::true_type {};
 
-template <typename Rep, typename Measure>
-struct is_unit<const volatile unit<Rep, Measure>> : std::true_type {};
+template <typename Rep, typename Ratio>
+struct is_measurement<const volatile measurement<Rep, Ratio>> : std::true_type {};
 
 template <typename T>
-constexpr bool is_unit_v = is_unit<T>::value;
+constexpr bool is_measurement_v = is_measurement<T>::value;
 
 template <typename T>
 struct is_ratio : std::false_type {};
 
 template <intmax_t N, intmax_t D>
 struct is_ratio<std::ratio<N, D>> : std::true_type {};
+
+template <typename T>
+constexpr bool is_ratio_v = is_ratio<T>::value;
 
 // --------------------------------------==[ Casting ]==--------------------------------------------
 
@@ -67,77 +70,77 @@ namespace detail {
     /**
      * @brief No conversion
      */
-    template <typename FromUnit, typename ToUnit,
-              typename Measure = typename std::ratio_divide<
-                    typename FromUnit::Measure,
-                    typename ToUnit::Measure>::type,
-              bool = Measure::num == 1,
-              bool = Measure::den == 1>
-    struct unit_cast;
+    template <typename FromMeasurement, typename ToMeasurement,
+              typename Ratio = typename std::ratio_divide<
+                    typename FromMeasurement::Ratio,
+                    typename ToMeasurement::Ratio>::type,
+              bool = Ratio::num == 1,
+              bool = Ratio::den == 1>
+    struct measurement_cast;
 
     /**
      * @brief Representation casting
      */
-    template <typename FromUnit, typename ToUnit, typename Measure>
-    struct unit_cast<FromUnit, ToUnit, Measure, /* num = 1 */ true, /* den = 1 */ true>
+    template <typename FromMeasurement, typename ToMeasurement, typename Ratio>
+    struct measurement_cast<FromMeasurement, ToMeasurement, Ratio, /* num = 1 */ true, /* den = 1 */ true>
     {
-        constexpr ToUnit operator()(const FromUnit& x) const noexcept {
-            return ToUnit(static_cast<typename ToUnit::Rep>(x.count()));
+        constexpr ToMeasurement operator()(const FromMeasurement& x) const noexcept {
+            return ToMeasurement(static_cast<typename ToMeasurement::Rep>(x.count()));
         }
     };
 
     /**
-     * @brief Representation casting and Measure down conversion
+     * @brief Representation casting and Ratio down conversion
      */
-    template <typename FromUnit, typename ToUnit, typename Measure>
-    struct unit_cast<FromUnit, ToUnit, Measure, /* num = 1 */ true, /* den = 1 */ false>
+    template <typename FromMeasurement, typename ToMeasurement, typename Ratio>
+    struct measurement_cast<FromMeasurement, ToMeasurement, Ratio, /* num = 1 */ true, /* den = 1 */ false>
     {
-        constexpr ToUnit operator()(const FromUnit& x) const noexcept {
+        constexpr ToMeasurement operator()(const FromMeasurement& x) const noexcept {
             using CT =
                 typename std::common_type_t<
-                    typename ToUnit::Rep,
-                    typename FromUnit::Rep,
+                    typename ToMeasurement::Rep,
+                    typename FromMeasurement::Rep,
                     intmax_t>;
-            return ToUnit(static_cast<typename ToUnit::Rep>(
-                static_cast<CT>(x.count()) / static_cast<CT>(Measure::den))
+            return ToMeasurement(static_cast<typename ToMeasurement::Rep>(
+                static_cast<CT>(x.count()) / static_cast<CT>(Ratio::den))
             );
         }
     };
 
     /**
-     * @brief Representation casting and Measure up conversion
+     * @brief Representation casting and Ratio up conversion
      */
-    template <typename FromUnit, typename ToUnit, typename Measure>
-    struct unit_cast<FromUnit, ToUnit, Measure, /* num = 1 */ false, /* den = 1 */ true>
+    template <typename FromMeasurement, typename ToMeasurement, typename Ratio>
+    struct measurement_cast<FromMeasurement, ToMeasurement, Ratio, /* num = 1 */ false, /* den = 1 */ true>
     {
-        constexpr ToUnit operator()(const FromUnit& x) const noexcept {
+        constexpr ToMeasurement operator()(const FromMeasurement& x) const noexcept {
             using CT =
                 typename std::common_type_t<
-                    typename ToUnit::Rep,
-                    typename FromUnit::Rep,
+                    typename ToMeasurement::Rep,
+                    typename FromMeasurement::Rep,
                     intmax_t>;
-            return ToUnit(static_cast<typename ToUnit::Rep>(
-                static_cast<CT>(x.count()) * static_cast<CT>(Measure::num))
+            return ToMeasurement(static_cast<typename ToMeasurement::Rep>(
+                static_cast<CT>(x.count()) * static_cast<CT>(Ratio::num))
             );
         }
     };
 
     /**
-     * @brief Representation casting and Measure conversion
+     * @brief Representation casting and Ratio conversion
      */
-    template <typename FromUnit, typename ToUnit, typename Measure>
-    struct unit_cast<FromUnit, ToUnit, Measure, /* num = 1 */ false, /* den = 1 */ false>
+    template <typename FromMeasurement, typename ToMeasurement, typename Ratio>
+    struct measurement_cast<FromMeasurement, ToMeasurement, Ratio, /* num = 1 */ false, /* den = 1 */ false>
     {
-        constexpr ToUnit operator()(const FromUnit& x) const noexcept {
+        constexpr ToMeasurement operator()(const FromMeasurement& x) const noexcept {
             using CT =
                 typename std::common_type_t<
-                    typename ToUnit::Rep,
-                    typename FromUnit::Rep,
+                    typename ToMeasurement::Rep,
+                    typename FromMeasurement::Rep,
                     intmax_t>;;
-            return ToUnit(static_cast<typename ToUnit::Rep>(
+            return ToMeasurement(static_cast<typename ToMeasurement::Rep>(
                 static_cast<CT>(x.count())
-                    * static_cast<CT>(Measure::num)
-                    / static_cast<CT>(Measure::den))
+                    * static_cast<CT>(Ratio::num)
+                    / static_cast<CT>(Ratio::den))
             );
         }
     };
@@ -145,7 +148,7 @@ namespace detail {
     // ----------------------==[ Relational operator implementations ]==----------------------------
 
     template <typename Lhs, typename Rhs>             // ----==[ Different types ]==----
-    struct unit_eq {
+    struct measurement_eq {
         [[nodiscard]] constexpr
         bool operator()(const Lhs& lhs, const Rhs& rhs) const noexcept {
             using CT = typename std::common_type_t<Lhs, Rhs>;
@@ -154,7 +157,7 @@ namespace detail {
     };
 
     template <typename Lhs, typename Rhs>
-    struct unit_lt {
+    struct measurement_lt {
         [[nodiscard]] constexpr
         bool operator()(const Lhs& lhs, const Rhs& rhs) const noexcept {
             using CT = typename std::common_type_t<Lhs, Rhs>;
@@ -163,7 +166,7 @@ namespace detail {
     };
 
     template <typename Lhs>                        // ----==[ Common type ]==----
-    struct unit_eq<Lhs, Lhs> {
+    struct measurement_eq<Lhs, Lhs> {
         [[nodiscard]] constexpr
         bool operator()(const Lhs& lhs, const Lhs& rhs) const noexcept {
             return lhs.count() == rhs.count();
@@ -171,7 +174,7 @@ namespace detail {
     };
 
     template <typename Lhs>
-    struct unit_lt<Lhs, Lhs> {
+    struct measurement_lt<Lhs, Lhs> {
         [[nodiscard]] constexpr
         bool operator()(const Lhs& lhs, const Lhs& rhs) const noexcept {
             return lhs.count() < rhs.count();
@@ -179,7 +182,7 @@ namespace detail {
     };
 
     template <typename Rep>
-    struct unit_values {
+    struct measurement_values {
         static constexpr Rep zero() noexcept { return Rep(0); }
         static constexpr Rep min()  noexcept { return std::numeric_limits<Rep>::lowest(); }
         static constexpr Rep max()  noexcept { return std::numeric_limits<Rep>::max(); }
@@ -190,30 +193,30 @@ namespace detail {
 /**
  * @brief Wrapper for casting
  */
-template <typename ToUnit, typename Rep, typename Measure>
+template <typename ToMeasurement, typename Rep, typename Ratio>
 [[nodiscard]] constexpr
-typename std::enable_if_t<is_unit_v<ToUnit>, ToUnit>
-unit_cast(const unit<Rep, Measure>& x) noexcept
+typename std::enable_if_t<is_measurement_v<ToMeasurement>, ToMeasurement>
+measurement_cast(const measurement<Rep, Ratio>& x) noexcept
 {
-    return detail::unit_cast<unit<Rep, Measure>, ToUnit>()(x);
+    return detail::measurement_cast<measurement<Rep, Ratio>, ToMeasurement>()(x);
 }
 
 // -------------------------------------==[ UNIT CLASS ]==------------------------------------------
 
-template <typename RepT, typename MeasureT>
-class unit {
-    static_assert(!is_unit<RepT>::value, "A unit representation can not be a unit");
-    static_assert(is_ratio<MeasureT>::value, "Second template parameter must be a std::ratio");
-    static_assert(MeasureT::num > 0, "Measure must be positive");
+template <typename RepT, typename RatioT>
+class measurement {
+    static_assert(!is_measurement_v<RepT>, "A measurement representation can not be a measurement");
+    static_assert(is_ratio_v<RatioT>, "Second template parameter must be a std::ratio");
+    static_assert(RatioT::num > 0, "Ratio must be positive");
 
 public:
-    using Measure = typename MeasureT::type;
+    using Ratio = typename RatioT::type;
     using Rep     = RepT;
 
-    constexpr unit() = default;
+    constexpr measurement() = default;
 
     template <typename Rep2>
-    constexpr explicit unit(const Rep2& value,
+    constexpr explicit measurement(const Rep2& value,
         typename std::enable_if_t<
             std::is_convertible_v<Rep2, Rep>
             && (std::is_floating_point_v<Rep>
@@ -223,42 +226,42 @@ public:
         : m_value(value)
     {}
 
-    template <typename Rep2, typename Measure2>
-    constexpr unit(const unit<Rep2, Measure2>& value,
+    template <typename Rep2, typename Ratio2>
+    constexpr measurement(const measurement<Rep2, Ratio2>& value,
         typename std::enable_if_t<
             std::is_floating_point_v<Rep>
-            || (std::ratio_divide<Measure2, Measure>::den == 1
+            || (std::ratio_divide<Ratio2, Ratio>::den == 1
             && !std::is_floating_point_v<Rep2>)
         >* = 0      // NOLINT(readability-named-parameter)
     )
-        : m_value(unit_cast<unit>(value).count())
+        : m_value(measurement_cast<measurement>(value).count())
     {}
 
     constexpr Rep count() const { return m_value; }
 
-    typename std::common_type_t<unit> operator+() const {
-        return typename std::common_type_t<unit>(*this);
+    typename std::common_type_t<measurement> operator+() const {
+        return typename std::common_type_t<measurement>(*this);
     }
 
-    typename std::common_type_t<unit> operator-() const {
-        return typename std::common_type_t<unit>(-m_value);
+    typename std::common_type_t<measurement> operator-() const {
+        return typename std::common_type_t<measurement>(-m_value);
     }
 
-    constexpr unit  operator++(int) { return unit(m_value++);  }
-    constexpr unit  operator--(int) { return unit(m_value--);  }
-    constexpr unit& operator++()    { ++m_value; return *this; }
-    constexpr unit& operator--()    { --m_value; return *this; }
+    constexpr measurement  operator++(int) { return measurement(m_value++);  }
+    constexpr measurement  operator--(int) { return measurement(m_value--);  }
+    constexpr measurement& operator++()    { ++m_value; return *this; }
+    constexpr measurement& operator--()    { --m_value; return *this; }
 
-    constexpr unit& operator+=(const unit& rhs) { m_value += rhs.count(); return *this; }
-    constexpr unit& operator-=(const unit& rhs) { m_value -= rhs.count(); return *this; }
-    constexpr unit& operator*=(const Rep& rhs)  { m_value *= rhs;         return *this; }
-    constexpr unit& operator/=(const Rep& rhs)  { m_value /= rhs;         return *this; }
-    constexpr unit& operator%=(const Rep& rhs)  { m_value %= rhs;         return *this; }
-    constexpr unit& operator%=(const unit& rhs) { m_value += rhs.count(); return *this; }
+    constexpr measurement& operator+=(const measurement& rhs) { m_value += rhs.count(); return *this; }
+    constexpr measurement& operator-=(const measurement& rhs) { m_value -= rhs.count(); return *this; }
+    constexpr measurement& operator*=(const Rep& rhs)  { m_value *= rhs;         return *this; }
+    constexpr measurement& operator/=(const Rep& rhs)  { m_value /= rhs;         return *this; }
+    constexpr measurement& operator%=(const Rep& rhs)  { m_value %= rhs;         return *this; }
+    constexpr measurement& operator%=(const measurement& rhs) { m_value += rhs.count(); return *this; }
 
-    static constexpr unit zero() noexcept { return unit(detail::unit_values<Rep>::zero()); }
-    static constexpr unit min()  noexcept { return unit(detail::unit_values<Rep>::min()); }
-    static constexpr unit max()  noexcept { return unit(detail::unit_values<Rep>::max()); }
+    static constexpr measurement zero() noexcept { return measurement(detail::measurement_values<Rep>::zero()); }
+    static constexpr measurement min()  noexcept { return measurement(detail::measurement_values<Rep>::min()); }
+    static constexpr measurement max()  noexcept { return measurement(detail::measurement_values<Rep>::max()); }
 
 private:
     Rep m_value;
@@ -267,53 +270,53 @@ private:
 
 // --------------------------------==[ Relational operators ]==-------------------------------------
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator==(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
-    return detail::unit_eq<unit<Rep1, Measure1>, unit<Rep2, Measure2>>()(lhs, rhs);
+bool operator==(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
+    return detail::measurement_eq<measurement<Rep1, Ratio1>, measurement<Rep2, Ratio2>>()(lhs, rhs);
 };
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator!=(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
+bool operator!=(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
     return !(lhs == rhs);
 };
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator<(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
-    return detail::unit_lt<unit<Rep1, Measure1>, unit<Rep2, Measure2>>()(lhs, rhs);
+bool operator<(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
+    return detail::measurement_lt<measurement<Rep1, Ratio1>, measurement<Rep2, Ratio2>>()(lhs, rhs);
 };
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator>(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
+bool operator>(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
     return rhs < lhs;
 };
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator>=(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
+bool operator>=(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
     return !(lhs < rhs);
 };
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-bool operator<=(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept {
+bool operator<=(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept {
     return !(lhs > rhs);
 };
 
 // --------------------------------==[ Arithmetic operators ]==-------------------------------------
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-typename std::common_type_t<unit<Rep1, Measure1>, unit<Rep2, Measure2>>
-operator+(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept
+typename std::common_type_t<measurement<Rep1, Ratio1>, measurement<Rep2, Ratio2>>
+operator+(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept
 {
     using CT =
         typename std::common_type_t<
-            unit<Rep1, Measure1>,
-            unit<Rep2, Measure2>
+            measurement<Rep1, Ratio1>,
+            measurement<Rep2, Ratio2>
         >;
 
     return CT(
@@ -321,15 +324,15 @@ operator+(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noex
     );
 }
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-typename std::common_type_t<unit<Rep1, Measure1>, unit<Rep2, Measure2>>
-operator-(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept
+typename std::common_type_t<measurement<Rep1, Ratio1>, measurement<Rep2, Ratio2>>
+operator-(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept
 {
     using CT =
         typename std::common_type_t<
-            unit<Rep1, Measure1>,
-            unit<Rep2, Measure2>
+            measurement<Rep1, Ratio1>,
+            measurement<Rep2, Ratio2>
         >;
 
     return CT(
@@ -337,59 +340,59 @@ operator-(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noex
     );
 }
 
-template <typename Rep1, typename Measure, typename Rep2>
+template <typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
     std::is_convertible_v<Rep2, typename std::common_type_t<Rep1, Rep2>>,
-    unit<typename std::common_type_t<Rep1, Rep2>, Measure>
+    measurement<typename std::common_type_t<Rep1, Rep2>, Ratio>
 >::type
-operator*(const unit<Rep1, Measure>& lhs, const Rep2& rhs) noexcept
+operator*(const measurement<Rep1, Ratio>& lhs, const Rep2& rhs) noexcept
 {
     using CR = typename std::common_type_t<Rep1, Rep2>;
-    using CT = unit<CR, Measure>;
+    using CT = measurement<CR, Ratio>;
 
     return CT(
         CT(lhs).count() * static_cast<CR>(rhs)
     );
 }
 
-template <typename Rep1, typename Measure, typename Rep2>
+template <typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
     std::is_convertible_v<Rep2, typename std::common_type_t<Rep1, Rep2>>,
-    unit<typename std::common_type_t<Rep1, Rep2>, Measure>
+    measurement<typename std::common_type_t<Rep1, Rep2>, Ratio>
 >::type
-operator*(const Rep2& lhs, const unit<Rep1, Measure>& rhs) noexcept
+operator*(const Rep2& lhs, const measurement<Rep1, Ratio>& rhs) noexcept
 {
     return rhs * lhs;
 }
 
-template <typename Rep1, typename Measure, typename Rep2>
+template <typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
-    !is_unit_v<Rep2> &&
+    !is_measurement_v<Rep2> &&
     std::is_convertible_v<Rep2, typename std::common_type_t<Rep1, Rep2>>,
-    unit<typename std::common_type_t<Rep1, Rep2>, Measure>
+    measurement<typename std::common_type_t<Rep1, Rep2>, Ratio>
 >::type
-operator/(const unit<Rep1, Measure>& lhs, const Rep2& rhs) noexcept
+operator/(const measurement<Rep1, Ratio>& lhs, const Rep2& rhs) noexcept
 {
     using CR = typename std::common_type_t<Rep1, Rep2>;
-    using CT = unit<CR, Measure>;
+    using CT = measurement<CR, Ratio>;
 
     return CT(
         CT(lhs).count() / static_cast<CR>(rhs)
     );
 }
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
 typename std::common_type_t<Rep1, Rep2>
-operator/(const unit<Rep1, Measure1>& lhs, const unit<Rep1, Measure1>& rhs) noexcept
+operator/(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep1, Ratio1>& rhs) noexcept
 {
     using CT =
         typename std::common_type_t<
-            unit<Rep1, Measure1>,
-            unit<Rep2, Measure2>
+            measurement<Rep1, Ratio1>,
+            measurement<Rep2, Ratio2>
         >;
 
     return CT(
@@ -397,33 +400,33 @@ operator/(const unit<Rep1, Measure1>& lhs, const unit<Rep1, Measure1>& rhs) noex
     );
 }
 
-template <typename Rep1, typename Measure, typename Rep2>
+template <typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
-    !is_unit_v<Rep2> &&
+    !is_measurement_v<Rep2> &&
     std::is_convertible_v<Rep2, typename std::common_type_t<Rep1, Rep2>>,
-    unit<typename std::common_type_t<Rep1, Rep2>, Measure>
+    measurement<typename std::common_type_t<Rep1, Rep2>, Ratio>
 >::type
-operator%(const unit<Rep1, Measure>& lhs, const Rep2& rhs) noexcept
+operator%(const measurement<Rep1, Ratio>& lhs, const Rep2& rhs) noexcept
 {
     using CR = typename std::common_type_t<Rep1, Rep2>;
-    using CT = unit<CR, Measure>;
+    using CT = measurement<CR, Ratio>;
 
     return CT(
         CT(lhs).count() % static_cast<CR>(rhs)
     );
 }
 
-template <typename Rep1, typename Measure1, typename Rep2, typename Measure2>
+template <typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-typename std::common_type_t<unit<Rep1, Measure1>, unit<Rep2, Measure2>>
-operator%(const unit<Rep1, Measure1>& lhs, const unit<Rep2, Measure2>& rhs) noexcept
+typename std::common_type_t<measurement<Rep1, Ratio1>, measurement<Rep2, Ratio2>>
+operator%(const measurement<Rep1, Ratio1>& lhs, const measurement<Rep2, Ratio2>& rhs) noexcept
 {
     using CR = typename std::common_type_t<Rep1, Rep2>;
     using CT =
         typename std::common_type_t<
-            unit<Rep1, Measure1>,
-            unit<Rep2, Measure2>
+            measurement<Rep1, Ratio1>,
+            measurement<Rep2, Ratio2>
         >;
 
     return CT(
@@ -442,12 +445,12 @@ namespace constants {
     constexpr auto TByte = GByte * 1024LL;
 } // namespace constants
 
-using bit   = unit<long long, std::ratio<1, constants::bit>>;
-using byte  = unit<long long>;
-using kByte = unit<long long, std::ratio<constants::kByte>>;
-using MByte = unit<long long, std::ratio<constants::MByte>>;
-using GByte = unit<long long, std::ratio<constants::GByte>>;
-using TByte = unit<long long, std::ratio<constants::TByte>>;
+using bit   = measurement<long long, std::ratio<1, constants::bit>>;
+using byte  = measurement<long long>;
+using kByte = measurement<long long, std::ratio<constants::kByte>>;
+using MByte = measurement<long long, std::ratio<constants::MByte>>;
+using GByte = measurement<long long, std::ratio<constants::GByte>>;
+using TByte = measurement<long long, std::ratio<constants::TByte>>;
 
 // --------------------------------------==[ Literals ]==-------------------------------------------
 

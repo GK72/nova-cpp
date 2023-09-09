@@ -11,9 +11,9 @@ TEST(Units, ConversionsImplicitToSmaller) {
 }
 
 TEST(Units, ConversionsExplicitToLarger) {
-    EXPECT_EQ(unit_cast<byte>( 9_bit), 1_byte);
-    EXPECT_EQ(unit_cast<byte>(15_bit), 1_byte);
-    EXPECT_EQ(unit_cast<byte>(16_bit), 2_byte);
+    EXPECT_EQ(measurement_cast<byte>( 9_bit), 1_byte);
+    EXPECT_EQ(measurement_cast<byte>(15_bit), 1_byte);
+    EXPECT_EQ(measurement_cast<byte>(16_bit), 2_byte);
 }
 
 TEST(Units, ConversionsConvertible) {
@@ -22,11 +22,11 @@ TEST(Units, ConversionsConvertible) {
 }
 
 TEST(Units, ConversionsImplicitBetweenRepresentations) {
-    EXPECT_EQ(unit<int>(8), unit<long>(8));
+    EXPECT_EQ(measurement<int>(8), measurement<long>(8));
 
-    EXPECT_EQ( (unit<int, std::ratio<1000>>   (8)), (unit<long,   std::ratio<1, 1000>>(8'000'000)) );
-    EXPECT_EQ( (unit<int, std::ratio<1000>>   (8)), (unit<double, std::ratio<1, 1000>>(8e6)      ) );
-    EXPECT_EQ( (unit<int, std::ratio<1, 1000>>(8)), (unit<double>                     (8e-3)     ) );
+    EXPECT_EQ( (measurement<int, std::ratio<1000>>   (8)), (measurement<long,   std::ratio<1, 1000>>(8'000'000)) );
+    EXPECT_EQ( (measurement<int, std::ratio<1000>>   (8)), (measurement<double, std::ratio<1, 1000>>(8e6)      ) );
+    EXPECT_EQ( (measurement<int, std::ratio<1, 1000>>(8)), (measurement<double>                     (8e-3)     ) );
 }
 
 TEST(Units, HelperTypes) {
@@ -126,5 +126,5 @@ TEST(Units, MemberFunctions) {
     EXPECT_EQ(byte::max().count() , std::numeric_limits<long long>::max());
     EXPECT_EQ(byte::min().count() , std::numeric_limits<long long>::min());
 
-    EXPECT_EQ(unit<double>::min().count(), std::numeric_limits<double>::lowest());
+    EXPECT_EQ(measurement<double>::min().count(), std::numeric_limits<double>::lowest());
 }
