@@ -7,8 +7,6 @@ intuitive APIs. Also a place for testing the newest features and libraries.
 
 The commits are following the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-Detailes can be found in [Styleguide][styleguide]
-
 # Dependencies
 
 # Building the library
@@ -26,5 +24,3 @@ aim is to be cross-platform working on any major compiler vendor.
 ├── unit-tests
 └── functional-tests
 ```
-
-[styleguide]: doc/styleguide.md
