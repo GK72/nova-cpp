@@ -2,8 +2,11 @@
 
 #include "nova/units.h"
 
+#include <chrono>
+
 using namespace nova::units;
 using namespace literals;
+using namespace std::chrono_literals;
 
 struct custom_tag {};
 
@@ -136,4 +139,18 @@ TEST(Units, MemberFunctions) {
     EXPECT_EQ(bytes::min().count() , std::numeric_limits<long long>::min());
 
     EXPECT_EQ( (measure<custom_tag, double>::min().count()), std::numeric_limits<double>::lowest() );
+}
+
+TEST(Units, ChronoAdapter) {
+    const auto x = nova::units::measure{ 5s };
+    EXPECT_EQ(x.count(), 5);
+    EXPECT_EQ((x + x).count(), 10);
+}
+
+TEST(Units, Rates) {
+    constexpr auto datarate = 10_byte / 2s;
+    EXPECT_EQ(datarate * 1min, 300_byte);
+
+    constexpr auto speed = 20_m / 2s;
+    EXPECT_EQ(speed * 1h, 36'000_m);
 }

@@ -1,13 +1,30 @@
 #pragma once
 
+#include <chrono>
 #include <numeric>
 #include <ratio>
+#include <type_traits>
 
 namespace nova::units {
 
 template <typename Unit, typename Rep, typename Ratio = std::ratio<1>> class measure;
 
+// -----------------------------------==[ Tag dispatches ]==----------------------------------------
+
+struct rates {};
+
+struct duration {};
+
+struct length;
+struct speed : rates { using base = length; };
+struct length { using rate = speed; };
+
+struct data_volume;
+struct data_rate : rates { using base = data_volume; };
+struct data_volume { using rate = data_rate; };
+
 namespace detail {
+
     template <typename R1, typename R2>
     struct ratioGCD
     {
@@ -15,12 +32,20 @@ namespace detail {
             std::ratio<std::gcd(R1::num, R2::num),
                        std::lcm(R1::den, R2::den)>;
     };
+
+    struct division_tag {};
+    struct multiplication_tag {};
+
 } // namespace detail
 } // namespace nova::units
 
 // -----------------------------==[ Common_Type Specialization ]==----------------------------------
 
 namespace std {
+
+    /**
+     * @brief   General specialization for common types
+     */
     template <typename Unit1, typename Unit2,
               typename Rep1, typename Ratio1,
               typename Rep2, typename Ratio2
@@ -34,6 +59,46 @@ namespace std {
             typename common_type<Rep1, Rep2>::type,
             typename nova::units::detail::ratioGCD<Ratio1, Ratio2>::type>;
     };
+
+    /**
+     * @brief   Specialization for creating rate
+     */
+    template <typename Unit1, typename Unit2,
+              typename Rep1, typename Ratio1,
+              typename Rep2, typename Ratio2
+    >
+    struct common_type<
+        nova::units::measure<Unit1, Rep1, Ratio1>,
+        nova::units::measure<Unit2, Rep2, Ratio2>,
+        nova::units::detail::division_tag
+    >
+    {
+        using type = nova::units::measure<
+            typename Unit1::rate,
+            typename common_type<Rep1, Rep2>::type,
+            typename nova::units::detail::ratioGCD<Ratio1, Ratio2>::type>;
+    };
+
+    /**
+     * @brief   Specialization for converting rate back to its base
+     */
+    template <typename Unit1, typename Unit2,
+              typename Rep1, typename Ratio1,
+              typename Rep2, typename Ratio2
+    >
+        requires std::is_base_of_v<nova::units::rates, Unit1>
+    struct common_type<
+        nova::units::measure<Unit1, Rep1, Ratio1>,
+        nova::units::measure<Unit2, Rep2, Ratio2>,
+        nova::units::detail::multiplication_tag
+    >
+    {
+        using type = nova::units::measure<
+            typename Unit1::base,
+            typename common_type<Rep1, Rep2>::type,
+            typename nova::units::detail::ratioGCD<Ratio1, Ratio2>::type>;
+    };
+
 } // namespace std
 
 namespace nova::units {
@@ -273,6 +338,45 @@ private:
 
 };
 
+/**
+ * @brief   Adapter for `std::chrono::duration`
+ */
+template <typename RepT, typename RatioT>
+class measure<duration, RepT, RatioT> : public std::chrono::duration<RepT, RatioT> {
+public:
+    using Ratio    = typename RatioT::type;
+    using Rep      = RepT;
+
+    constexpr explicit measure(const std::chrono::duration<RepT, RatioT>& value)
+        : std::chrono::duration<RepT, RatioT>(value)
+    {}
+
+    constexpr explicit measure(RepT value)
+        : std::chrono::duration<RepT, RatioT>(value)
+    {}
+};
+
+template <typename RepT, typename RatioT>
+measure(std::chrono::duration<RepT, RatioT> a) -> measure<duration, RepT, RatioT>;
+
+/**
+ * @brief   Adapter for division by `std::chrono::duration`
+ */
+template <typename Unit1, typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
+[[nodiscard]] constexpr auto
+operator/(const measure<Unit1, Rep1, Ratio1>& lhs, const std::chrono::duration<Rep2, Ratio2>& rhs) noexcept {
+    return lhs / measure{ rhs };
+}
+
+/**
+ * @brief   Adapter for multiplication by `std::chrono::duration`
+ */
+template <typename Unit1, typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
+[[nodiscard]] constexpr auto
+operator*(const measure<Unit1, Rep1, Ratio1>& lhs, const std::chrono::duration<Rep2, Ratio2>& rhs) noexcept {
+    return lhs * measure{ rhs };
+}
+
 // --------------------------------==[ Relational operators ]==-------------------------------------
 
 template <typename Unit1, typename Rep1, typename Ratio1, typename Unit2, typename Rep2, typename Ratio2>
@@ -345,6 +449,9 @@ operator-(const measure<Unit1, Rep1, Ratio1>& lhs, const measure<Unit2, Rep2, Ra
     );
 }
 
+/**
+ * @brief   Multiplication by scalar
+ */
 template <typename Unit, typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
@@ -361,6 +468,9 @@ operator*(const measure<Unit, Rep1, Ratio>& lhs, const Rep2& rhs) noexcept
     );
 }
 
+/**
+ * @brief   Multiplication by another `measure`
+ */
 template <typename Unit, typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
@@ -372,6 +482,29 @@ operator*(const Rep2& lhs, const measure<Unit, Rep1, Ratio>& rhs) noexcept
     return rhs * lhs;
 }
 
+/**
+ * @brief   Multiplication by a different Unit `measure`
+ */
+template <typename Unit1, typename Rep1, typename Ratio1, typename Unit2, typename Rep2, typename Ratio2>
+[[nodiscard]] constexpr
+auto
+operator*(const measure<Unit1, Rep1, Ratio1>& lhs, const measure<Unit2, Rep2, Ratio2>& rhs) noexcept
+{
+    using CT =
+        typename std::common_type_t<
+            measure<Unit1, Rep1, Ratio1>,
+            measure<Unit2, Rep2, Ratio2>,
+            detail::multiplication_tag
+        >;
+
+    return CT(
+        CT(lhs).count() * CT(rhs).count()
+    );
+}
+
+/**
+ * @brief   Division by scalar
+ */
 template <typename Unit, typename Rep1, typename Ratio, typename Rep2>
 [[nodiscard]] constexpr
 typename std::enable_if<
@@ -389,15 +522,38 @@ operator/(const measure<Unit, Rep1, Ratio>& lhs, const Rep2& rhs) noexcept
     );
 }
 
+/**
+ * @brief   Division by another `measure`
+ */
+template <typename Unit, typename Rep1, typename Ratio1, typename Rep2, typename Ratio2>
+[[nodiscard]] constexpr
+auto
+operator/(const measure<Unit, Rep1, Ratio1>& lhs, const measure<Unit, Rep2, Ratio2>& rhs) noexcept
+{
+    using CT =
+        typename std::common_type_t<
+            measure<Unit, Rep1, Ratio1>,
+            measure<Unit, Rep2, Ratio2>
+        >;
+
+    return CT(
+        CT(lhs).count() / CT(rhs).count()
+    );
+}
+
+/**
+ * @brief   Division by a different Unit `measure`
+ */
 template <typename Unit1, typename Rep1, typename Ratio1, typename Unit2, typename Rep2, typename Ratio2>
 [[nodiscard]] constexpr
-typename std::common_type_t<Rep1, Rep2>
-operator/(const measure<Unit1, Rep1, Ratio1>& lhs, const measure<Unit2, Rep1, Ratio1>& rhs) noexcept
+auto
+operator/(const measure<Unit1, Rep1, Ratio1>& lhs, const measure<Unit2, Rep2, Ratio2>& rhs) noexcept
 {
     using CT =
         typename std::common_type_t<
             measure<Unit1, Rep1, Ratio1>,
-            measure<Unit2, Rep2, Ratio2>
+            measure<Unit2, Rep2, Ratio2>,
+            detail::division_tag
         >;
 
     return CT(
@@ -454,9 +610,10 @@ namespace constants {
     constexpr auto mile_to_mm = 1609344;
 } // namespace constants
 
-// Tag dispatches
-struct data_volume {};
-struct length {};
+/**
+ * @brief   Making sure implicit conversion for the `chrono` adapter
+ */
+using DefaultRepT = std::chrono::seconds::rep;
 
 using bits   = measure<data_volume, long long, std::ratio<1, constants::bit>>;
 using bytes  = measure<data_volume, long long>;
