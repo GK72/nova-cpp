@@ -5,28 +5,30 @@
 using namespace nova::units;
 using namespace literals;
 
+struct custom_tag {};
+
 TEST(Units, ConversionsImplicitToSmaller) {
-    EXPECT_EQ(bit(1_byte),    8_bit);
-    EXPECT_EQ(bit(1_kB)  , 8192_bit);
+    EXPECT_EQ(bits(1_byte),    8_bit);
+    EXPECT_EQ(bits(1_kB)  , 8192_bit);
 }
 
 TEST(Units, ConversionsExplicitToLarger) {
-    EXPECT_EQ(measurement_cast<byte>( 9_bit), 1_byte);
-    EXPECT_EQ(measurement_cast<byte>(15_bit), 1_byte);
-    EXPECT_EQ(measurement_cast<byte>(16_bit), 2_byte);
+    EXPECT_EQ(measure_cast<bytes>( 9_bit), 1_byte);
+    EXPECT_EQ(measure_cast<bytes>(15_bit), 1_byte);
+    EXPECT_EQ(measure_cast<bytes>(16_bit), 2_byte);
 }
 
 TEST(Units, ConversionsConvertible) {
-    static_assert(!std::is_convertible_v<byte, kByte>);
-    static_assert(std::is_convertible_v<kByte, byte>);
+    static_assert(!std::is_convertible_v<bytes, kBytes>);
+    static_assert(std::is_convertible_v<kBytes, bytes>);
 }
 
 TEST(Units, ConversionsImplicitBetweenRepresentations) {
-    EXPECT_EQ(measurement<int>(8), measurement<long>(8));
+    EXPECT_EQ( (measure<custom_tag, int>(8)), (measure<custom_tag, long>(8)) );
 
-    EXPECT_EQ( (measurement<int, std::ratio<1000>>   (8)), (measurement<long,   std::ratio<1, 1000>>(8'000'000)) );
-    EXPECT_EQ( (measurement<int, std::ratio<1000>>   (8)), (measurement<double, std::ratio<1, 1000>>(8e6)      ) );
-    EXPECT_EQ( (measurement<int, std::ratio<1, 1000>>(8)), (measurement<double>                     (8e-3)     ) );
+    EXPECT_EQ( (measure<custom_tag, int, std::ratio<1000>>   (8)), (measure<custom_tag, long,   std::ratio<1, 1000>>(8'000'000)) );
+    EXPECT_EQ( (measure<custom_tag, int, std::ratio<1000>>   (8)), (measure<custom_tag, double, std::ratio<1, 1000>>(8e6)      ) );
+    EXPECT_EQ( (measure<custom_tag, int, std::ratio<1, 1000>>(8)), (measure<custom_tag, double>                     (8e-3)     ) );
 }
 
 TEST(Units, HelperTypes) {
@@ -41,6 +43,13 @@ TEST(Units, HelperTypes) {
     EXPECT_EQ(1_MB  , 1024_kB);
     EXPECT_EQ(1_GB  , 1024_MB);
     EXPECT_EQ(1_TB  , 1024_GB);
+}
+
+TEST(Units, LengthHelperTypes) {
+    EXPECT_EQ(1_km, 1000_m);
+    EXPECT_EQ(1_mi, 1609344_mm);
+
+    EXPECT_EQ(nova::units::measure_cast<nova::units::meters>(1_mi), 1609_m);
 }
 
 TEST(Units, RelationalOperatorsCommonType) {
@@ -122,9 +131,9 @@ TEST(Units, MemberFunctions) {
 
     EXPECT_EQ(x.count(), 8);
 
-    EXPECT_EQ(byte::zero().count(), 0);
-    EXPECT_EQ(byte::max().count() , std::numeric_limits<long long>::max());
-    EXPECT_EQ(byte::min().count() , std::numeric_limits<long long>::min());
+    EXPECT_EQ(bytes::zero().count(), 0);
+    EXPECT_EQ(bytes::max().count() , std::numeric_limits<long long>::max());
+    EXPECT_EQ(bytes::min().count() , std::numeric_limits<long long>::min());
 
-    EXPECT_EQ(measurement<double>::min().count(), std::numeric_limits<double>::lowest());
+    EXPECT_EQ( (measure<custom_tag, double>::min().count()), std::numeric_limits<double>::lowest() );
 }
