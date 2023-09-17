@@ -3,9 +3,12 @@
 #include "nova/type_traits.h"
 
 #include <array>
+#include <cmath>
 #include <cassert>
+#include <cstdint>
 #include <functional>
 #include <numeric>
+#include <ostream>
 #include <type_traits>
 
 namespace nova {
@@ -24,6 +27,42 @@ template <typename T>
 concept vec_like = requires {
     typename T::vec_type;
 };
+
+namespace detail {
+
+    /**
+     * @brief   Helper function object to iterate over the elements of the vector
+     *
+     * Vec-Vec operators and
+     * Vec-factor operators
+     * are supported
+     */
+    template <typename T, typename U>
+    struct looper {
+        looper(T& lhs_, U& rhs_)
+            : lhs(lhs_)
+            , rhs(rhs_)
+        {}
+
+        template <typename Func>
+        constexpr T operator()(Func func) {
+            auto result = T { };
+            for (std::size_t i = 0; i < result.size(); ++i) {
+                if constexpr (vec_like<U>) {
+                    result[i] = func(lhs[i], rhs[i]);
+                } else {
+                    result[i] = func(lhs[i], rhs);
+                }
+            }
+            return result;
+        }
+
+    private:
+        T& lhs;
+        U& rhs;
+    };
+
+} // namespace detail
 
 template <std::size_t Size, arithmetic Rep>
 class vec {
@@ -124,38 +163,23 @@ template <vec_like VecT, vec_like VecU>
 
 template <vec_like VecT, vec_like VecU>
 [[nodiscard]] constexpr VecT operator+(const VecT& lhs, const VecU& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] + rhs[i];
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::plus<typename VecT::rep>{});
+
 }
 
 template <vec_like VecT, vec_like VecU>
 [[nodiscard]] constexpr VecT operator-(const VecT& lhs, const VecU& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] - rhs[i];
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::minus<typename VecT::rep>{});
 }
 
 template <vec_like VecT, vec_like VecU>
 [[nodiscard]] constexpr VecT operator*(const VecT& lhs, const VecU& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] * rhs[i];
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::multiplies<typename VecT::rep>{});
 }
 
 template <vec_like VecT, vec_like VecU>
 [[nodiscard]] constexpr VecT operator/(const VecT& lhs, const VecU& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] / rhs[i];
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::divides<typename VecT::rep>{});
 }
 
 template <vec_like VecT, vec_like VecU>
@@ -172,38 +196,22 @@ template <vec_like VecT, vec_like VecU>
 
 template <vec_like VecT>
 [[nodiscard]] constexpr VecT operator+(const VecT& lhs, const typename VecT::rep& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] + rhs;
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::plus<typename VecT::rep>{});
 }
 
 template <vec_like VecT>
 [[nodiscard]] constexpr VecT operator-(const VecT& lhs, const typename VecT::rep& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] - rhs;
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::minus<typename VecT::rep>{});
 }
 
 template <vec_like VecT>
 [[nodiscard]] constexpr VecT operator*(const VecT& lhs, const typename VecT::rep& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] * rhs;
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::multiplies<typename VecT::rep>{});
 }
 
 template <vec_like VecT>
 [[nodiscard]] constexpr VecT operator/(const VecT& lhs, const typename VecT::rep& rhs) {
-    auto ret = VecT { };
-    for (std::size_t i = 0; i < lhs.size(); ++i) {
-        ret[i] = lhs[i] / rhs;
-    }
-    return ret;
+    return detail::looper(lhs, rhs)(std::divides<typename VecT::rep>{});
 }
 
 template <vec_like VecT>
