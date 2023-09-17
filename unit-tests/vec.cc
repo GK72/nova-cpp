@@ -2,9 +2,9 @@
 
 #include "nova/vec.h"
 
-using Vec2 = nova::vec2<float>;
-using Vec3 = nova::vec3<float>;
-using Vec4 = nova::vec4<float>;
+using Vec2  = nova::vec2<float>;
+using Vec3  = nova::vec3<float>;
+using Vec4  = nova::vec4<float>;
 using Vec4i = nova::vec4<int>;
 
 constexpr auto Epsilon = 1e-5;
@@ -101,6 +101,13 @@ TEST(Vec, Vec3_Cross) {
     EXPECT_EQ(nova::cross(Vec3(1, 0, 0), Vec3(0, 1, 0)),    Vec3(0, 0,  1));
     EXPECT_EQ(nova::cross(Vec3(0, 1, 0), Vec3(1, 0, 0)),    Vec3(0, 0, -1));
     EXPECT_EQ(nova::cross(Vec3(0, 1, 0), Vec3(0, 2, 0)),    Vec3(0, 0,  0));
+}
+
+TEST(Vec, UnitVector) {
+    constexpr auto scalar2 = std::sqrt(2.0F) / 2.0F;
+    constexpr auto scalar3 = std::sqrt(3.0F) / 3.0F;
+    EXPECT_EQ(unit(Vec2(1.0F, 1.0F)),       Vec2(scalar2, scalar2));
+    EXPECT_EQ(unit(Vec3(1.0F, 1.0F, 1.0F)), Vec3(scalar3, scalar3, scalar3));
 }
 
 TEST(Vec, Utilities) {

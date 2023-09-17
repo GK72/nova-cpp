@@ -11,7 +11,7 @@ namespace nova {
 
 template <std::size_t Size, typename Rep> class vec;
 
-template <typename T>                    struct is_vec : std::false_type {};
+template <typename T>                     struct is_vec : std::false_type {};
 template <std::size_t Size, typename Rep> struct is_vec<vec<Size, Rep>> : std::true_type {};
 template <std::size_t Size, typename Rep> struct is_vec<const vec<Size, Rep>> : std::true_type {};
 template <std::size_t Size, typename Rep> struct is_vec<volatile vec<Size, Rep>> : std::true_type {};
@@ -23,7 +23,6 @@ template <typename T>
 concept vec_like = requires {
     typename T::vec_type;
 };
-
 
 template <std::size_t Size, typename Rep>
 class vec {
@@ -198,6 +197,11 @@ template <vec_like VecT>
         typename VecT::rep { 1 },
         std::multiplies{}
     );
+}
+
+template <vec_like VecT>
+[[nodiscard]] constexpr VecT unit(const VecT& value) noexcept {
+    return value / value.length();
 }
 
 // ---------------------------------==[ "Famous" dimensions ]==-------------------------------------
