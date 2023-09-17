@@ -3,19 +3,20 @@
 #include "nova/type_traits.h"
 
 #include <array>
+#include <cassert>
 #include <functional>
 #include <numeric>
 #include <type_traits>
 
 namespace nova {
 
-template <std::size_t Size, typename Rep> class vec;
+template <std::size_t Size, arithmetic Rep> class vec;
 
-template <typename T>                     struct is_vec : std::false_type {};
-template <std::size_t Size, typename Rep> struct is_vec<vec<Size, Rep>> : std::true_type {};
-template <std::size_t Size, typename Rep> struct is_vec<const vec<Size, Rep>> : std::true_type {};
-template <std::size_t Size, typename Rep> struct is_vec<volatile vec<Size, Rep>> : std::true_type {};
-template <std::size_t Size, typename Rep> struct is_vec<const volatile vec<Size, Rep>> : std::true_type {};
+template <typename T>                       struct is_vec : std::false_type {};
+template <std::size_t Size, arithmetic Rep> struct is_vec<vec<Size, Rep>> : std::true_type {};
+template <std::size_t Size, arithmetic Rep> struct is_vec<const vec<Size, Rep>> : std::true_type {};
+template <std::size_t Size, arithmetic Rep> struct is_vec<volatile vec<Size, Rep>> : std::true_type {};
+template <std::size_t Size, arithmetic Rep> struct is_vec<const volatile vec<Size, Rep>> : std::true_type {};
 
 template <typename T> constexpr bool is_vec_v = is_vec<T>::value;
 
@@ -24,9 +25,11 @@ concept vec_like = requires {
     typename T::vec_type;
 };
 
-template <std::size_t Size, typename Rep>
+template <std::size_t Size, arithmetic Rep>
 class vec {
 public:
+    static_assert(Size > 0, "Empty vector is not valid!");
+
     using vec_type = vec<Size, Rep>;
     using rep = Rep;
 
@@ -46,17 +49,32 @@ public:
     [[nodiscard]] constexpr auto begin()       noexcept { return std::begin(m_vec); }
     [[nodiscard]] constexpr auto end()         noexcept { return std::end(m_vec); }
 
-    [[nodiscard]] constexpr Rep length_squared() const noexcept {
-        return std::inner_product(
-            std::begin(m_vec), std::end(m_vec),
-            std::begin(m_vec),
-            Rep { 0 },
-            std::plus<Rep>{}, std::multiplies<Rep>{}
-        );
+    [[nodiscard]] Rep length() const noexcept {
+        return norm();
     }
 
-    [[nodiscard]] constexpr Rep length() const noexcept {
-        return std::sqrt(length_squared());
+    /**
+     * @brief   p-norm
+     */
+    [[nodiscard]] Rep norm(Rep p = 2) const noexcept {
+        static_assert(floating_point<Rep>, "Cannot normalize a vector with non floating-point representation!");
+        assert(p > 0);
+        assert(not std::isnan(p));
+
+        if (std::isinf(p)) {
+            return *std::max_element(std::begin(*this), std::end(*this));
+        }
+
+        return std::pow(
+            std::accumulate(
+                std::begin(m_vec), std::end(m_vec),
+                Rep { 0 },
+                [&p](const Rep& init, const Rep& value) {
+                    return init + std::pow(std::abs(value), p);
+                }
+            ),
+            1 / p
+        );
     }
 
     template <vec_like VecT>
@@ -65,8 +83,8 @@ public:
     constexpr vec_type operator-=(const VecT& rhs) { *this = *this - rhs; return *this; }
     template <vec_like VecT>
     constexpr vec_type operator*=(const VecT& rhs) { *this = *this * rhs; return *this; }
-    template <vec_like vect>
-    constexpr vec_type operator/=(const vect& rhs) { *this = *this / rhs; return *this; }
+    template <vec_like VecT>
+    constexpr vec_type operator/=(const VecT& rhs) { *this = *this / rhs; return *this; }
 
     constexpr vec_type operator+=(const rep& rhs)  { *this = *this + rhs; return *this; }
     constexpr vec_type operator-=(const rep& rhs)  { *this = *this - rhs; return *this; }

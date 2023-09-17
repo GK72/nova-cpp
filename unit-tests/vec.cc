@@ -66,11 +66,18 @@ TEST(Vec, MemberOperators) {
     u /= 2.0F;    EXPECT_EQ(u, nova::Vec2f(2, 3));
 }
 
+TEST(Vec, PNorm) {
+    EXPECT_NEAR(nova::Vec2f(1, 2).norm(1),        3.0F,     Epsilon);
+    EXPECT_NEAR(nova::Vec2f(1, 2).norm(2),        2.23606F, Epsilon);
+    EXPECT_NEAR(nova::Vec2f(1, 2).norm(3),        2.08008F, Epsilon);
+    EXPECT_NEAR(nova::Vec2f(1, 2).norm(INFINITY), 2.0F,     Epsilon);
+}
+
 TEST(Vec, Length) {
     EXPECT_NEAR(nova::Vec2f(0, 2).length(), 2.0F, Epsilon);
     EXPECT_NEAR(nova::Vec2f(3, 4).length(), 5.0F, Epsilon);
 
-    EXPECT_NEAR(nova::Vec3f(3, 4, 0).length(), 5.0F, Epsilon);
+    EXPECT_NEAR(nova::Vec3f(3, 4, 0).length(), 5.0F,        Epsilon);
     EXPECT_NEAR(nova::Vec3f(3, 4, 2).length(), 5.38516474F, Epsilon);
 }
 
@@ -109,8 +116,8 @@ TEST(Vec, Vec3_Cross) {
 }
 
 TEST(Vec, UnitVector) {
-    constexpr auto scalar2 = std::sqrt(2.0F) / 2.0F;
-    constexpr auto scalar3 = std::sqrt(3.0F) / 3.0F;
+    const auto scalar2 = std::sqrt(2.0F) / 2.0F;
+    const auto scalar3 = std::sqrt(3.0F) / 3.0F;
     EXPECT_EQ(unit(nova::Vec2f(1.0F, 1.0F)),       nova::Vec2f(scalar2, scalar2));
     EXPECT_EQ(unit(nova::Vec3f(1.0F, 1.0F, 1.0F)), nova::Vec3f(scalar3, scalar3, scalar3));
 }
