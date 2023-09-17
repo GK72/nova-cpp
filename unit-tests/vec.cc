@@ -4,6 +4,8 @@
 
 using Vec2 = nova::vec2<float>;
 using Vec3 = nova::vec3<float>;
+using Vec4 = nova::vec4<float>;
+using Vec4i = nova::vec4<int>;
 
 constexpr auto Epsilon = 1e-5;
 
@@ -99,4 +101,25 @@ TEST(Vec, Vec3_Cross) {
     EXPECT_EQ(nova::cross(Vec3(1, 0, 0), Vec3(0, 1, 0)),    Vec3(0, 0,  1));
     EXPECT_EQ(nova::cross(Vec3(0, 1, 0), Vec3(1, 0, 0)),    Vec3(0, 0, -1));
     EXPECT_EQ(nova::cross(Vec3(0, 1, 0), Vec3(0, 2, 0)),    Vec3(0, 0,  0));
+}
+
+TEST(Vec, Utilities) {
+    EXPECT_EQ(nova::cast8(-1), 0);
+    EXPECT_EQ(nova::cast8(128), 128);
+    EXPECT_EQ(nova::cast8(256), 255);
+
+    EXPECT_EQ(nova::cast8(-1.0F), 0);
+    EXPECT_EQ(nova::cast8(0.5F), 127);
+    EXPECT_EQ(nova::cast8(2.0F), 255);
+
+    EXPECT_EQ(nova::pack32BE(Vec4i(    0,    63,   127,   191)), 0x003F7FBF);
+    EXPECT_EQ(nova::pack32BE( Vec4(0.00F, 0.25F, 0.50F, 0.75F)), 0x003F7FBF);
+
+    EXPECT_EQ(nova::pack32LE(Vec4i(    0,    63,   127,   191)), 0xBF7F3F00);
+    EXPECT_EQ(nova::pack32LE( Vec4(0.00F, 0.25F, 0.50F, 0.75F)), 0xBF7F3F00);
+
+    EXPECT_EQ(nova::product(Vec2(2, 3))   ,  6.0F);
+    EXPECT_EQ(nova::product(Vec3(2, 3, 4)), 24.0F);
+    EXPECT_EQ(nova::area   (Vec2(2, 3))   ,  6.0F);
+    EXPECT_EQ(nova::volume (Vec3(2, 3, 4)), 24.0F);
 }
