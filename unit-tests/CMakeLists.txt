@@ -1,6 +1,7 @@
 add_executable(test-nova
     utils.cc
     units.cc
+    vec.cc
 )
 
 target_link_libraries(test-nova PRIVATE
