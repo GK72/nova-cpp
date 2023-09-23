@@ -374,16 +374,4 @@ using Vec2d = vec2<double>;
 using Vec3d = vec3<double>;
 using Vec4d = vec4<double>;
 
-namespace colors {
-
-    constexpr auto black = Vec4i{   0,   0,   0, 255 };
-    constexpr auto white = Vec4i{ 255, 255, 255, 255 };
-    constexpr auto red   = Vec4i{ 255,   0,   0, 255 };
-    constexpr auto green = Vec4i{   0, 255,   0, 255 };
-    constexpr auto blue  = Vec4i{   0,   0, 255, 255 };
-
-    constexpr auto petrol_blue = Vec4f{ 0.1294F, 0.3922F, 0.4667F, 1.0F };
-
-} // namespace colors
-
 } // namespace nova
