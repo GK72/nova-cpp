@@ -248,6 +248,11 @@ public:
     [[nodiscard]] constexpr Rep y() const noexcept { return vec_type::m_vec[1]; }
     [[nodiscard]]           Rep& x()      noexcept { return vec_type::m_vec[0]; }
     [[nodiscard]]           Rep& y()      noexcept { return vec_type::m_vec[1]; }
+
+// Extension point, e.g. for ImGui Vec conversions
+#ifdef NOVA_EXTENSION_CLASS_VEC2
+    NOVA_EXTENSION_CLASS_VEC2
+#endif
 };
 
 template <typename Rep>
@@ -272,6 +277,11 @@ public:
     [[nodiscard]]           Rep& x()      noexcept { return vec_type::m_vec[0]; }
     [[nodiscard]]           Rep& y()      noexcept { return vec_type::m_vec[1]; }
     [[nodiscard]]           Rep& z()      noexcept { return vec_type::m_vec[2]; }
+
+// Extension point, e.g. for ImGui Vec conversions
+#ifdef NOVA_EXTENSION_CLASS_VEC3
+    NOVA_EXTENSION_CLASS_VEC3
+#endif
 };
 
 template <typename Rep>
@@ -315,6 +325,11 @@ public:
     [[nodiscard]]           Rep& y()      noexcept { return vec_type::m_vec[1]; }
     [[nodiscard]]           Rep& z()      noexcept { return vec_type::m_vec[2]; }
     [[nodiscard]]           Rep& w()      noexcept { return vec_type::m_vec[3]; }
+
+// Extension point, e.g. for ImGui Vec conversions
+#ifdef NOVA_EXTENSION_CLASS_VEC4
+    NOVA_EXTENSION_CLASS_VEC4
+#endif
 };
 
 // ---------------------------------==[ Utility functions ]==---------------------------------------
