@@ -2,6 +2,7 @@
 
 #include "nova/type_traits.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cassert>
@@ -243,6 +244,10 @@ public:
         : vec_type(std::to_array({ x, y }))
     {}
 
+#ifdef NOVA_VEC2_EXTRA
+    NOVA_VEC2_EXTRA
+#endif
+
     [[nodiscard]] constexpr Rep x() const noexcept { return vec_type::m_vec[0]; }
     [[nodiscard]] constexpr Rep y() const noexcept { return vec_type::m_vec[1]; }
     [[nodiscard]]           Rep& x()      noexcept { return vec_type::m_vec[0]; }
@@ -264,6 +269,10 @@ public:
     constexpr vec3(Rep x, Rep y, Rep z)
         : vec_type(std::to_array({ x, y, z }))
     {}
+
+#ifdef NOVA_VEC3_EXTRA
+    NOVA_VEC3_EXTRA
+#endif
 
     [[nodiscard]] constexpr Rep x() const noexcept { return vec_type::m_vec[0]; }
     [[nodiscard]] constexpr Rep y() const noexcept { return vec_type::m_vec[1]; }
@@ -305,6 +314,10 @@ public:
     constexpr vec4(Rep x, Rep y, Rep z, Rep w)
         : vec_type(std::to_array({ x, y, z, w }))
     {}
+
+#ifdef NOVA_VEC4_EXTRA
+    NOVA_VEC4_EXTRA
+#endif
 
     [[nodiscard]] constexpr Rep x() const noexcept { return vec_type::m_vec[0]; }
     [[nodiscard]] constexpr Rep y() const noexcept { return vec_type::m_vec[1]; }
