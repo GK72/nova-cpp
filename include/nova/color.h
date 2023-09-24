@@ -41,13 +41,25 @@ public:
     [[nodiscard]] constexpr float g() const noexcept { return vec_type::m_vec[1] * scaling_factor::value; }
     [[nodiscard]] constexpr float b() const noexcept { return vec_type::m_vec[2] * scaling_factor::value; }
     [[nodiscard]] constexpr float a() const noexcept { return vec_type::m_vec[3] * scaling_factor::value; }
-    [[nodiscard]]           float& r()      noexcept { return vec_type::m_vec[0] * scaling_factor::value; }
-    [[nodiscard]]           float& g()      noexcept { return vec_type::m_vec[1] * scaling_factor::value; }
-    [[nodiscard]]           float& b()      noexcept { return vec_type::m_vec[2] * scaling_factor::value; }
-    [[nodiscard]]           float& a()      noexcept { return vec_type::m_vec[3] * scaling_factor::value; }
 };
 
 using Color = color<>;
+
+/**
+ * @brief   Pack a color vector as 8-bit values into one 32 bit value (Big endian)
+ */
+template <color_scale Scale>
+[[nodiscard]] constexpr std::uint32_t pack32BE(const color<Scale>& value) noexcept {
+    return pack32BE(value.r(), value.g(), value.b(), value.a());
+}
+
+/**
+ * @brief   Pack a color vector as 8-bit values into one 32 bit value (Little endian)
+ */
+template <color_scale Scale>
+[[nodiscard]] constexpr std::uint32_t pack32LE(const color<Scale>& value) noexcept {
+    return pack32BE(value.a(), value.b(), value.g(), value.r());
+}
 
 namespace colors {
 
