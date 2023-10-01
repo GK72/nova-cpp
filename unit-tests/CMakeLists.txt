@@ -1,5 +1,6 @@
 add_executable(test-nova
     color.cc
+    random.cc
     utils.cc
     units.cc
     vec.cc
