@@ -3,6 +3,19 @@
 #include "nova/utils.h"
 
 #include <array>
+#include <chrono>
+#include <type_traits>
+
+TEST(Utils, Now) {
+    using T = decltype(nova::now());
+    static_assert(std::is_same_v<T, std::chrono::nanoseconds>);
+}
+
+TEST(Utils, ToMicrosec) {
+    using namespace std::chrono_literals;
+    constexpr auto microsec = nova::to_us(9s);
+    EXPECT_EQ(microsec, 9'000'000.0);
+}
 
 TEST(Utils, Concat) {
     EXPECT_EQ(

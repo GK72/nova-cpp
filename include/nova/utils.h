@@ -2,6 +2,7 @@
 
 #include "nova/error.h"
 #include "nova/types.h"
+#include "nova/type_traits.h"
 
 #include <algorithm>
 #include <array>
@@ -36,6 +37,22 @@ namespace ascii {
     }
     // NOLINTEND(*magic-numbers*)
 } // namespace ascii
+
+/**
+ * @brief   Return the current time in UNIX epoch
+ */
+[[nodiscard]] inline
+std::chrono::nanoseconds now() {
+    return std::chrono::steady_clock().now().time_since_epoch();
+}
+
+/**
+ * @brief   Convert a duration to seconds with fractional part
+ */
+[[nodiscard]] constexpr
+auto to_us(chrono_duration auto x) {
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(x).count());
+}
 
 template <typename First>
 [[nodiscard]] consteval auto concat(First&& first) {
