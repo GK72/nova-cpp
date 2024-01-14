@@ -7,3 +7,9 @@ target_include_directories(nova INTERFACE
 )
 
 code_analysis(nova INTERFACE)
+
+add_library(nova-deps INTERFACE)
+
+target_link_libraries(nova INTERFACE
+    fmt
+)
