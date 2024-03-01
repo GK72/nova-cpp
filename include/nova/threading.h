@@ -8,12 +8,13 @@
 #include <csignal>
 #include <condition_variable>
 #include <exception>
+#include <functional>
 #include <mutex>
 #include <thread>
 #include <type_traits>
 #include <utility>
 
-#if defined (__unix__)
+#if defined (__unix__) || defined (__APPLE__)
     #include <pthread.h>
 #endif
 
@@ -58,24 +59,23 @@ private:
 };
 
 class thread {
-private:
     static constexpr auto MaxNameLength = 15;
 
 public:
     template <typename Callable>
     thread(const std::string& name, context& ctx, Callable&& func)
-        : m_name(set_name(name))
-        , m_thread([&ctx, func = std::forward<Callable>(func)]{
+        : m_name(validate_name(name))
+        , m_thread([this, &ctx, func = std::forward<Callable>(func)] (std::stop_token st) {
+            set_name(m_name);
+
             try {
-                func();
+                std::invoke(func, st);
             } catch (const std::exception&) {
                 auto lock = std::lock_guard(ctx.mtx);
                 ctx.exception = std::current_exception();
             }
         })
-    {
-        p_set_name(name);
-    }
+    {}
 
     [[nodiscard]] auto name() const { return m_name; }
 
@@ -87,19 +87,21 @@ private:
     std::string m_name;
     std::jthread m_thread;
 
-    std::string set_name(const std::string& name) {
+    static std::string validate_name(const std::string& name) {
         if (name.size() > MaxNameLength) {
             throw std::invalid_argument("The name of the thread cannot be larger than 16 bytes (including null terminator).");
         }
         return name;
     }
 
-    void p_set_name(const std::string& name) {
+    static void set_name(const std::string& name) {
         if (not name.empty()) {
             #if defined (__unix__)
-                pthread_setname_np(m_thread.native_handle(), name.c_str());
+                pthread_setname_np(pthread_self(), name.c_str());
+            #elif defined (__APPLE__)
+                pthread_setname_np(name.c_str());
             #else
-                #warning "Only Linux is supported for the thread set name magick!"
+                #warning "This OS is not supported!"
             #endif
         }
     }
