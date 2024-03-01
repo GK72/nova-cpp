@@ -9,7 +9,11 @@ target_include_directories(nova INTERFACE
 code_analysis(nova INTERFACE)
 
 add_library(nova-deps INTERFACE)
+target_compile_definitions(nova-deps INTERFACE SPDLOG_FMT_EXTERNAL)
 
-target_link_libraries(nova INTERFACE
+target_link_libraries(nova-deps INTERFACE
     fmt
+    spdlog
 )
+
+target_link_libraries(nova INTERFACE nova-deps)

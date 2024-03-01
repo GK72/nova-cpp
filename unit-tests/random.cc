@@ -3,7 +3,7 @@
 #include "nova/error.h"
 #include "nova/random.h"
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <array>
 #include <cmath>

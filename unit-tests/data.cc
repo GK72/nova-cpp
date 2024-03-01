@@ -1,7 +1,8 @@
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include "nova/data.h"
 
+#include <array>
 #include <cstddef>
 #include <string_view>
 
