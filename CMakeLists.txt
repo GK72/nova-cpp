@@ -11,6 +11,7 @@ include(cmake/compiler-warnings.cmake)
 set_project_warnings(project_warnings)
 
 include(cmake/settings.cmake)
+include(cmake/dependencies.cmake)
 
 add_subdirectory(include)
 
