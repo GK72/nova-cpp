@@ -11,6 +11,7 @@ add_executable(test-nova
 
 target_link_libraries(test-nova PRIVATE
     nova
+    nova-deps
     gtest_main
     gtest
 )

@@ -12,8 +12,6 @@ add_library(nova-deps INTERFACE)
 target_compile_definitions(nova-deps INTERFACE SPDLOG_FMT_EXTERNAL)
 
 target_link_libraries(nova-deps INTERFACE
-    fmt
-    spdlog
+    fmt::fmt-header-only
+    spdlog::spdlog_header_only
 )
-
-target_link_libraries(nova INTERFACE nova-deps)
