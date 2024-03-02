@@ -72,6 +72,12 @@ public:
         : m_data(std::as_bytes(data))
     {}
 
+    template <binary_interpretable T>
+    [[nodiscard]]
+    data_view(std::span<T> data)
+        : m_data(std::as_bytes(data))
+    {}
+
     [[nodiscard]] data_view subview(std::size_t offset) {
         return data_view(m_data.subspan(offset));
     }
@@ -134,6 +140,29 @@ public:
         const auto str_length = as_number(pos, length_bytes);
         boundary_check(pos, str_length);
         return as_string(pos + length_bytes, str_length);
+    }
+
+    [[nodiscard]]
+    std::string as_hex_string(std::size_t pos, std::size_t length) const {
+        boundary_check(pos, length);
+
+        std::string ret;
+
+        for (const auto& ch : m_data.subspan(pos, length)) {
+            ret += fmt::format("{:02x}", ch);
+        }
+
+        return ret;
+    }
+
+    [[nodiscard]]
+    std::string as_hex_string() const {
+        return as_hex_string(0, size());
+    }
+
+    [[nodiscard]]
+    std::string as_hex_string(std::size_t pos) const {
+        return as_hex_string(pos, size() - pos);
     }
 
     [[nodiscard]]

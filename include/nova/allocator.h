@@ -19,11 +19,16 @@ public:
 
     ~mem() = default;
 
+    void release() {
+        std::pmr::monotonic_buffer_resource::release();
+        m_total_allocations = 0;
+        m_total_allocated_bytes = 0;
+    }
+
     [[nodiscard]] std::size_t total_allocations()       const noexcept { return m_total_allocations; }
     [[nodiscard]] std::size_t total_allocated_bytes()   const noexcept { return m_total_allocated_bytes; }
 
 private:
- 
     std::size_t m_total_allocated_bytes = 0;
     std::size_t m_total_allocations = 0;
 
