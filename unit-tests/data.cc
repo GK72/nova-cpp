@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "nova/data.h"
+#include "nova/utils.h"
 
 #include <array>
 #include <cstddef>
@@ -50,7 +51,10 @@ TEST(DataView, SubView) {
 
 TEST(DataView, ToHexString) {
     static constexpr auto data = "Hello Nova"sv;
-    EXPECT_EQ(fmt::format("{}", nova::data_view(data).to_hex()), "\n0000: 48 65 6c 6c 6f 20 4e 6f 76 61"sv);
+    EXPECT_EQ(
+        fmt::format("{}", nova::data_view(data).to_hex()),
+        fmt::format("{}0000: 48 65 6c 6c 6f 20 4e 6f 76 61", nova::NewLine)
+    );
 }
 
 TEST(DataView, ErrorOutOfBounds) {

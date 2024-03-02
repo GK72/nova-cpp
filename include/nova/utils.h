@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nova/error.h"
+#include "nova/intrinsics.h"
 #include "nova/types.h"
 #include "nova/type_traits.h"
 
@@ -37,6 +38,12 @@ namespace ascii {
     }
     // NOLINTEND(*magic-numbers*)
 } // namespace ascii
+
+#if defined NOVA_WIN
+constexpr auto NewLine = "\r\n";
+#else
+constexpr auto NewLine = '\n';
+#endif
 
 /**
  * @brief   Return the current time in UNIX epoch
