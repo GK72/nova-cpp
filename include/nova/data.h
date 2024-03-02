@@ -16,7 +16,7 @@
 
 namespace nova {
 
-template <class T>
+template <typename T>
 concept binary_interpretable =
     std::is_same_v<T, char>
     || std::is_same_v<T, unsigned char>
@@ -60,7 +60,7 @@ public:
         : m_data(std::as_bytes(std::span(data)))
     {}
 
-    template <class T, std::size_t N>
+    template <typename T, std::size_t N>
     [[nodiscard]] explicit
     data_view(const std::array<T, N>& data)
         : m_data(std::as_bytes(std::span<const T, N>(data)))
@@ -83,7 +83,7 @@ public:
     /**
      * @brief   Interpret data as number according to the type `T`
      */
-    template <class T>
+    template <typename T>
         requires std::is_integral_v<T>
     [[nodiscard]] T as_number(std::size_t pos) const {
         boundary_check(pos, sizeof(T));
