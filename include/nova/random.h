@@ -52,7 +52,12 @@ namespace detail {
 
 struct ascii_distribution {
     [[nodiscard]] char operator()(std::uniform_random_bit_generator auto& gen) {
-        return std::uniform_int_distribution(ascii::PrintableRange.low, ascii::PrintableRange.high)(gen);
+        return static_cast<char>(
+            std::uniform_int_distribution(
+                static_cast<int>(ascii::PrintableRange.low),
+                static_cast<int>(ascii::PrintableRange.high)
+            )(gen)
+        );
     }
 };
 
