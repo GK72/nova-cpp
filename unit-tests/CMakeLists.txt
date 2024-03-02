@@ -1,4 +1,5 @@
 add_executable(test-nova
+    allocator.cc
     color.cc
     data.cc
     random.cc
