@@ -1,7 +1,7 @@
 add_executable(test-nova
-    allocator.cc
     color.cc
     data.cc
+    memory.cc
     random.cc
     static_string.cc
     type_traits.cc
