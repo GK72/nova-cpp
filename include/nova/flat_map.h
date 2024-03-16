@@ -7,114 +7,118 @@
 #include <cstddef>
 #include <initializer_list>
 #include <iterator>
+#include <stdexcept>
 #include <type_traits>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace nova {
 namespace detail {
 
-// Template meta-programming / meta-functions
-namespace meta {
-
-template <typename Container>
-struct _iterator {
-    using value = typename Container::iterator;
-};
-
-template <typename Container>
-struct _const_iterator {
-    using value = typename Container::const_iterator;
-};
-
-template <typename Container>
-struct _reverse_iterator  {
-    using value = typename Container::reverse_iterator;
-};
-
-template <typename Container>
-struct _const_reverse_iterator {
-    using value = typename Container::const_reverse_iterator;
-};
-
-} // namespace meta
-
-template <typename ContainerType, typename Iterators>
+template <typename KeyIterator, typename MappedIterator>
 class flat_map_iterator {
 public:
-    using self = flat_map_iterator<ContainerType, Iterators>;
-
-    using value_type = typename ContainerType::value_type;
-    using pointer = typename ContainerType::pointer;
-    using reference = typename ContainerType::reference;
+    using value_type = std::pair<typename KeyIterator::value_type, typename MappedIterator::value_type>;
+    using reference = std::pair<typename KeyIterator::reference, typename MappedIterator::reference>;
     using difference_type = std::ptrdiff_t;
-
     using iterator_category = std::random_access_iterator_tag;
 
-    constexpr flat_map_iterator(Iterators iter)
-        : m_iter(iter)
+private:
+    class proxy {
+    public:
+        proxy(const reference& ref)
+            : m_ref(ref)
+        {}
+
+        const reference* operator->() const {
+            return std::addressof(m_ref);
+        }
+
+    private:
+        reference m_ref;
+    };
+
+public:
+    using pointer = proxy;
+
+    constexpr flat_map_iterator(KeyIterator key_iter, MappedIterator mapped_iter)
+        : m_key_iter(key_iter)
+        , m_mapped_iter(mapped_iter)
     {}
 
-    constexpr self& operator++() noexcept {
-        ++m_iter.key;
-        ++m_iter.value;
+    [[nodiscard]] constexpr reference operator*() const noexcept {
+        return reference { *m_key_iter, *m_mapped_iter };
+    }
+
+    [[nodiscard]] constexpr pointer operator->() const noexcept {
+        return { **this };
+    }
+
+    constexpr flat_map_iterator& operator++() noexcept {
+        ++m_key_iter;
+        ++m_mapped_iter;
         return *this;
     }
 
-    [[nodiscard]] constexpr self& operator++(int) noexcept {
-        self iter = *this;
+    [[nodiscard]] constexpr flat_map_iterator& operator++(int) noexcept {
+        flat_map_iterator iter = *this;
         ++(*this);
         return iter;
     }
 
-    constexpr self& operator--() noexcept {
-        --m_iter.key;
-        --m_iter.value;
+    constexpr flat_map_iterator& operator--() noexcept {
+        --m_key_iter;
+        --m_mapped_iter;
         return *this;
     }
 
-    [[nodiscard]] constexpr self& operator--(int) noexcept {
-        self iter = *this;
+    [[nodiscard]] constexpr flat_map_iterator& operator--(int) noexcept {
+        flat_map_iterator iter = *this;
         --(*this);
         return iter;
     }
 
-    [[nodiscard]] constexpr self operator+(difference_type n) const noexcept {
-        return Iterators{ m_iter.key + n, m_iter.value + n };
+    [[nodiscard]] constexpr flat_map_iterator operator+(difference_type n) const noexcept {
+        flat_map_iterator iter = *this;
+        iter += n;
+        return iter;
     }
 
-    [[nodiscard]] constexpr self operator+=(difference_type n) const noexcept {
-        self iter = *this;
+    [[nodiscard]] constexpr flat_map_iterator operator-(difference_type n) const noexcept {
+        flat_map_iterator iter = *this;
+        iter -= n;
+        return iter;
+    }
+
+    [[nodiscard]] constexpr flat_map_iterator operator+=(difference_type n) const noexcept {
+        flat_map_iterator iter = *this;
         iter = iter + n;
         return iter;
     }
 
-    [[nodiscard]] constexpr difference_type operator-(self other) const noexcept {
-        return m_iter.key - other.m_iter.key;
+    [[nodiscard]] constexpr difference_type operator-(flat_map_iterator other) const noexcept {
+        return m_key_iter - other.m_key_iter;
     }
 
-    [[nodiscard]] constexpr reference operator*() const noexcept {
-        return std::make_pair(std::ref(*m_iter.key), std::ref(*m_iter.value));
+    [[nodiscard]] constexpr bool operator==(flat_map_iterator other) const noexcept {
+        return m_key_iter == other.m_key_iter;
     }
 
-    [[nodiscard]] constexpr bool operator==(self other) const noexcept {
-        return m_iter == other.m_iter;
-    }
-
-    [[nodiscard]] constexpr bool operator!=(self other) const noexcept {
-        return not (*this == other);
+    [[nodiscard]] constexpr auto operator<=>(flat_map_iterator other) const noexcept {
+        return m_key_iter <=> other.m_key_iter;
     }
 
     [[nodiscard]] constexpr auto key() const noexcept {
-        return m_iter.key;
+        return m_key_iter;
     }
 
     [[nodiscard]] constexpr auto value() const noexcept {
-        return m_iter.value;
+        return m_mapped_iter;
     }
 
 private:
-    Iterators m_iter;
+    KeyIterator m_key_iter;
+    MappedIterator m_mapped_iter;
 };
 
 } // namespace detail
@@ -126,17 +130,6 @@ template <typename Key,
           typename MappedContainer = std::vector<T>
 >
 class flat_map {
-    template <template <typename> typename MetaFunc>
-    struct iterators {
-        using key_iterator = typename MetaFunc<KeyContainer>::value;
-        using value_iterator = typename MetaFunc<MappedContainer>::value;
-
-        auto operator<=>(const iterators&) const = default;
-
-        key_iterator key;
-        value_iterator value;
-    };
-
 public:
     using self = flat_map<Key, T, Compare, KeyContainer, MappedContainer>;
 
@@ -151,18 +144,31 @@ public:
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
 
-    using iterator_pair               = iterators<detail::meta::_iterator>;
-    using const_iterator_pair         = iterators<detail::meta::_const_iterator>;
-    using reverse_iterator_pair       = iterators<detail::meta::_reverse_iterator>;
-    using const_reverse_iterator_pair = iterators<detail::meta::_const_reverse_iterator>;
-
-    using iterator               = detail::flat_map_iterator<self, iterator_pair>;
-    using const_iterator         = detail::flat_map_iterator<self, const_iterator_pair>;
-    using reverse_iterator       = detail::flat_map_iterator<self, reverse_iterator_pair>;
-    using const_reverse_iterator = detail::flat_map_iterator<self, const_reverse_iterator_pair>;
+    using iterator               = detail::flat_map_iterator<typename KeyContainer::iterator, typename MappedContainer::iterator>;
+    using const_iterator         = detail::flat_map_iterator<typename KeyContainer::const_iterator, typename MappedContainer::const_iterator>;
+    using reverse_iterator       = detail::flat_map_iterator<typename KeyContainer::reverse_iterator, typename MappedContainer::reverse_iterator>;
+    using const_reverse_iterator = detail::flat_map_iterator<typename KeyContainer::const_reverse_iterator, typename MappedContainer::const_reverse_iterator>;
 
     using key_container_type    = KeyContainer;
     using mapped_container_type = MappedContainer;
+
+private:
+    class get_fn {
+    public:
+        constexpr get_fn(const Key& key)
+            : m_key(key)
+        {}
+
+        [[nodiscard]] constexpr
+        const Key& operator()(const value_type& value) const {
+            return value.first;
+        }
+
+    private:
+        const Key& m_key;
+    };
+
+public:
 
     constexpr flat_map() = default;
 
@@ -175,92 +181,175 @@ public:
     [[nodiscard]] constexpr const key_container_type& keys()      const noexcept { return m_keys; }
     [[nodiscard]] constexpr const mapped_container_type& values() const noexcept { return m_values; }
 
-    [[nodiscard]] constexpr mapped_type& at(const key_type& key) const noexcept {
-        const auto keyEqual = [&key](const auto& ref) { return key == ref.first; };
-        const auto iter = std::find_if(begin(), end(), keyEqual);
+private:
 
-        return *iter.value();
-    }
-
-    constexpr std::pair<iterator, bool> insert(const std::pair<Key, T>& value) {
-        const auto keyEqual = [&value](const auto& ref) { return value.first == ref.first; };
-        auto iter = std::find_if(begin(), end(), keyEqual);
-
-        if (iter != end()) {
-            return { iter, false };
-        }
-
-        auto key_iter = std::upper_bound(std::begin(m_keys), std::end(m_keys), value.first, Compare());
-        key_iter = m_keys.insert(key_iter, value.first);
-
-        const auto value_iter = m_values.insert(
-            std::next(std::begin(m_values), std::distance(std::begin(m_keys), key_iter)),
-            value.second
+    /**
+     * @brief   Find the key/value pair possibly in `log(n)` time.
+     *
+     * @return  The iterator and whether it matches find the requested key.
+     *
+     * Note: if the result is unsuccessful it is undefined behaviour to
+     * dereference the returned iterator. It might, or might not be pointing to
+     * the end iterator.
+     */
+    [[nodiscard]] constexpr auto at_impl(const key_type& key)
+            -> std::pair<iterator, bool>
+    {
+        const auto iter_key = std::lower_bound(
+            std::begin(m_keys),
+            std::end(m_keys),
+            key
         );
 
-        return { iterator_pair{ key_iter, value_iter }, true };
-    }
+        const auto iter_value = std::next(
+            std::begin(m_values),
+            std::distance(std::begin(m_keys), iter_key)
+        );
 
-    // [[nodiscard]] mapped_type& operator[](key_type&& key) {
-
-    [[nodiscard]] constexpr mapped_type& operator[](const key_type& key) {
-        const auto keyEqual = [&key](const auto& ref) { return key == ref.first; };
-        const auto iter = std::find_if(begin(), end(), keyEqual);
-
-        if (iter == end()) {
-            const auto& [inserted, _] = insert({ key, T{} });
-            return *inserted.value();
+        if (iter_key == std::end(m_keys) || *iter_key != key) {
+            return { iterator{ iter_key, iter_value }, false };
         }
 
-        return *iter.value();
+        return { iterator{ iter_key, iter_value }, true };
+    }
+
+    /**
+     * @brief   Find the key/value pair possibly in `log(n)` time.
+     *
+     * @return  The iterator and whether it matches find the requested key.
+     *
+     * Note: if the result is unsuccessful it is undefined behaviour to
+     * dereference the returned iterator. It might, or might not be pointing to
+     * the end iterator.
+     */
+    [[nodiscard]] constexpr auto at_impl(const key_type& key) const
+            -> std::pair<const_iterator, bool>
+    {
+        // TODO(refact): deducing this
+        const auto iter_key = std::lower_bound(
+            std::begin(m_keys),
+            std::end(m_keys),
+            key
+        );
+
+        const auto iter_value = std::next(
+            std::begin(m_values),
+            std::distance(std::begin(m_keys), iter_key)
+        );
+
+        if (iter_key == std::end(m_keys) || *iter_key != key) {
+            return { const_iterator{ iter_key, iter_value }, false };
+        }
+
+        return { const_iterator{ iter_key, iter_value }, true };
+    }
+
+    /**
+     * @brief   Return the iterator if it is valid.
+     */
+    [[nodiscard]] constexpr auto checked_at(const key_type& key) -> iterator {
+        const auto [it, success] = at_impl(key);
+        if (not success) {
+            throw std::out_of_range("flat_map out of range");
+        }
+        return it;
+    }
+
+    /**
+     * @brief   Return the iterator if it is valid.
+     */
+    [[nodiscard]] constexpr auto checked_at(const key_type& key) const -> const_iterator {
+        const auto [it, success] = at_impl(key);
+        if (not success) {
+            throw std::out_of_range("flat_map out of range");
+        }
+        return it;
+    }
+
+public:
+
+    /**
+     * @brief   Return the associated value for the `key`.
+     */
+    [[nodiscard]] constexpr const mapped_type& at(const key_type& key) {
+        return checked_at(key).value().operator*();
+    }
+
+    /**
+     * @brief   Return the associated value for the `key`.
+     */
+    [[nodiscard]] constexpr const mapped_type& at(const key_type& key) const {
+        return checked_at(key).value().operator*();
+    }
+
+    /**
+     * @brief   Insert a value. Does not overwrite associated values.
+     *
+     * @return  Iterator pointing to the inserted value and if its a freshly
+     *          inserted value.
+     */
+    constexpr std::pair<iterator, bool> insert(const std::pair<Key, T>& value) {
+        auto [it, success] = at_impl(value.first);
+        if (success) {
+            return { it, false };
+        }
+
+        const auto iter_key = m_keys.insert(it.key(), value.first);
+        const auto iter_value = m_values.insert(it.value(), value.second);
+
+        return { iterator{ iter_key, iter_value }, true };
+    }
+
+    [[nodiscard]] constexpr mapped_type& operator[](const key_type& key) {
+        return insert({ key, T{} }).first.value().operator*();
     }
 
     [[nodiscard]] constexpr iterator begin() noexcept {
-        return iterator_pair{ std::begin(m_keys), std::begin(m_values) };
+        return { std::begin(m_keys), std::begin(m_values) };
     }
 
     [[nodiscard]] constexpr iterator end() noexcept {
-        return iterator_pair{ std::end(m_keys), std::end(m_values) };
+        return { std::end(m_keys), std::end(m_values) };
     }
 
     [[nodiscard]] constexpr const_iterator begin() const noexcept {
-        return const_iterator_pair{ std::begin(m_keys), std::begin(m_values) };
+        return { std::begin(m_keys), std::begin(m_values) };
     }
 
     [[nodiscard]] constexpr const_iterator end() const noexcept {
-        return const_iterator_pair{ std::end(m_keys), std::end(m_values) };
+        return { std::end(m_keys), std::end(m_values) };
     }
 
     [[nodiscard]] constexpr const_iterator cbegin() const noexcept {
-        return const_iterator_pair{ std::cbegin(m_keys), std::cbegin(m_values) };
+        return { std::cbegin(m_keys), std::cbegin(m_values) };
     }
 
     [[nodiscard]] constexpr const_iterator cend() const noexcept {
-        return const_iterator_pair{ std::cend(m_keys), std::cend(m_values) };
+        return { std::cend(m_keys), std::cend(m_values) };
     }
 
     [[nodiscard]] constexpr reverse_iterator rbegin() noexcept {
-        return reverse_iterator_pair{ std::rbegin(m_keys), std::rbegin(m_values) };
+        return { std::rbegin(m_keys), std::rbegin(m_values) };
     }
 
     [[nodiscard]] constexpr reverse_iterator rend() noexcept {
-        return reverse_iterator_pair{ std::rend(m_keys), std::rend(m_values) };
+        return { std::rend(m_keys), std::rend(m_values) };
     }
 
     [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept {
-        return const_reverse_iterator_pair{ std::rbegin(m_keys), std::rbegin(m_values) };
+        return { std::rbegin(m_keys), std::rbegin(m_values) };
     }
 
     [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept {
-        return const_reverse_iterator_pair{ std::rend(m_keys), std::rend(m_values) };
+        return { std::rend(m_keys), std::rend(m_values) };
     }
 
     [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept {
-        return const_reverse_iterator_pair{ std::crbegin(m_keys), std::crbegin(m_values) };
+        return { std::crbegin(m_keys), std::crbegin(m_values) };
     }
 
     [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept {
-        return const_reverse_iterator_pair{ std::crend(m_keys), std::crend(m_values) };
+        return { std::crend(m_keys), std::crend(m_values) };
     }
 
 private:
