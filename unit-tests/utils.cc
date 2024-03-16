@@ -4,7 +4,10 @@
 
 #include <array>
 #include <chrono>
+#include <thread>
 #include <type_traits>
+
+using namespace std::chrono_literals;
 
 TEST(Utils, Now) {
     using T = decltype(nova::now());
@@ -12,7 +15,6 @@ TEST(Utils, Now) {
 }
 
 TEST(Utils, ToMicrosec) {
-    using namespace std::chrono_literals;
     constexpr auto microsec = nova::to_us(9s);
     EXPECT_EQ(microsec, 9'000'000.0);
 }
@@ -30,4 +32,24 @@ TEST(Utils, Concat) {
             2, 3, 1
         })
     );
+}
+
+TEST(Utils, Stopwatch_Elapsed) {
+    auto stopwatch = nova::stopwatch();
+    EXPECT_GT(stopwatch.elapsed(), 0ns);
+
+    std::this_thread::sleep_for(200ms);
+    EXPECT_GT(stopwatch.elapsed(), 200ms);
+
+    std::this_thread::sleep_for(200ms);
+    EXPECT_GT(stopwatch.elapsed(), 400ms);
+}
+
+TEST(Utils, Stopwatch_Lap) {
+    auto stopwatch = nova::stopwatch();
+    EXPECT_GT(stopwatch.lap(), 0ns);
+
+    std::this_thread::sleep_for(200ms);
+    EXPECT_GT(stopwatch.lap(), 200ms);
+    EXPECT_LT(stopwatch.lap(), 100us);
 }

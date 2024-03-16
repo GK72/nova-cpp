@@ -1,3 +1,9 @@
+/**
+ * Part of Nova C++ Library.
+ *
+ * Various utility functions, types and constants.
+ */
+
 #pragma once
 
 #include "nova/error.h"
@@ -7,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <tuple>
 
 namespace nova {
@@ -46,7 +53,7 @@ constexpr auto NewLine = '\n';
 #endif
 
 /**
- * @brief   Return the current time in UNIX epoch
+ * @brief   Return the current time in UNIX epoch.
  */
 [[nodiscard]] inline
 std::chrono::nanoseconds now() {
@@ -54,7 +61,7 @@ std::chrono::nanoseconds now() {
 }
 
 /**
- * @brief   Convert a duration to seconds with fractional part
+ * @brief   Convert a duration to seconds with fractional part.
  */
 [[nodiscard]] constexpr
 auto to_us(chrono_duration auto x) {
@@ -67,7 +74,7 @@ template <typename First>
 }
 
 /**
- * @brief   Compile-time concatenation of arrays
+ * @brief   Compile-time concatenation of arrays.
  */
 template <typename First, typename Second, typename ...Tail>
 [[nodiscard]] consteval auto concat(const First& first, const Second& second, const Tail& ...tail) {
@@ -81,5 +88,35 @@ template <typename First, typename Second, typename ...Tail>
     std::ranges::copy(second, std::next(std::begin(result), std::ssize(first)));
     return concat(result, tail...);
 }
+
+/**
+ * @brief   A simple stopwatch measuring in nanosecond resolution.
+ */
+class stopwatch {
+public:
+    [[nodiscard]] stopwatch()
+        : m_clock(now())
+    {}
+
+    /**
+     * @brief   Measure the elapsed time since construction.
+     */
+    [[nodiscard]] auto elapsed() -> std::chrono::nanoseconds {
+        return now() - m_clock;
+    }
+
+    /**
+     * @brief   Measure the elapsed time since last call this function.
+     */
+    auto lap() -> std::chrono::nanoseconds {
+        const auto time = now();
+        const auto ret = time - m_clock;
+        m_clock = time;
+        return ret;
+    }
+
+private:
+    std::chrono::nanoseconds m_clock;
+};
 
 } // namespace nova
