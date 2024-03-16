@@ -11,7 +11,9 @@
 #include "nova/intrinsics.h"
 
 #include <cassert>
+#include <expected>
 #include <stdexcept>
+#include <string>
 
 namespace nova {
 
@@ -21,6 +23,32 @@ public:
         : std::runtime_error(msg)
     {}
 };
+
+/**
+ * @brief   Error type for `std::expected`.
+ */
+struct error {
+    std::string message;
+};
+
+/**
+ * @brief   Throwing exception with useful message in case of bad expected access.
+ */
+template <typename T>
+class expected : public std::expected<T, error> {
+public:
+    using base = std::expected<T, error>;
+    using base::expected;
+
+    [[nodiscard]] auto value() {
+        if (not base::has_value()) {
+            throw std::runtime_error(base::error().message);
+        }
+        return base::value();
+    }
+};
+
+using unexpected = std::unexpected<error>;
 
 } // namespace nova
 
