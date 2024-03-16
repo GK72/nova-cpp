@@ -1,3 +1,12 @@
+/**
+ * Part of Nova C++ Library.
+ *
+ * A cache friendly associative container.
+ *
+ * Because C++ standard is slow and it's not `constexpr` capable anyway.
+ * Only partly C++ standard compliant, but it should provide a drop-in-replacement.
+ */
+
 #pragma once
 
 #include "type_traits.h"
