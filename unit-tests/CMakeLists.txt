@@ -20,13 +20,11 @@ target_link_libraries(test-nova PRIVATE
 
 code_analysis(test-nova PRIVATE)
 
-add_test(
-    NAME test-nova
-    COMMAND test-nova
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
 include(CTest)
 include(GoogleTest)
 
-gtest_discover_tests(test-nova)
+gtest_discover_tests(
+    test-nova
+    PROPERTIES ENVIRONMENT NOVA_TEST_ENV=1
+    DISCOVERY_MODE PRE_TEST
+)

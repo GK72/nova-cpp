@@ -34,6 +34,12 @@ TEST(Utils, Concat) {
     );
 }
 
+TEST(Utils, GetEnv) {
+    EXPECT_FALSE(nova::getenv("NONEXISTENTENV").has_value());
+    EXPECT_EQ(nova::getenv("NOVA_TEST_ENV").value(), "1");
+    EXPECT_EQ(nova::getenv("NONEXISTENTENV", "default"), "default");
+}
+
 TEST(Utils, Stopwatch_Elapsed) {
     auto stopwatch = nova::stopwatch();
     EXPECT_GT(stopwatch.elapsed(), 0ns);

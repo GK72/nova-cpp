@@ -11,9 +11,16 @@
 #include "nova/types.h"
 #include "nova/type_traits.h"
 
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <string_view>
 #include <tuple>
 
 namespace nova {
@@ -87,6 +94,37 @@ template <typename First, typename Second, typename ...Tail>
     std::ranges::copy(first, std::begin(result));
     std::ranges::copy(second, std::next(std::begin(result), std::ssize(first)));
     return concat(result, tail...);
+}
+
+[[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string> {
+    char* env = std::getenv(env_name.c_str());
+    if (env == nullptr) {
+        return unexpected{ fmt::format("Environment variable is not set: {}", env_name) };
+    }
+    return { env };
+}
+
+[[nodiscard]] inline auto getenv(const std::string& env_name, const std::string& def) -> std::string {
+    return getenv(env_name)
+        .or_else(
+            [&def](const error&) {
+                return std::expected<std::string, error>{ def };
+            }
+        ).value();
+}
+
+/**
+ * @brief   Initailize logging.
+ *
+ * Format: [2024-03-16 21:22:25.542140 +01:00] [NAME @THREAD_ID] [info]
+ */
+inline auto log_init(const std::string& name) -> spdlog::logger& {
+    spdlog::set_default_logger(spdlog::create<spdlog::sinks::ansicolor_stdout_sink_mt>(name));
+
+    auto& logger = *spdlog::get(name);
+    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%f %z] [%n @%t] %^[%l]%$ %v");
+
+    return logger;
 }
 
 /**
