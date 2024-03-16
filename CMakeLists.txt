@@ -15,5 +15,7 @@ include(cmake/dependencies.cmake)
 
 add_subdirectory(include)
 
+add_subdirectory(examples)
+
 enable_testing()
 add_subdirectory(unit-tests)
