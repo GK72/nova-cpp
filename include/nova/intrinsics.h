@@ -28,7 +28,9 @@
 #ifdef NOVA_MSVC
     #include "intrin.h"
 #else
-    #include "x86intrin.h"
+    #ifdef __x86_64__
+        #include "x86intrin.h"
+    #endif
 #endif
 
 namespace nova {
@@ -41,12 +43,18 @@ namespace nova {
  *
  * Overflow: 2 ^ 64 cycles @3 GHz ~ 195 years
  *
+ * Note: only x86_64 is supported!
+ *
  * # Reference
  *
  * https://www.ccsl.carleton.ca/~jamuir/rdtscpm1.pdf
  */
 [[nodiscard]] inline auto rdtsc() -> std::uint64_t {
-    return __rdtsc();
+    #ifdef __aarch64__
+        return 0;
+    #else
+        return __rdtsc();
+    #endif
 }
 
 #ifdef NOVA_LINUX
