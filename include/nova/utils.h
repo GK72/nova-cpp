@@ -105,12 +105,11 @@ template <typename First, typename Second, typename ...Tail>
 }
 
 [[nodiscard]] inline auto getenv(const std::string& env_name, const std::string& def) -> std::string {
-    return getenv(env_name)
-        .or_else(
-            [&def](const error&) {
-                return std::expected<std::string, error>{ def };
-            }
-        ).value();
+    const auto env = getenv(env_name);
+    if (not env.has_value()) {
+        return def;
+    }
+    return *env;
 }
 
 /**

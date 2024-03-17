@@ -8,6 +8,8 @@
  *             makes the process high priority.
  *
  * https://www.linuxjournal.com/article/6900
+ *
+ * Capability must be enabled: `sudo setcap cap_sys_nice+ep shielded`
  */
 
 #include "nova/main.h"
