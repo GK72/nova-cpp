@@ -49,48 +49,48 @@ TEST(Utils, Linspace) {
     EXPECT_THAT(
         nova::linspace(nova::range<int>{ 0, 100 }, 10, false),
         ElementsAre(
-             DoubleEq( 0.0),
-             DoubleEq(10.0),
-             DoubleEq(20.0),
-             DoubleEq(30.0),
-             DoubleEq(40.0),
-             DoubleEq(50.0),
-             DoubleEq(60.0),
-             DoubleEq(70.0),
-             DoubleEq(80.0),
-             DoubleEq(90.0)
+             FloatEq( 0.0F),
+             FloatEq(10.0F),
+             FloatEq(20.0F),
+             FloatEq(30.0F),
+             FloatEq(40.0F),
+             FloatEq(50.0F),
+             FloatEq(60.0F),
+             FloatEq(70.0F),
+             FloatEq(80.0F),
+             FloatEq(90.0F)
         )
     );
 
     EXPECT_THAT(
         nova::linspace(nova::range<int>{ 0, 2 }, 5, false),
         ElementsAre(
-            DoubleEq(0.0),
-            DoubleEq(0.4),
-            DoubleEq(0.8),
-            DoubleEq(1.2),
-            DoubleEq(1.6)
+            FloatEq(0.0F),
+            FloatEq(0.4F),
+            FloatEq(0.8F),
+            FloatEq(1.2F),
+            FloatEq(1.6F)
         )
     );
 
     EXPECT_THAT(
         nova::linspace(nova::range<int>{ -2, 2 }, 4, false),
         ElementsAre(
-            DoubleEq(-2.0),
-            DoubleEq(-1.0),
-            DoubleEq( 0.0),
-            DoubleEq( 1.0)
+            FloatEq(-2.0F),
+            FloatEq(-1.0F),
+            FloatEq( 0.0F),
+            FloatEq( 1.0F)
         )
     );
 
     EXPECT_THAT(
         nova::linspace(nova::range<int>{ -2, 2 }, 5),
         ElementsAre(
-            DoubleEq(-2.0),
-            DoubleEq(-1.0),
-            DoubleEq( 0.0),
-            DoubleEq( 1.0),
-            DoubleEq( 2.0)
+            FloatEq(-2.0F),
+            FloatEq(-1.0F),
+            FloatEq( 0.0F),
+            FloatEq( 1.0F),
+            FloatEq( 2.0F)
         )
     );
 }

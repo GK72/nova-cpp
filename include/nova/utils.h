@@ -17,12 +17,14 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <concepts>
 #include <cstdlib>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 namespace nova {
 
@@ -116,16 +118,16 @@ template <typename First, typename Second, typename ...Tail>
 /**
  * @brief   Generate evenly spaced numbers over the range.
  */
-template <typename T>
-[[nodiscard]] auto linspace(range<T> range, std::size_t num, bool inclusive = true) -> std::vector<double> {
-    auto ret = std::vector<double>(num);
+template <typename T, std::floating_point R = float>
+[[nodiscard]] auto linspace(range<T> range, std::size_t num, bool inclusive = true) -> std::vector<R> {
+    auto ret = std::vector<R>(num);
 
-    const auto interval = (static_cast<double>(range.high) - static_cast<double>(range.low)) /
-        (static_cast<double>(num) - (1 * static_cast<double>(inclusive)));
+    const auto interval = (static_cast<R>(range.high) - static_cast<R>(range.low)) /
+        (static_cast<R>(num) - (1 * static_cast<R>(inclusive)));
 
-    double value = static_cast<double>(range.low);
+    R value = static_cast<R>(range.low);
 
-    for (double& x : ret) {
+    for (R& x : ret) {
         x = value;
         value += interval;
     }

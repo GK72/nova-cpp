@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace nova {
@@ -63,7 +62,7 @@ private:
  * @brief   Read a file and process its content with the given `Parser`.
  */
 template <class Parser = detail::def_parser>
-[[nodiscard]] auto read_file(std::string_view path, Parser&& parser = {})
+[[nodiscard]] auto read_file(const std::string& path, Parser&& parser = {})
         -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>>
 {
     const auto fs = std::filesystem::path(path);
