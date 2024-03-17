@@ -19,6 +19,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -110,6 +111,26 @@ template <typename First, typename Second, typename ...Tail>
         return def;
     }
     return *env;
+}
+
+/**
+ * @brief   Generate evenly spaced numbers over the range.
+ */
+template <typename T>
+[[nodiscard]] auto linspace(range<T> range, std::size_t num, bool inclusive = true) -> std::vector<double> {
+    auto ret = std::vector<double>(num);
+
+    const auto interval = (static_cast<double>(range.high) - static_cast<double>(range.low)) /
+        (static_cast<double>(num) - (1 * static_cast<double>(inclusive)));
+
+    double value = static_cast<double>(range.low);
+
+    for (double& x : ret) {
+        x = value;
+        value += interval;
+    }
+
+    return ret;
 }
 
 /**

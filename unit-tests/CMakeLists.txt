@@ -18,6 +18,7 @@ target_link_libraries(test-nova PRIVATE
 
     GTest::gtest_main
     GTest::gtest
+    GTest::gmock
 )
 
 code_analysis(test-nova PRIVATE)
