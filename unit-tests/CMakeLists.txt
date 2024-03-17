@@ -2,6 +2,7 @@ add_executable(test-nova
     color.cc
     data.cc
     flat_map.cc
+    io.cc
     random.cc
     static_string.cc
     type_traits.cc
