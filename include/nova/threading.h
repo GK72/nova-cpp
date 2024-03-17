@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "nova/intrinsics.h"
 #include "nova/utils.h"
 
 #include <chrono>
@@ -42,7 +43,7 @@ public:
         while (m_total_elapsed < m_timings.limit) {
             m_delta += m_stopwatch.elapsed();
             if (m_delta > m_timings.interval) {
-                std::invoke(m_func, m_delta);
+                std::invoke(m_func, m_delta, nova::rdtsc());
                 m_total_elapsed += m_delta;
                 m_delta = 0ns;
             }

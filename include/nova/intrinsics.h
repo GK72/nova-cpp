@@ -17,6 +17,38 @@
     #define NOVA_MACOS
 #endif
 
+#if defined(_MSC_VER)
+    #define NOVA_MSVC
+#elif defined(__clang__)
+    #define NOVA_CLANG
+#elif defined(__GNUC__)
+    #define NOVA_GCC
+#endif
+
+#ifdef NOVA_MSVC
+    #include "intrin.h"
+#else
+    #include "x86intrin.h"
+#endif
+
+namespace nova {
+
+/**
+ * @brief   Read time-stamp counter. It measures the CPU cycles since reset.
+ *
+ * The instructions loads the high-order 32 bits into EDX, and the low-order
+ * into EAX.
+ *
+ * Overflow: 2 ^ 64 cycles @3 GHz ~ 195 years
+ *
+ * # Reference
+ *
+ * https://www.ccsl.carleton.ca/~jamuir/rdtscpm1.pdf
+ */
+[[nodiscard]] inline auto rdtsc() -> std::uint64_t {
+    return __rdtsc();
+}
+
 #ifdef NOVA_LINUX
     [[nodiscard]] inline auto is_debugger_present() -> bool {
         std::ifstream inf("/proc/self/status");
@@ -34,11 +66,13 @@
 #warning "`is_debugger_present()` is not supported on the target platform!"
 #endif
 
-#if defined(_MSC_VER)
+} // namespace nova
+
+#if defined(NOVA_MSVC)
     #define nova_breakpoint()           __debugbreak()
-#elif defined(__clang__)
+#elif defined(NOVA_CLANG)
     #define nova_breakpoint()           if (is_debugger_present()) { __builtin_debugtrap(); }
-#elif defined(__GNUC__)
+#elif defined(NOVA_GCC)
     #if (defined(__i386__) || defined(__x86_64__))
         #define nova_breakpoint()       if (is_debugger_present()) { __asm__ volatile("int $0x03"); }
     #elif defined(__aarch64__)
