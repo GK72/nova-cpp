@@ -13,5 +13,6 @@ target_compile_definitions(nova-deps INTERFACE SPDLOG_FMT_EXTERNAL)
 
 target_link_libraries(nova-deps INTERFACE
     fmt::fmt-header-only
+    nlohmann_json::nlohmann_json
     spdlog::spdlog_header_only
 )

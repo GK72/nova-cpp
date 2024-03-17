@@ -24,6 +24,13 @@ public:
     {}
 };
 
+class parsing_error : public std::runtime_error {
+public:
+    parsing_error(const char* msg)
+        : std::runtime_error(msg)
+    {}
+};
+
 /**
  * @brief   Error type for `std::expected`.
  */
