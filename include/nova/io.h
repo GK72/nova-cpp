@@ -38,14 +38,14 @@ namespace detail {
 /**
  * @brief   A parser that puts the result of a callback into a vector.
  */
-template <class Callable = std::identity>
+template <typename Callable = std::identity>
 class line_parser {
 public:
     line_parser(Callable&& callback = {})
         : m_callback(callback)
     {}
 
-    template <class T = std::remove_cvref_t<std::invoke_result_t<Callable, std::string&>>>
+    template <typename T = std::remove_cvref_t<std::invoke_result_t<Callable, std::string&>>>
     [[nodiscard]] auto operator()(std::istream& inf) {
         auto ret = std::vector<T>();
         for (std::string line; std::getline(inf, line); ) {
@@ -61,7 +61,7 @@ private:
 /**
  * @brief   Read a file and process its content with the given `Parser`.
  */
-template <class Parser = detail::def_parser>
+template <typename Parser = detail::def_parser>
 [[nodiscard]] auto read_file(const std::string& path, Parser&& parser = {})
         -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>>
 {
