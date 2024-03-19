@@ -13,7 +13,11 @@ set_project_warnings(project_warnings)
 include(cmake/settings.cmake)
 include(cmake/dependencies.cmake)
 
-add_subdirectory(include)
+add_subdirectory(include)       # Legacy
+
+add_subdirectory(libnova)
+add_subdirectory(libnova-gfx)
+add_subdirectory(nova)
 
 enable_testing()
 add_subdirectory(unit-tests)

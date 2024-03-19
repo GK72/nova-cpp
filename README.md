@@ -17,10 +17,17 @@ aim is to be cross-platform working on any major compiler vendor.
 
 # Project structure
 
+Under migration to [Canonical Project Structure].
+
 ```
 ├── cmake
 ├── doc
-├── include                 Public headers
-├── unit-tests
-└── functional-tests
+├── include                 Public headers (legacy).
+├── libnova                 Source code for general library.
+├── libnova-gfx             Source code for graphics library.
+├── nova                    Source code for executables.
+├── unit-tests              (legacy)
+└── functional-tests        (legacy)
 ```
+
+[Canonical Project Structure][https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html]
