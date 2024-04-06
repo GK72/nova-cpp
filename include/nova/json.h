@@ -80,6 +80,24 @@ public:
         return m_data.at(make_json_pointer(path)).template get_ref<const R&>();
     }
 
+    template <typename R> requires std::is_fundamental_v<R>
+    [[nodiscard]] R lookup(const std::string& path, R def) const {
+        try {
+            return lookup<R>(path);
+        } catch (const nlohmann::json::exception& ex) {
+            return def;
+        }
+    }
+
+    template <typename R>
+    [[nodiscard]] const R& lookup(const std::string& path, R def) const {
+        try {
+            return lookup<R>(path);
+        } catch (const nlohmann::json::exception& ex) {
+            return def;
+        }
+    }
+
     /**
      * @brief   Return a JSON object without leaking the underlying API.
      */
