@@ -82,20 +82,18 @@ public:
 
     template <typename R> requires std::is_fundamental_v<R>
     [[nodiscard]] R lookup(const std::string& path, const R& def) const {
-        try {
-            return lookup<R>(path);
-        } catch (const nlohmann::json::exception& ex) {
+        if (not contains(path)) {
             return def;
         }
+        return lookup<R>(path);
     }
 
     template <typename R>
     [[nodiscard]] const R& lookup(const std::string& path, const R& def) const {
-        try {
-            return lookup<R>(path);
-        } catch (const nlohmann::json::exception& ex) {
+        if (not contains(path)) {
             return def;
         }
+        return lookup<R>(path);
     }
 
     /**
@@ -105,6 +103,10 @@ public:
         auto doc = json();
         doc.set(m_data.at(make_json_pointer(path)));
         return doc;
+    }
+
+    [[nodiscard]] bool contains(const std::string& path) const {
+        return m_data.contains(make_json_pointer(path));
     }
 
 private:

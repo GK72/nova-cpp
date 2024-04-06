@@ -54,6 +54,12 @@ TEST(Json, ConstructFromJsonObject) {
     EXPECT_EQ(inner.lookup<int>("int"), 9);
 }
 
+TEST(Json, Contains) {
+    const auto json = nova::json(input);
+    EXPECT_TRUE(json.contains("key"));
+    EXPECT_FALSE(json.contains("nokey"));
+}
+
 TEST(Json, LookupFundamental) {
     const auto json = nova::json(input);
 
