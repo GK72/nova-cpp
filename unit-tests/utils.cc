@@ -95,6 +95,21 @@ TEST(Utils, Linspace) {
     );
 }
 
+TEST(Utils, Linspace_ExplicitReturnType) {
+    using namespace testing;
+
+    EXPECT_THAT(
+        nova::linspace<double>(nova::range<int>{ -2, 2 }, 5),
+        ElementsAre(
+            DoubleEq(-2.0),
+            DoubleEq(-1.0),
+            DoubleEq( 0.0),
+            DoubleEq( 1.0),
+            DoubleEq( 2.0)
+        )
+    );
+}
+
 TEST(Utils, Stopwatch_Elapsed) {
     auto stopwatch = nova::stopwatch();
     EXPECT_GT(stopwatch.elapsed(), 0ns);

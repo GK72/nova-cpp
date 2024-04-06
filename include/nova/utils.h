@@ -118,7 +118,7 @@ template <typename First, typename Second, typename ...Tail>
 /**
  * @brief   Generate evenly spaced numbers over the range.
  */
-template <typename T, std::floating_point R = float>
+template <std::floating_point R = float, typename T>
 [[nodiscard]] auto linspace(range<T> range, std::size_t num, bool inclusive = true) -> std::vector<R> {
     auto ret = std::vector<R>(num);
 
