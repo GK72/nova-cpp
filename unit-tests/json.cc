@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "nova/error.h"
 #include "nova/json.h"
@@ -53,10 +54,11 @@ TEST(Json, ConstructFromJsonObject) {
     EXPECT_EQ(inner.lookup<int>("int"), 9);
 }
 
-TEST(Json, Lookup) {
+TEST(Json, LookupFundamental) {
     const auto json = nova::json(input);
 
     EXPECT_EQ(json.lookup<int>("key"), 1);
+    EXPECT_EQ(json.lookup<short>("key"), 1);
     EXPECT_EQ(json.lookup<int>("sub.int"), 9);
     EXPECT_EQ(json.lookup<float>("sub.float"), 9.9F);
     EXPECT_EQ(json.lookup<bool>("sub.boolean"), true);
@@ -65,4 +67,25 @@ TEST(Json, Lookup) {
     EXPECT_EQ(xs.lookup<int>("0"), 1);
     EXPECT_EQ(xs.lookup<int>("1"), 2);
     EXPECT_EQ(xs.lookup<int>("2"), 3);
+}
+
+TEST(Json, LookupCompound) {
+    using namespace testing;
+
+    const auto json = nova::json(input);
+
+    EXPECT_THAT(
+        json.lookup<nlohmann::json::array_t>("list"),
+        ElementsAre(1, 2, 3)
+    );
+}
+
+TEST(Json, LookupDefault) {
+    using namespace testing;
+    using Array = nlohmann::json::array_t;
+
+    const auto json = nova::json(input);
+
+    EXPECT_EQ(json.lookup<int>("nokey", 1), 1);
+    EXPECT_THAT(json.lookup<Array>("nolist", Array{ 1, 2 }), ElementsAre(1, 2));
 }

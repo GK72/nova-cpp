@@ -81,7 +81,7 @@ public:
     }
 
     template <typename R> requires std::is_fundamental_v<R>
-    [[nodiscard]] R lookup(const std::string& path, R def) const {
+    [[nodiscard]] R lookup(const std::string& path, const R& def) const {
         try {
             return lookup<R>(path);
         } catch (const nlohmann::json::exception& ex) {
@@ -90,7 +90,7 @@ public:
     }
 
     template <typename R>
-    [[nodiscard]] const R& lookup(const std::string& path, R def) const {
+    [[nodiscard]] const R& lookup(const std::string& path, const R& def) const {
         try {
             return lookup<R>(path);
         } catch (const nlohmann::json::exception& ex) {
