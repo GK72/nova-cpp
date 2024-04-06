@@ -80,6 +80,22 @@ public:
         return m_data.at(make_json_pointer(path)).template get_ref<const R&>();
     }
 
+    template <typename R> requires std::is_fundamental_v<R>
+    [[nodiscard]] R lookup(const std::string& path, const R& def) const {
+        if (not contains(path)) {
+            return def;
+        }
+        return lookup<R>(path);
+    }
+
+    template <typename R>
+    [[nodiscard]] const R& lookup(const std::string& path, const R& def) const {
+        if (not contains(path)) {
+            return def;
+        }
+        return lookup<R>(path);
+    }
+
     /**
      * @brief   Return a JSON object without leaking the underlying API.
      */
@@ -87,6 +103,10 @@ public:
         auto doc = json();
         doc.set(m_data.at(make_json_pointer(path)));
         return doc;
+    }
+
+    [[nodiscard]] bool contains(const std::string& path) const {
+        return m_data.contains(make_json_pointer(path));
     }
 
 private:
