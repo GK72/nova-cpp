@@ -4,6 +4,7 @@ CPMAddPackage("gh:fmtlib/fmt#10.2.1")
 CPMAddPackage("gh:gabime/spdlog#v1.13.0")
 CPMAddPackage("gh:google/googletest#v1.14.0")
 CPMAddPackage("gh:nlohmann/json#v3.11.3")
+CPMAddPackage("gh:jbeder/yaml-cpp#0.8.0")
 
 CPMAddPackage(
     NAME benchmark

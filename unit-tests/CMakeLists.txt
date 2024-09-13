@@ -7,9 +7,10 @@ add_executable(test-nova
     random.cc
     static_string.cc
     type_traits.cc
-    utils.cc
     units.cc
+    utils.cc
     vec.cc
+    yaml.cc
 )
 
 target_link_libraries(test-nova PRIVATE
