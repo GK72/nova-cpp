@@ -67,7 +67,7 @@ template <typename Parser = detail::def_parser>
 {
     const auto fs = std::filesystem::path(path);
     if (not std::filesystem::is_regular_file(fs)) {
-        return unexpected(fmt::format("{} is not a regular file!", std::filesystem::absolute(fs).string()));
+        return unexpected<error>{ fmt::format("{} is not a regular file!", std::filesystem::absolute(fs).string()) };
     }
 
     auto stream = std::ifstream(fs);
