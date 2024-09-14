@@ -9,7 +9,7 @@ TEST(Expected, TrivialTypes) {
         if (condition) {
             return 1;
         }
-        return nova::unexpected{"Error message"};
+        return nova::unexpected<error>{"Error message"};
     };
 
     {
