@@ -1,15 +1,15 @@
-#include <string_view>
+#include "nova/expected.h"
 
 #include <gtest/gtest.h>
 
-#include "nova/expected.h"
+#include <string_view>
 
 TEST(Expected, TrivialTypes) {
     constexpr auto expect = [](bool condition) -> nova::expected<int, std::string_view> {
         if (condition) {
             return 1;
         }
-        return nova::unexpected<error>{"Error message"};
+        return nova::unexpected<std::string_view>{"Error message"};
     };
 
     {
