@@ -29,24 +29,24 @@ jobs:
         sudo apt install -y build-essential cmake
 
     - name: Build
-      if: runner.os != 'Linux' || (runner.os == 'Linux' && build_type == 'Release')
+      if: runner.os != 'Linux' || (runner.os == 'Linux' && ${{ matrix.build_type }} == 'Release')
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
     - name: Build (Coverage)
-      if: runner.os == 'Linux' && build_type == 'Debug'
+      if: runner.os == 'Linux' && ${{ matrix.build_type }} == 'Debug'
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCOVERAGE=1
         cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
     - name: Unit Test
-      if: runner.os != 'Linux' || (runner.os == 'Linux' && build_type == 'Release')
+      if: runner.os != 'Linux' || (runner.os == 'Linux' && ${{ matrix.build_type }} == 'Release')
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
 
     - name: Unit Test (Coverage)
-      if: runner.os == 'Linux' && build_type == 'Debug'
+      if: runner.os == 'Linux' && {{ matrix.build_type }} == 'Debug'
       working-directory: ${{github.workspace}}/build
       run: |
         ctest -C ${{ matrix.build_type }} --output-on-failure
