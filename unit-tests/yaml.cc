@@ -35,7 +35,7 @@ TEST(Yaml, FundamentalTypes) {
 
 TEST(Yaml, Arrays) {
     const auto doc = nova::yaml(data);
-    const auto array = doc.lookup_vec("array");
+    const auto array = doc.lookup<std::vector>("array");
     EXPECT_EQ(array[0].as<std::string>(), "elem1");
     EXPECT_EQ(array[1].as<std::string>(), "elem2");
     EXPECT_EQ(array[2].lookup<int>("elem3.inner"), 1);
@@ -45,7 +45,7 @@ TEST(Yaml, Arrays) {
 
 TEST(Yaml, Objects) {
     const auto doc = nova::yaml(data);
-    const auto object = doc.lookup_map("array.3");
+    const auto object = doc.lookup<std::map>("array.3");
     EXPECT_EQ(object.at("inner1").as<int>(), 2);
     EXPECT_EQ(object.at("inner2").as<int>(), 3);
 }
