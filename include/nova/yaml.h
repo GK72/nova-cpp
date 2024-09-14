@@ -5,6 +5,7 @@
  */
 
 #include "nova/error.h"
+#include "nova/type_traits.h"
 #include "nova/utils.h"
 
 #include <yaml-cpp/yaml.h>
@@ -53,13 +54,17 @@ public:
         }
     }
 
-    [[nodiscard]] std::vector<yaml> lookup_vec(std::string_view path) const {
+    template <template <typename> typename Container>
+        requires vector_like<Container<yaml>>
+    [[nodiscard]] Container<yaml> lookup(std::string_view path) const {
         const auto node = lookup_impl(path);
-        return std::vector<yaml>(node.begin(), node.end());
+        return Container<yaml>(node.begin(), node.end());
     }
 
-    [[nodiscard]] std::map<std::string, yaml> lookup_map(std::string_view path) const {
-        std::map<std::string, yaml> ret;
+    template <template <typename, typename> typename Container>
+        requires map_like<Container<std::string, yaml>>
+    [[nodiscard]] Container<std::string, yaml> lookup(std::string_view path) const {
+        Container<std::string, yaml> ret;
         const auto node = lookup_impl(path);
 
         for (const auto& elem : node) {
