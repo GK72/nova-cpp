@@ -20,16 +20,16 @@ namespace nova {
 
 class assertion_error : public std::runtime_error {
 public:
-    assertion_error(const char* msg)
-        : std::runtime_error(msg)
-    {}
+    using std::runtime_error::runtime_error;
 };
 
 class parsing_error : public std::runtime_error {
 public:
-    parsing_error(const char* msg)
-        : std::runtime_error(msg)
-    {}
+    using std::runtime_error::runtime_error;
+};
+
+class not_implemented : public std::runtime_error {
+    using std::runtime_error::runtime_error;
 };
 
 /**

@@ -34,10 +34,6 @@ struct process_scheduling {
     process_priority priority;
 };
 
-[[nodiscard]] inline auto get_pid() -> int {
-    return getpid();
-}
-
 #ifdef NOVA_LINUX
 /**
  * @brief   Set CPU affinity and process priority.
@@ -65,6 +61,11 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     }
     return empty{};
 }
+
+[[nodiscard]] inline auto get_pid() -> int {
+    return getpid();
+}
+
 #else
 /**
  * @brief   NOT IMPLEMENTED! It's a stub.
@@ -72,6 +73,14 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
 inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> expected<empty, error> {
     return empty{};
 }
+
+/**
+ * @brief   NOT IMPLEMENTED! It's a stub.
+ */
+inline auto get_pid() -> int {
+    throw not_implemented("get_pid");
+}
+
 // TODO: emit a non-error warning that every major compiler likes
 // TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif  // NOVA_LINUX
