@@ -63,14 +63,6 @@ constexpr auto NewLine = "\r\n";
 constexpr auto NewLine = '\n';
 #endif
 
-[[nodiscard]] inline auto split(std::string_view str, std::string_view delim) {
-    auto temp = std::views::split(str, delim)
-              | std::views::transform([](const auto& elem) {
-                  return std::string(std::ranges::begin(elem), std::ranges::end(elem));
-              });
-    return std::vector<std::string>(std::begin(temp), std::end(temp));
-}
-
 /**
  * @brief   Split a string by delimiter.
  *
