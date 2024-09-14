@@ -80,7 +80,7 @@ TEST(FlatMap, StdAlgorithmConform) {
         { 3, 31 }
     };
 
-    std::find_if(std::begin(map), std::end(map), [](const auto& p) { return p.second == 22; });
+    [[maybe_unused]] const auto _ = std::find_if(std::begin(map), std::end(map), [](const auto& p) { return p.second == 22; });
 }
 
 TEST(FlatMap, At) {

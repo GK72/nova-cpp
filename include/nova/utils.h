@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -61,6 +62,22 @@ constexpr auto NewLine = "\r\n";
 #else
 constexpr auto NewLine = '\n';
 #endif
+
+/**
+ * @brief   Split a string by delimiter.
+ *
+ * @param str       Input string to split.
+ * @param delim     Delimiter string which can consist of multiple characters.
+ *
+ * @returns         A vector of strings.
+ */
+[[nodiscard]] inline auto split(std::string_view str, std::string_view delim) {
+    auto temp = std::views::split(str, delim)
+              | std::views::transform([](const auto& elem) {
+                  return std::string(std::ranges::begin(elem), std::ranges::end(elem));
+              });
+    return std::vector<std::string>(std::begin(temp), std::end(temp));
+}
 
 /**
  * @brief   Return the current time in UNIX epoch.
