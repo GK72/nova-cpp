@@ -23,7 +23,7 @@ jobs:
       with:
         version: "2.6.0"
     - name: Install GCC
-      if: runner.os == "Linux"
+      if: runner.os == 'Linux'
       run: |
         sudo apt update
         sudo apt install -y build-essential cmake
