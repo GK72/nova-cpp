@@ -60,7 +60,7 @@ jobs:
         path: build/coverage/*
 
     - name: Code Coverage Report
-      if: runner.os == 'Linux' && build_type == 'Debug'
+      if: runner.os == 'Linux' && ${{ matrix.build_type }} == 'Debug'
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
         filename: build/coverage.cobertura.xml
