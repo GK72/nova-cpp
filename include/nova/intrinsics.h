@@ -95,5 +95,6 @@ namespace nova {
     #endif
 #else
     #define nova_breakpoint()
+    // TODO(x-platform): emit a non-error warning that every major compiler likes
     #warning "Setting breakpoint from code is not supported on the target platform!"
 #endif
