@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "nova/expected.h"
 #include "nova/intrinsics.h"
 
 #include <cassert>
@@ -19,16 +20,16 @@ namespace nova {
 
 class assertion_error : public std::runtime_error {
 public:
-    assertion_error(const char* msg)
-        : std::runtime_error(msg)
-    {}
+    using std::runtime_error::runtime_error;
 };
 
 class parsing_error : public std::runtime_error {
 public:
-    parsing_error(const char* msg)
-        : std::runtime_error(msg)
-    {}
+    using std::runtime_error::runtime_error;
+};
+
+class not_implemented : public std::runtime_error {
+    using std::runtime_error::runtime_error;
 };
 
 /**
@@ -40,22 +41,22 @@ struct error {
 
 /**
  * @brief   Throwing exception with useful message in case of bad expected access.
+ *
+ * TODO(feat): port it over to the custom `expected` implementation
  */
-template <typename T>
-class expected : public std::expected<T, error> {
-public:
-    using base = std::expected<T, error>;
-    using base::expected;
+// template <typename T>
+// class expected : public expected<T, error> {
+// public:
+    // using base = expected<T, error>;
+    // using base::expected;
 
-    [[nodiscard]] auto value() {
-        if (not base::has_value()) {
-            throw std::runtime_error(base::error().message);
-        }
-        return base::value();
-    }
-};
-
-using unexpected = std::unexpected<error>;
+    // [[nodiscard]] auto value() {
+        // if (not base::has_value()) {
+            // throw std::runtime_error(base::error().message);
+        // }
+        // return base::value();
+    // }
+// };
 
 } // namespace nova
 

@@ -13,6 +13,7 @@
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/ansicolor_sink.h>
 
 #include <algorithm>
 #include <array>
@@ -26,6 +27,8 @@
 #include <string_view>
 #include <tuple>
 #include <vector>
+
+#include <stdlib.h>
 
 namespace nova {
 
@@ -116,12 +119,31 @@ template <typename First, typename Second, typename ...Tail>
     return concat(result, tail...);
 }
 
-[[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string> {
+[[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string, error> {
+#ifdef NOVA_WIN
+    char* env;
+    // size_t len;
+    errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
+
+    if (env == nullptr) {
+        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
+    }
+
+    if (err) {
+        return unexpected<error>{ fmt::format("Error querying environment variable: {}", env_name) };
+    }
+
+    const auto ret = std::string{ env };
+    free(env);
+    return ret;
+
+#else
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return unexpected{ fmt::format("Environment variable is not set: {}", env_name) };
+        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
     }
     return { env };
+#endif
 }
 
 [[nodiscard]] inline auto getenv(const std::string& env_name, const std::string& def) -> std::string {

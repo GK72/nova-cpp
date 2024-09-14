@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #else
-#error "The target platform does not support OS specific code"
+// TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif
 
 namespace nova {
@@ -35,12 +35,11 @@ struct process_scheduling {
 };
 
 #ifdef NOVA_LINUX
-
 /**
  * @brief   Set CPU affinity and process priority.
  */
 [[nodiscard]] inline
-auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
+auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
     CPU_SET(cfg.cpu, &cpu_set);
@@ -48,7 +47,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return unexpected{ "Cannot set CPU affinity!" };
+        return unexpected<error>{ "Cannot set CPU affinity!" };
     }
 
     const auto result_priority = setpriority(
@@ -58,10 +57,9 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
     );
 
     if (result_priority == -1) {
-        return unexpected{ "Cannot set process priority!" };
+        return unexpected<error>{ "Cannot set process priority!" };
     }
-
-    return {};
+    return empty{};
 }
 
 [[nodiscard]] inline auto get_pid() -> int {
@@ -69,7 +67,22 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
 }
 
 #else
-#error "The target platform does not support OS specific code"
+/**
+ * @brief   NOT IMPLEMENTED! It's a stub.
+ */
+inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> expected<empty, error> {
+    return empty{};
+}
+
+/**
+ * @brief   NOT IMPLEMENTED! It's a stub.
+ */
+inline auto get_pid() -> int {
+    throw not_implemented("get_pid");
+}
+
+// TODO: emit a non-error warning that every major compiler likes
+// TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif  // NOVA_LINUX
 
 } // namespace nova

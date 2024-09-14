@@ -63,11 +63,11 @@ private:
  */
 template <typename Parser = detail::def_parser>
 [[nodiscard]] auto read_file(const std::string& path, Parser&& parser = {})
-        -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>>
+        -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>, error>
 {
     const auto fs = std::filesystem::path(path);
     if (not std::filesystem::is_regular_file(fs)) {
-        return unexpected(fmt::format("{} is not a regular file!", std::filesystem::absolute(fs).string()));
+        return unexpected<error>{ fmt::format("{} is not a regular file!", std::filesystem::absolute(fs).string()) };
     }
 
     auto stream = std::ifstream(fs);

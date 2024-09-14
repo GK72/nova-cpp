@@ -54,14 +54,14 @@ public:
         }
     }
 
-    template <template <typename> typename Container>
+    template <template <typename...> typename Container>
         requires vector_like<Container<yaml>>
     [[nodiscard]] Container<yaml> lookup(std::string_view path) const {
         const auto node = lookup_impl(path);
         return Container<yaml>(node.begin(), node.end());
     }
 
-    template <template <typename, typename> typename Container>
+    template <template <typename, typename...> typename Container>
         requires map_like<Container<std::string, yaml>>
     [[nodiscard]] Container<std::string, yaml> lookup(std::string_view path) const {
         Container<std::string, yaml> ret;

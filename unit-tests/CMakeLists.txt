@@ -1,6 +1,7 @@
 add_executable(test-nova
     color.cc
     data.cc
+    expected.cc
     flat_map.cc
     io.cc
     json.cc

@@ -2,6 +2,9 @@
  * Part of Nova C++ Library.
  *
  * Compiler magics, macros, instrinsics, etc...
+ *
+ * TODO(feat): `is_debugger_present()` is not implemented for Mac and
+ *             always returns with false.
  */
 
 #pragma once
@@ -72,13 +75,15 @@ namespace nova {
         return true;
     }
 #else
-#warning "`is_debugger_present()` is not supported on the target platform!"
+    [[nodiscard]] inline auto is_debugger_present() -> bool {
+        return false;
+    }
 #endif
 
 } // namespace nova
 
 #if defined(NOVA_MSVC)
-    #define nova_breakpoint()           __debugbreak()
+    #define nova_breakpoint()           if (is_debugger_present()) { __debugbreak(); }
 #elif defined(NOVA_CLANG)
     #define nova_breakpoint()           if (is_debugger_present()) { __builtin_debugtrap(); }
 #elif defined(NOVA_GCC)
@@ -90,5 +95,6 @@ namespace nova {
     #endif
 #else
     #define nova_breakpoint()
+    // TODO(x-platform): emit a non-error warning that every major compiler likes
     #warning "Setting breakpoint from code is not supported on the target platform!"
 #endif
