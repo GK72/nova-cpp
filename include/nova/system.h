@@ -40,7 +40,7 @@ struct process_scheduling {
  * @brief   Set CPU affinity and process priority.
  */
 [[nodiscard]] inline
-auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
+auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
     CPU_SET(cfg.cpu, &cpu_set);
@@ -48,7 +48,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return unexpected{ "Cannot set CPU affinity!" };
+        return unexpected<error>{ "Cannot set CPU affinity!" };
     }
 
     const auto result_priority = setpriority(
@@ -58,7 +58,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<void> {
     );
 
     if (result_priority == -1) {
-        return unexpected{ "Cannot set process priority!" };
+        return unexpected<error>{ "Cannot set process priority!" };
     }
 
     return {};

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "nova/expected.h"
 #include "nova/intrinsics.h"
 
 #include <cassert>
@@ -40,22 +41,22 @@ struct error {
 
 /**
  * @brief   Throwing exception with useful message in case of bad expected access.
+ *
+ * TODO(feat): port it over to the custom `expected` implementation
  */
-template <typename T>
-class expected : public std::expected<T, error> {
-public:
-    using base = std::expected<T, error>;
-    using base::expected;
+// template <typename T>
+// class expected : public expected<T, error> {
+// public:
+    // using base = expected<T, error>;
+    // using base::expected;
 
-    [[nodiscard]] auto value() {
-        if (not base::has_value()) {
-            throw std::runtime_error(base::error().message);
-        }
-        return base::value();
-    }
-};
-
-using unexpected = std::unexpected<error>;
+    // [[nodiscard]] auto value() {
+        // if (not base::has_value()) {
+            // throw std::runtime_error(base::error().message);
+        // }
+        // return base::value();
+    // }
+// };
 
 } // namespace nova
 
