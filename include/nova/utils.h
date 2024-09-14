@@ -119,7 +119,7 @@ template <typename First, typename Second, typename ...Tail>
 [[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string, error> {
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return unexpected{ error{ fmt::format("Environment variable is not set: {}", env_name) } };
+        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
     }
     return { env };
 }
