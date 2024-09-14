@@ -32,6 +32,11 @@ TEST(Utils, Split) {
         nova::split("bla/abc", "/"),
         ( std::vector<std::string>{ "bla", "abc" } )
     );
+
+    EXPECT_EQ(
+        nova::split("bla//abc", "//"),
+        ( std::vector<std::string>{ "bla", "abc" } )
+    );
 }
 
 TEST(Utils, Now) {
