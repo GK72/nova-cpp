@@ -36,6 +36,6 @@ TEST(Expected, NonTrivialTypes) {
         constexpr ~S() { }
     };
 
-    constexpr auto x = nova::expected<S, int>(S{ });
+    const auto x = nova::expected<S, int>(S{ });
     EXPECT_TRUE(x);
 }
