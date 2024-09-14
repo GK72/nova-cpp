@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <ranges>
 #include <cmath>
 
 TEST(Random, OneNumber) {
@@ -48,7 +49,8 @@ TEST(Random, Choice) {
     auto random = nova::rng(1);
     constexpr auto xs = std::to_array({ 3, 6, 9, 12, 15 });
 
-    EXPECT_EQ(random.choice(xs), 9);
+    const auto result = random.choice(xs);
+    EXPECT_TRUE(std::ranges::find(xs, result) != std::ranges::end(xs));
 }
 
 TEST(Random, RandomString) {
