@@ -12,11 +12,15 @@
 
 #define JSON_DIAGNOSTICS 1
 
+#if NOVA_GCC
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106247
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #include <nlohmann/json.hpp>
 #pragma GCC diagnostic pop
+#else
+#include <nlohmann/json.hpp>
+#endif
 
 #include <algorithm>
 #include <concepts>
