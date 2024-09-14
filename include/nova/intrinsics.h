@@ -2,6 +2,9 @@
  * Part of Nova C++ Library.
  *
  * Compiler magics, macros, instrinsics, etc...
+ *
+ * TODO(feat): `is_debugger_present()` is not implemented for Mac and
+ *             always returns with false.
  */
 
 #pragma once
@@ -72,7 +75,9 @@ namespace nova {
         return true;
     }
 #else
-#warning "`is_debugger_present()` is not supported on the target platform!"
+    [[nodiscard]] inline auto is_debugger_present() -> bool {
+        return false;
+    }
 #endif
 
 } // namespace nova
