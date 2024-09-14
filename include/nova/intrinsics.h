@@ -83,7 +83,7 @@ namespace nova {
 } // namespace nova
 
 #if defined(NOVA_MSVC)
-    #define nova_breakpoint()           __debugbreak()
+    #define nova_breakpoint()           if (is_debugger_present()) { __debugbreak(); }
 #elif defined(NOVA_CLANG)
     #define nova_breakpoint()           if (is_debugger_present()) { __builtin_debugtrap(); }
 #elif defined(NOVA_GCC)
