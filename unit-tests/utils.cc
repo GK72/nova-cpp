@@ -6,30 +6,52 @@
 
 #include <array>
 #include <chrono>
+#include <string>
 #include <thread>
 #include <type_traits>
 #include <vector>
 
 using namespace std::chrono_literals;
 
-TEST(Utils, Split) {
+TEST(Utils, Split_EmptyString) {
     EXPECT_EQ(
         nova::split("", "/"),
         ( std::vector<std::string>{ } )
     );
+}
 
+TEST(Utils, Split_LeadingDelim) {
     EXPECT_EQ(
         nova::split("/bla", "/"),
         ( std::vector<std::string>{ "", "bla" } )
     );
+}
 
+TEST(Utils, Split_LeadingAndTrailingDelim) {
     EXPECT_EQ(
         nova::split("/bla/", "/"),
         ( std::vector<std::string>{ "", "bla", "" } )
     );
+}
 
+TEST(Utils, Split_MultiElems) {
     EXPECT_EQ(
         nova::split("bla/abc", "/"),
+        ( std::vector<std::string>{ "bla", "abc" } )
+    );
+}
+
+TEST(Utils, Split_MultiCharDelim) {
+    EXPECT_EQ(
+        nova::split("bla//abc", "//"),
+        ( std::vector<std::string>{ "bla", "abc" } )
+    );
+}
+
+TEST(Utils, Split_StdString) {
+    using namespace std::string_literals;
+    EXPECT_EQ(
+        nova::split("bla//abc"s, "//"),
         ( std::vector<std::string>{ "bla", "abc" } )
     );
 }
