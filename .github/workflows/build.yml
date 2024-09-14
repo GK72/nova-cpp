@@ -15,6 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+    - uses: actions/setup-python@v5
     - name: Checkout
       uses: actions/checkout@v3
 
