@@ -2,7 +2,9 @@
 
 #include <array>
 #include <chrono>
+#include <map>
 #include <type_traits>
+#include <vector>
 
 namespace nova {
 
