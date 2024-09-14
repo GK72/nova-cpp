@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #else
-#error "The target platform does not support OS specific code"
+// TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif
 
 namespace nova {
@@ -38,12 +38,12 @@ struct process_scheduling {
     return getpid();
 }
 
+#ifdef NOVA_LINUX
 /**
  * @brief   Set CPU affinity and process priority.
  */
 [[nodiscard]] inline
 auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
-#ifdef NOVA_LINUX
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
     CPU_SET(cfg.cpu, &cpu_set);
@@ -63,12 +63,17 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     if (result_priority == -1) {
         return unexpected<error>{ "Cannot set process priority!" };
     }
+    return empty{};
+}
 #else
+/**
+ * @brief   NOT IMPLEMENTED! It's a stub.
+ */
+inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> expected<empty, error> {
+    return empty{};
+}
 // TODO: emit a non-error warning that every major compiler likes
 // TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif  // NOVA_LINUX
-    return empty{};
-}
-
 
 } // namespace nova
