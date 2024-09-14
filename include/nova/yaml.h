@@ -5,6 +5,7 @@
  */
 
 #include "nova/error.h"
+#include "nova/utils.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -15,20 +16,6 @@
 #include <vector>
 
 namespace nova {
-
-// TODO(refact): generalize split and move into `utils.h`
-std::vector<std::string> split(const std::string &str, char delimiter) {
-    std::vector<std::string> tokens;
-    std::stringstream ss(str);
-    std::string token;
-
-    while (std::getline(ss, token, delimiter)) {
-        if (not token.empty()) {
-            tokens.push_back(token);
-        }
-    }
-    return tokens;
-}
 
 class yaml {
 public:
@@ -87,7 +74,9 @@ private:
 
     YAML::Node lookup_impl(std::string_view path) const {
         try {
-            std::vector<std::string> keys = split(std::string(path), '.');
+            auto temp = split(path, ".")
+                      | std::views::filter([](const auto& elem) { return std::size(elem) > 0; });
+            const auto keys = std::vector<std::string>(std::begin(temp), std::end(temp));
             YAML::Node node = YAML::Clone(m_doc);
 
             for (const std::string& key : keys) {

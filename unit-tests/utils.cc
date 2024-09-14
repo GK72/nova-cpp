@@ -12,6 +12,28 @@
 
 using namespace std::chrono_literals;
 
+TEST(Utils, Split) {
+    EXPECT_EQ(
+        nova::split("", "/"),
+        ( std::vector<std::string>{ } )
+    );
+
+    EXPECT_EQ(
+        nova::split("/bla", "/"),
+        ( std::vector<std::string>{ "", "bla" } )
+    );
+
+    EXPECT_EQ(
+        nova::split("/bla/", "/"),
+        ( std::vector<std::string>{ "", "bla", "" } )
+    );
+
+    EXPECT_EQ(
+        nova::split("bla/abc", "/"),
+        ( std::vector<std::string>{ "bla", "abc" } )
+    );
+}
+
 TEST(Utils, Now) {
     using T = decltype(nova::now());
     static_assert(std::is_same_v<T, std::chrono::nanoseconds>);

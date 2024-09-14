@@ -21,28 +21,6 @@ array:
     inner2: 3
 )";
 
-TEST(Utils, Split) {
-    EXPECT_EQ(
-        nova::split("", '/'),
-        ( std::vector<std::string>{ } )
-    );
-
-    EXPECT_EQ(
-        nova::split("/bla", '/'),
-        ( std::vector<std::string>{ "bla" } )
-    );
-
-    EXPECT_EQ(
-        nova::split("/bla/", '/'),
-        ( std::vector<std::string>{ "bla" } )
-    );
-
-    EXPECT_EQ(
-        nova::split("bla/abc", '/'),
-        ( std::vector<std::string>{ "bla", "abc" } )
-    );
-}
-
 // TODO: stoi exception
 TEST(Yaml, FundamentalTypes) {
     const auto doc = nova::yaml(data);
