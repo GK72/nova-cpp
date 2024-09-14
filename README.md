@@ -1,5 +1,7 @@
 # Nova Library
 
+![Build](https://github.com/GK72/nova-cpp/actions/workflows/build.yml/badge.svg)
+
 A collection of modern C++ code following modern and pedantic C++ with clean,
 intuitive APIs. Also a place for testing the newest features and libraries.
 

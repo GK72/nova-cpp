@@ -29,10 +29,46 @@ jobs:
         sudo apt install -y build-essential cmake
 
     - name: Build
+      if: runner.os != 'Linux' || (runner.os == 'Linux' && build_type == 'Release')
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
+    - name: Build (Coverage)
+      if: runner.os == 'Linux' && build_type == 'Debug'
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCOVERAGE=1
+        cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
+
     - name: Unit Test
+      if: runner.os != 'Linux' || (runner.os == 'Linux' && build_type == 'Release')
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Unit Test (Coverage)
+      if: runner.os == 'Linux' && build_type == 'Debug'
+      working-directory: ${{github.workspace}}/build
+      run: |
+        ctest -C ${{ matrix.build_type }} --output-on-failure
+        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage.covertura.xml
+        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report
+        path: build/coverage/*
+
+    - name: Code Coverage Report
+      if: runner.os == 'Linux' && build_type == 'Debug'
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: build/coverage.cobertura.xml
+        badge: true
+        fail_below_min: true
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: true
+        indicators: true
+        output: both
+        thresholds: '80 90'
