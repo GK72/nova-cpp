@@ -112,6 +112,21 @@ auto operator==(const static_string<N> lhs, const static_string<M> rhs) noexcept
     return lhs <=> rhs == std::strong_ordering::equal;
 }
 
+/**
+ * @brief   A workaround for the following issue.
+ *
+ * "return type 'auto' of selected 'operator==' function for rewritten '!=' comparison is not 'bool'"
+ *
+ * Note: [Clang] operator== rewrite return type restriction is overly strict #76649
+ *
+ * https://github.com/llvm/llvm-project/issues/76649
+ */
+template <std::size_t N, std::size_t M>
+[[nodiscard]] constexpr
+auto operator!=(const static_string<N> lhs, const static_string<M> rhs) noexcept {
+    return lhs <=> rhs != std::strong_ordering::equal;
+}
+
 template <typename T>
 struct separator {
     T value;

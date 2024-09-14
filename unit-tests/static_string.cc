@@ -35,6 +35,7 @@ TEST(StaticString, Comparisons) {
     static_assert("Bob"_str   >= "Alice"_str);
 
     // Generated from equality operator
+    // except Clang does not like it, so there is an explicit imlementation
     static_assert("Bob"_str   != "Alice"_str);
 
     // Testing different but equal length strings
