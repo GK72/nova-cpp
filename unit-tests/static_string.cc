@@ -1,4 +1,4 @@
-#include "nova/intrinsics.h.h"
+#include "nova/intrinsics.h"
 
 #ifndef NOVA_WIN
 #include <gtest/gtest.h>
