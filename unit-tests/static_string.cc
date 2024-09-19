@@ -1,3 +1,6 @@
+#include "nova/intrinsics.h.h"
+
+#ifndef NOVA_WIN
 #include <gtest/gtest.h>
 
 #include "nova/static_string.h"
@@ -48,3 +51,4 @@ TEST(StaticString, Concat) {
     static_assert(nova::concat(nova::separator{ " " }, "Hello", "World") == "Hello World"_str);
     EXPECT_EQ(nova::concat(nova::separator{ " " }, "Hello", "World"s), "Hello World"s);
 }
+#endif  // NOVA_WIN

@@ -1,5 +1,20 @@
 #pragma once
 
+#include "nova/intrinsics.h"
+
+// FIXME(x-platform): gigahack (does not compile on MSVC unless C++23)
+//
+// https://github.com/microsoft/STL/commit/165e96f248ab41588de5702007b3732119cdc47d
+//
+// note: see reference to function template instantiation 'auto nova::detail::concat_helper<const char(&)[6],const char(&)[2],const char(&)[6]>(const char (&)[6],const char (&)[2],const char (&)[6]) noexcept' being compiled
+// note: see reference to function template instantiation '_Tuple_cat1<_Tuples...>::_Ret std::tuple_cat(_Tuples ...)' being compiled
+// Z:/compilers/msvc/14.41.33923-14.41.33923.0/include\tuple(1060): note: see reference to alias template instantiation 'std::_Tuple_cat1<nova::static_string<5>,nova::static_string<1>,nova::static_string<5>>' being compiled
+// Z:/compilers/msvc/14.41.33923-14.41.33923.0/include\tuple(1048): note: see reference to variable template 'const size_t tuple_size_v<nova::static_string<5> >' being compiled
+// Z:/compilers/msvc/14.41.33923-14.41.33923.0/include\utility(150): error C2065: 'value': undeclared identifier
+// Z:/compilers/msvc/14.41.33923-14.41.33923.0/include\utility(150): error C2131: expression did not evaluate to a constant
+// Z:/compilers/msvc/14.41.33923-14.41.33923.0/include\utility(150): note: a non-constant (sub-)expression was encountered
+#ifndef NOVA_WIN
+
 #include <array>
 #include <compare>
 #include <cstddef>
@@ -219,3 +234,4 @@ namespace std {
         return nova::detail::concat(strs...);
     }
 } // namespace std
+#endif // NOVA_WIN
