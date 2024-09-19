@@ -12,7 +12,6 @@
 #include "nova/intrinsics.h"
 
 #include <cassert>
-#include <expected>
 #include <stdexcept>
 #include <string>
 
