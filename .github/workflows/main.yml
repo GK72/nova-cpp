@@ -1,4 +1,4 @@
-name: CMake
+name: Main
 
 on:
   push:
@@ -7,12 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ macos-latest, ubuntu-24.04, windows-latest ]
-        build_type: [ Debug, Release ]
-    runs-on: ${{ matrix.os }}
+  release:
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v3
@@ -23,33 +19,44 @@ jobs:
       with:
         version: "2.6.0"
     - name: Install GCC
-      if: runner.os == 'Linux'
       run: |
         sudo apt update
         sudo apt install -y build-essential cmake
 
     - name: Build
-      if: runner.os != 'Linux' || (runner.os == 'Linux' && ${{ matrix.build_type }} == 'Release')
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
-
-    - name: Build (Coverage)
-      if: runner.os == 'Linux' && ${{ matrix.build_type }} == 'Debug'
-      run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCOVERAGE=1
-        cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+        cmake --build ${{github.workspace}}/build --config Release
 
     - name: Unit Test
-      if: runner.os != 'Linux' || (runner.os == 'Linux' && ${{ matrix.build_type }} == 'Release')
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{ matrix.build_type }} --output-on-failure
+      run: ctest -C Release --output-on-failure
 
-    - name: Unit Test (Coverage)
-      if: runner.os == 'Linux' && ${{ matrix.build_type }} == 'Debug'
+  debug-coverage:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: turtlebrowser/get-conan@main
+      with:
+        version: "2.6.0"
+    - name: Install GCC
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake
+
+    - name: Build
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1
+        cmake --build ${{github.workspace}}/build --config Debug
+
+    - name: Unit Test
       working-directory: ${{github.workspace}}/build
       run: |
-        ctest -C ${{ matrix.build_type }} --output-on-failure
+        ctest -C Debug --output-on-failure
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage.covertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
@@ -60,7 +67,6 @@ jobs:
         path: build/coverage/*
 
     - name: Code Coverage Report
-      if: runner.os == 'Linux' && ${{ matrix.build_type }} == 'Debug'
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
         filename: build/coverage.cobertura.xml
