@@ -46,7 +46,7 @@ jobs:
     - name: Install GCC
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake
+        sudo apt install -y build-essential cmake gcovr
 
     - name: Build
       run: |
