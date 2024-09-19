@@ -11,6 +11,7 @@
 
 #include "nova/error.h"
 #include "nova/intrinsics.h"
+#include "nova/std_extensions.h"
 
 #include <utility>
 
@@ -53,7 +54,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     const auto result_priority = setpriority(
         PRIO_PROCESS,
         static_cast<unsigned int>(cfg.pid),
-        std::to_underlying(cfg.priority)
+        nova::to_underlying(cfg.priority)
     );
 
     if (result_priority == -1) {
