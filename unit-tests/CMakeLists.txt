@@ -1,3 +1,5 @@
+find_package(GTest REQUIRED)
+
 add_executable(test-nova
     color.cc
     data.cc
