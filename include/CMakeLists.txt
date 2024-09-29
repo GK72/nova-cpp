@@ -15,10 +15,6 @@ target_sources(nova
 
 target_link_libraries(nova INTERFACE
     project_warnings
-    fmt::fmt
-    nlohmann_json::nlohmann_json
-    spdlog::spdlog
-    yaml-cpp::yaml-cpp
 )
 
 target_include_directories(nova INTERFACE

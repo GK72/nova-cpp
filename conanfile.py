@@ -33,9 +33,11 @@ class Nova(ConanFile):
         check_min_cppstd(self, "20")
 
     def requirements(self):
-        requirements = self.conan_data.get("requirements", [])
-        for req in requirements:
+        for req in self.conan_data.get("private-deps", []):
             self.requires(req)
+
+        for req in self.conan_data.get("public-deps", []):
+            self.requires(req, transitive_headers=True, transitive_libs=True)
 
     def layout(self):
         cmake_layout(self)

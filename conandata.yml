@@ -1,7 +1,9 @@
-requirements:
+public-deps:
   - fmt/10.2.1
-  - spdlog/1.13.0
-  - gtest/1.14.0
   - nlohmann_json/3.11.3
+  - spdlog/1.13.0
   - yaml-cpp/0.8.0
+
+private-deps:
   - benchmark/1.8.3
+  - gtest/1.14.0
