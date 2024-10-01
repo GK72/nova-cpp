@@ -25,12 +25,15 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config Release
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C Release --output-on-failure
+
+    - name: Package
+      run: conan create ${{github.workspace}} --test-folder package-test --build=missing --settings compiler.cppstd=20
 
   debug-coverage:
     runs-on: ubuntu-24.04
@@ -50,7 +53,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config Debug
 
     - name: Unit Test
@@ -60,6 +63,9 @@ jobs:
         mkdir --parent ${{github.workspace}}/build/coverage
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
+
+    - name: Package
+      run: conan create ${{github.workspace}} --test-folder package-test --build=missing --settings compiler.cppstd=20
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
