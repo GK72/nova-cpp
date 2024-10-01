@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.24)
 
-if (CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     message(FATAL_ERROR "Building in-source is not supported! Create a build dir and remove ${CMAKE_SOURCE_DIR}/CMakeCache.txt")
 endif()
 
-project("nova" CXX)
+include(cmake/version.cmake)
+
+nova_extract_version()
+project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
+message(STATUS "Nova version ${NOVA_VERSION}")
 
 add_library(project_warnings INTERFACE)
 include(cmake/compiler-warnings.cmake)

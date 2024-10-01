@@ -25,7 +25,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config Release
 
     - name: Unit Test
@@ -53,7 +53,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1 -DBUILD_TESTS=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config Debug
 
     - name: Unit Test
