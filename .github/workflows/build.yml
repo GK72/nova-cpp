@@ -30,7 +30,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
     - name: Unit Test
