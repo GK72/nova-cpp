@@ -38,4 +38,4 @@ jobs:
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
 
     - name: Package
-      run: conan create ${{github.workspace}}/build --test-folder package-test --build=missing
+      run: conan create ${{github.workspace}} --test-folder package-test --build=missing
