@@ -1,0 +1,88 @@
+name: Main
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: turtlebrowser/get-conan@main
+      with:
+        version: "2.6.0"
+    - name: Install GCC
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake
+
+    - name: Build
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+        cmake --build ${{github.workspace}}/build --config Release
+
+    - name: Unit Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C Release --output-on-failure
+
+  debug-coverage:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: turtlebrowser/get-conan@main
+      with:
+        version: "2.6.0"
+    - name: Install GCC
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake gcovr
+
+    - name: Build
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1
+        cmake --build ${{github.workspace}}/build --config Debug
+
+    - name: Unit Test
+      working-directory: ${{github.workspace}}/build
+      run: |
+        ctest -C Debug --output-on-failure
+        mkdir --parent ${{github.workspace}}/build/coverage
+        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
+        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report
+        path: build/coverage/*
+
+    - name: Code Coverage Report
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: build/coverage/cobertura.xml
+        badge: true
+        fail_below_min: true
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: true
+        indicators: true
+        output: both
+        thresholds: '80 90'
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md

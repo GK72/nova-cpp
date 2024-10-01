@@ -9,6 +9,7 @@ add_executable(test-nova
     json.cc
     random.cc
     static_string.cc
+    std_extensions.cc
     type_traits.cc
     units.cc
     utils.cc
