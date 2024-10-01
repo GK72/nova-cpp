@@ -8,11 +8,7 @@ endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_STANDARD 20)      # Until libcxx is C++2b: https://releases.llvm.org/16.0.0/projects/libcxx/docs/
-else()
-    set(CMAKE_CXX_STANDARD 23)
-endif()
+set(CMAKE_CXX_STANDARD 20)
 
 if(COVERAGE)
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
