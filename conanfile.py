@@ -26,6 +26,9 @@ class Nova(ConanFile):
             del self.options.fPIC
 
     def configure(self):
+        self.options["fmt"].header_only = True
+        self.options["spdlog"].header_only = True
+
         if self.options.shared:
             self.options.rm_safe("fPIC")
 

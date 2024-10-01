@@ -27,8 +27,8 @@ code_analysis(nova INTERFACE)
 add_library(nova-deps INTERFACE)
 
 target_link_libraries(nova-deps INTERFACE
-    fmt::fmt
+    fmt::fmt-header-only
     nlohmann_json::nlohmann_json
-    spdlog::spdlog
+    spdlog::spdlog_header_only
     yaml-cpp::yaml-cpp
 )
