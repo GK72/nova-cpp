@@ -25,9 +25,12 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Package
+      run: conan create ${{github.workspace}} --test-folder package-test --build=missing --settings compiler.cppstd=20
