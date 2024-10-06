@@ -8,6 +8,10 @@
 using namespace std::chrono_literals;
 using namespace std::string_view_literals;
 
+namespace nova {
+    using namespace alpha;
+}
+
 TEST(Parse, NumAndSuffix) {
     EXPECT_EQ(nova::detail::split_num_n_suffix<int>("1000abc").value(), std::make_pair(1000, "abc"sv));
     EXPECT_EQ(nova::detail::split_num_n_suffix<int>("1000abc bla").value(), std::make_pair(1000, "abc bla"sv));
