@@ -73,3 +73,17 @@ TEST(Cast, AsCast_ToNumber) {
     int y = nova::as("1234a");
     EXPECT_EQ(y, 1234);
 }
+
+TEST(Cast, AsCast_ToChrono) {
+    std::chrono::seconds x = nova::as("1d");
+    EXPECT_EQ(x, 86'400s);
+
+    EXPECT_THROW(
+        []() {
+            std::chrono::nanoseconds ret = nova::as("bla");
+            return ret;
+        }()
+        ,
+        std::runtime_error
+    );
+}

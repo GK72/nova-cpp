@@ -43,6 +43,12 @@ namespace detail {
         return throw_if_parse_error([y = std::forward<T>(x)]() { return to_number<R>(y); });
     }
 
+    template <typename R, typename T>
+        requires chrono_duration<R> && string_like<T>
+    [[nodiscard]] auto as(T&& x) -> decltype(auto) {
+        return throw_if_parse_error([y = std::forward<T>(x)]() { return to_chrono<R>(y); });
+    }
+
     /**
      * @brief   Helper function for implicit type casting for rvalue references.
      *
