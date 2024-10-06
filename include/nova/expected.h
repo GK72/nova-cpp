@@ -66,13 +66,15 @@ public:
 
     [[nodiscard]] constexpr const T& value() const&                 { return std::get<T>(_value_or_unexpected); }
     [[nodiscard]] constexpr T& value() &                            { return std::get<T>(_value_or_unexpected); }
+    // FIXME: expected
     // [[nodiscard]] constexpr const T&& value() const&&               { return std::get<T>(_value_or_unexpected); }
     // [[nodiscard]] constexpr T&& value() &&                          { return std::get<T>(_value_or_unexpected); }
 
     [[nodiscard]] constexpr const E& error() const&                 { return std::get<E>(_value_or_unexpected); }
     [[nodiscard]] constexpr E& error() &                            { return std::get<E>(_value_or_unexpected); }
-    [[nodiscard]] constexpr const E&& error() const&&               { return std::get<E>(_value_or_unexpected); }
-    [[nodiscard]] constexpr E&& error() &&                          { return std::get<E>(_value_or_unexpected); }
+    // FIXME: expected
+    // [[nodiscard]] constexpr const E&& error() const&&               { return std::get<E>(_value_or_unexpected); }
+    // [[nodiscard]] constexpr E&& error() &&                          { return std::get<E>(_value_or_unexpected); }
 
     template <typename U>
     [[nodiscard]] constexpr
