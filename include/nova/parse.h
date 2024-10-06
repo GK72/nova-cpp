@@ -37,9 +37,9 @@ template <typename R>
     const auto [_, err] = std::from_chars(x.data(), x.data() + x.size(), ret);
 
     if (err == std::errc::invalid_argument) {
-        return unexpected{ parse_error::invalid_argument };
+        return unexpected<parse_error>{ parse_error::invalid_argument };
     } else if (err == std::errc::result_out_of_range) {
-        return unexpected{ parse_error::out_of_range };
+        return unexpected<parse_error>{ parse_error::out_of_range };
     }
 
     return ret;
@@ -63,13 +63,13 @@ namespace detail {
         const auto ratio_ratio = static_cast<double>(ratio_t) / static_cast<double>(ratio_r);
 
         if (ratio_ratio < 1.0) {
-            return unexpected{ parse_error::lossy_conversion };
+            return unexpected<parse_error>{ parse_error::lossy_conversion };
         }
 
         if (static_cast<double>(std::numeric_limits<typename R::rep>::max())
                 / ratio_ratio < static_cast<double>(x.count()))
         {
-            return unexpected{ parse_error::out_of_range };
+            return unexpected<parse_error>{ parse_error::out_of_range };
         }
 
         return duration_cast<R>(x);
@@ -142,7 +142,7 @@ template <typename R> requires chrono_duration<R>
         return detail::convert_duration<R>(years{ number });
     }
 
-    return unexpected{ parse_error::invalid_argument };
+    return unexpected<parse_error>{ parse_error::invalid_argument };
 }
 
 namespace alpha {
@@ -188,7 +188,7 @@ namespace alpha {
             return number / static_cast<R>(1'000'000'000);
         }
 
-        return unexpected{ parse_error::invalid_argument };
+        return unexpected<parse_error>{ parse_error::invalid_argument };
     }
 
 } // namespace alpha

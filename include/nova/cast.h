@@ -17,7 +17,7 @@ namespace nova {
 namespace detail {
 
     template <typename Func>
-    auto throw_if_parse_error(Func parse) -> decltype(auto) {
+    auto throw_if_parse_error(Func parse) {
         const auto ret = parse();
         if (not ret.has_value()) {
             throw std::runtime_error("Cast failed!");
@@ -39,13 +39,13 @@ namespace detail {
 
     template <typename R, typename T>
         requires std::is_arithmetic_v<R> && string_like<T>
-    [[nodiscard]] auto as(T&& x) -> decltype(auto) {
+    [[nodiscard]] auto as(T&& x) {
         return throw_if_parse_error([y = std::forward<T>(x)]() { return to_number<R>(y); });
     }
 
     template <typename R, typename T>
         requires chrono_duration<R> && string_like<T>
-    [[nodiscard]] auto as(T&& x) -> decltype(auto) {
+    [[nodiscard]] auto as(T&& x) {
         return throw_if_parse_error([y = std::forward<T>(x)]() { return to_chrono<R>(y); });
     }
 
