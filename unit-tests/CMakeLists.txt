@@ -1,12 +1,14 @@
 find_package(GTest REQUIRED)
 
 add_executable(test-nova
+    cast.cc
     color.cc
     data.cc
     expected.cc
     flat_map.cc
     io.cc
     json.cc
+    parse.cc
     random.cc
     static_string.cc
     std_extensions.cc
