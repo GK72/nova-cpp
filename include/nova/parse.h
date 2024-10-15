@@ -27,7 +27,6 @@ namespace nova {
 
 enum class parse_error {
     invalid_argument,
-    lossy_conversion,
     out_of_range
 };
 
@@ -99,8 +98,7 @@ namespace detail {
     /**
      * @brief   Safely convert duration.
      *
-     * Ensures that the result is representable by the return (`R`) type
-     * and that the conversion is not lossy.
+     * Ensures that the result is representable by the return (`R`) type.
      */
     template <typename R, typename T>
     [[nodiscard]] auto convert_duration(T x) -> expected<R, parse_error>  {
@@ -110,10 +108,6 @@ namespace detail {
         constexpr auto ratio_r = static_cast<double>(RP::num) / static_cast<double>(RP::den);
 
         constexpr auto ratio_ratio = static_cast<double>(ratio_t) / static_cast<double>(ratio_r);
-
-        if constexpr (ratio_ratio < 1.0) {
-            return unexpected<parse_error>{ parse_error::lossy_conversion };
-        }
 
         if (static_cast<double>(std::numeric_limits<typename R::rep>::max())
                 / ratio_ratio < static_cast<double>(x.count()))
@@ -156,8 +150,7 @@ namespace detail {
  *
  * ## Error
  *
- * Returns an error if the conversion is lossy or it is out of range for the
- * return type (`R`).
+ * Returns an error if the conversion is is out of range for the return type (`R`).
  */
 template <typename R> requires chrono_duration<R>
 [[nodiscard]] auto to_chrono(const std::string& str) -> expected<R, parse_error> {

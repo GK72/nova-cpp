@@ -48,8 +48,8 @@ TEST(Parse, ToChrono_Types) {
 
 TEST(Parse, ToChrono_Conversions) {
     EXPECT_EQ(nova::to_chrono<std::chrono::microseconds>("1ms").value(), 1000us);
-    EXPECT_EQ(nova::to_chrono<std::chrono::microseconds>("1000ns").error(), nova::parse_error::lossy_conversion);
-    EXPECT_EQ(nova::to_chrono<std::chrono::microseconds>("1001ns").error(), nova::parse_error::lossy_conversion);
+    EXPECT_EQ(nova::to_chrono<std::chrono::microseconds>("1000ns").value(), 1us);
+    EXPECT_EQ(nova::to_chrono<std::chrono::microseconds>("1001ns").value(), 1us);
     EXPECT_EQ(nova::to_chrono<std::chrono::nanoseconds>("1000y").error(), nova::parse_error::out_of_range);
 }
 
