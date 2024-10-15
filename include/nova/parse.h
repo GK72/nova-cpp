@@ -106,12 +106,12 @@ namespace detail {
     [[nodiscard]] auto convert_duration(T x) -> expected<R, parse_error>  {
         using TP = typename T::period;
         using RP = typename R::period;
-        const auto ratio_t = static_cast<double>(TP::num) / static_cast<double>(TP::den);
-        const auto ratio_r = static_cast<double>(RP::num) / static_cast<double>(RP::den);
+        constexpr auto ratio_t = static_cast<double>(TP::num) / static_cast<double>(TP::den);
+        constexpr auto ratio_r = static_cast<double>(RP::num) / static_cast<double>(RP::den);
 
-        const auto ratio_ratio = static_cast<double>(ratio_t) / static_cast<double>(ratio_r);
+        constexpr auto ratio_ratio = static_cast<double>(ratio_t) / static_cast<double>(ratio_r);
 
-        if (ratio_ratio < 1.0) {
+        if constexpr (ratio_ratio < 1.0) {
             return unexpected<parse_error>{ parse_error::lossy_conversion };
         }
 
