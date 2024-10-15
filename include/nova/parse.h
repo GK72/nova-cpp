@@ -19,6 +19,10 @@
 #include <string_view>
 #include <type_traits>
 
+#ifdef _LIBCPP_VERSION
+#include <string>       // Fallback floating-point parsing
+#endif
+
 namespace nova {
 
 enum class parse_error {
@@ -27,6 +31,7 @@ enum class parse_error {
     out_of_range
 };
 
+#ifndef _LIBCPP_VERSION
 /**
  * @brief   Convert a string(-like) to a number.
  */
@@ -44,6 +49,50 @@ template <typename R>
 
     return ret;
 }
+
+#else
+
+/**
+ * @brief   Convert a string(-like) to a number.
+ *
+ * Note: floating-point numbers are not yet supported in libcxx by `std::from_chars()`.
+ *
+ * ## References
+ *
+ * - https://libcxx.llvm.org/Status/Cxx17.html#note-p0067
+ * - https://en.cppreference.com/w/cpp/compiler_support/17#C.2B.2B17_library_features
+ */
+template <typename R>
+[[nodiscard]] auto to_number(std::string_view x) -> expected<R, parse_error> {
+    if constexpr (std::is_integral_v<R>) {
+        R ret;
+
+        const auto [_, err] = std::from_chars(x.data(), x.data() + x.size(), ret);
+
+        if (err == std::errc::invalid_argument) {
+            return unexpected<parse_error>{ parse_error::invalid_argument };
+        } else if (err == std::errc::result_out_of_range) {
+            return unexpected<parse_error>{ parse_error::out_of_range };
+        }
+
+        return ret;
+    } else {
+        try {
+            if constexpr (std::is_same_v<R, float>) {
+                return std::stof(std::string(x));
+            } else if constexpr (std::is_same_v<R, double>) {
+                return std::stod(std::string(x));
+            } else if constexpr (std::is_same_v<R, long double>) {
+                return std::stold(std::string(x));
+            }
+        } catch (const std::invalid_argument& ex) {
+            return unexpected<parse_error>{ parse_error::invalid_argument };
+        } catch (const std::out_of_range& ex) {
+            return unexpected<parse_error>{ parse_error::out_of_range };
+        }
+    }
+}
+#endif // _LIBCPP_VERSION
 
 namespace detail {
 

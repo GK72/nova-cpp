@@ -25,6 +25,12 @@ TEST(Parse, ToNumber) {
     EXPECT_EQ(nova::to_number<int>("-1").value(), -1);
     EXPECT_FLOAT_EQ(nova::to_number<float>("1.23").value(), 1.23F);
     EXPECT_FLOAT_EQ(nova::to_number<float>("1.230").value(), 1.23F);
+
+    // Separate implementation due to floating-point numbers are not yet
+    // supported in libcxx by `std::from_chars()`.
+
+    EXPECT_EQ(nova::to_number<float>("bla").error(), nova::parse_error::invalid_argument);
+    EXPECT_EQ(nova::to_number<float>("1.1e+500").error(), nova::parse_error::out_of_range);
 }
 
 TEST(Parse, ToChrono_Types) {
