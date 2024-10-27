@@ -1,5 +1,5 @@
 function(nova_extract_version)
-    file(READ "${CMAKE_CURRENT_LIST_DIR}/include/nova/nova.h" file_contents)
+    file(READ "${CMAKE_CURRENT_LIST_DIR}/include/nova/nova.hh" file_contents)
     string(REGEX MATCH ".*NovaVersionMajor = ([0-9]+)" _ "${file_contents}")
     if(NOT CMAKE_MATCH_COUNT EQUAL 1)
         message(FATAL_ERROR "Could not extract major version number from nova/nova.h")

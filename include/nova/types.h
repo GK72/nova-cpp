@@ -1,11 +1,4 @@
+// Deprecated. Proxy header for including '.hh' files.
 #pragma once
 
-namespace nova {
-
-template <typename T>
-struct range {
-    T low;
-    T high;
-};
-
-} // namespace nova
+#include "nova/types.hh"
