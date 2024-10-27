@@ -83,15 +83,15 @@ namespace nova {
 } // namespace nova
 
 #if defined(NOVA_MSVC)
-    #define nova_breakpoint()           __debugbreak();
+    #define nova_breakpoint()           if (nova::is_debugger_present()) { __debugbreak(); }
 #elif defined(NOVA_CLANG)
-    #define nova_breakpoint()           if (is_debugger_present()) { __builtin_debugtrap(); }
+    #define nova_breakpoint()           if (nova::is_debugger_present()) { __builtin_debugtrap(); }
 #elif defined(NOVA_GCC)
     #if (defined(__i386__) || defined(__x86_64__))
-        #define nova_breakpoint()       if (is_debugger_present()) { __asm__ volatile("int $0x03"); }
+        #define nova_breakpoint()       if (nova::is_debugger_present()) { __asm__ volatile("int $0x03"); }
     #elif defined(__aarch64__)
         // https://developer.arm.com/documentation/ddi0602/2023-12/Base-Instructions/BRK--Breakpoint-instruction-?lang=en
-        #define nova_breakpoint()       if (is_debugger_present()) { __asm__ volatile("brk #0"); }
+        #define nova_breakpoint()       if (nova::is_debugger_present()) { __asm__ volatile("brk #0"); }
     #endif
 #else
     #define nova_breakpoint()
