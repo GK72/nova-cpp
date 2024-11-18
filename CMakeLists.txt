@@ -22,6 +22,7 @@ add_subdirectory(include)
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(unit-tests)
+    add_subdirectory(functional-tests)
 endif()
 
 add_subdirectory(examples)

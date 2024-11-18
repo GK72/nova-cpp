@@ -16,7 +16,7 @@
     int main(int argc, char* argv[]) {                                          \
         try {                                                                   \
             const auto args = std::span(argv, static_cast<std::size_t>(argc));  \
-            func(args | std::views::transform(                                  \
+            return func(args | std::views::transform(                           \
                 [](const auto& x) { return std::string_view(x); })              \
             );                                                                  \
         } catch (std::exception& ex) {                                          \
