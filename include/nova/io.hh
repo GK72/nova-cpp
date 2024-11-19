@@ -75,11 +75,6 @@ namespace detail {
 
 } // namespace detail
 
-enum class filemode : std::uint8_t {
-    text,
-    binary
-};
-
 /**
  * @brief   A parser that puts the result of a callback into a vector.
  */
@@ -129,7 +124,7 @@ template <typename Parser = detail::def_bin_parser>
         return fs.error();
     }
 
-    auto stream = std::ifstream(*fs, std::ios::binary | std::ios::ate);
+    auto stream = std::ifstream(*fs, std::ios::binary);
     return parser(stream);
 }
 
