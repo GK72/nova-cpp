@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include <memory>
 #include <type_traits>
 #include <utility>
-#include <variant>
 
 namespace nova {
 
@@ -19,7 +19,7 @@ namespace detail {
 
     // Tags for choosing the member in the `union`.
 
-    struct expect_t   { explicit expect_t() = default;   };
+    struct expect_t   { explicit expect_t()   = default; };
     struct unexpect_t { explicit unexpect_t() = default; };
 
     inline constexpr expect_t expect;
@@ -70,20 +70,20 @@ public:
         // : _value_or_unexpected(std::move(unexpected.value))
     // {}
 
-    [[nodiscard]] constexpr const T*  operator->() const   noexcept { return &m_vex.impl.v; }
-    // [[nodiscard]] constexpr       T*  operator->()         noexcept { return &m_vex.impl.v; }
+    [[nodiscard]] constexpr const T*  operator->() const   noexcept { return std::addressof(m_vex.impl.v); }
+    [[nodiscard]] constexpr       T*  operator->()         noexcept { return std::addressof(m_vex.impl.v); }
     [[nodiscard]] constexpr const T&  operator*()  const&  noexcept { return m_vex.impl.v; }
-    // [[nodiscard]] constexpr       T&  operator*()       &  noexcept { return m_vex.impl.v; }
-    // [[nodiscard]] constexpr const T&& operator*()  const&& noexcept { return m_vex.impl.v; }
-    // [[nodiscard]] constexpr       T&& operator*()       && noexcept { return m_vex.impl.v; }
+    [[nodiscard]] constexpr       T&  operator*()       &  noexcept { return m_vex.impl.v; }
+    // [[nodiscard]] constexpr const T&& operator*()  const&& noexcept { return std::move(m_vex.impl.v); }
+    // [[nodiscard]] constexpr       T&& operator*()       && noexcept { return std::move(m_vex.impl.v); }
 
     [[nodiscard]] constexpr bool has_value() const noexcept         { return m_vex.value; }
     [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    [[nodiscard]] constexpr const T& value() const&                 { return m_vex.impl.v; }
-    // [[nodiscard]] constexpr T& value() &                            { return std::get<T>(_value_or_unexpected); }
-    // [[nodiscard]] constexpr const T&& value() const&&               { return std::get<T>(_value_or_unexpected); }
-    // [[nodiscard]] constexpr T&& value() &&                          { return std::get<T>(_value_or_unexpected); }
+    [[nodiscard]] constexpr const T& value()  const&                { return m_vex.impl.v; }
+    [[nodiscard]] constexpr       T& value()       &                { return m_vex.impl.v; }
+    // [[nodiscard]] constexpr const T&& value() const&&               { return std::move(m_vex.impl.v); }
+    // [[nodiscard]] constexpr       T&& value()      &&               { return std::move(m_vex.impl.v); }
 
     [[nodiscard]] constexpr const E& error() const&                 { return m_vex.impl.e; }
     // [[nodiscard]] constexpr E& error() &                            { return std::get<E>(_value_or_unexpected); }
@@ -93,15 +93,39 @@ public:
     template <typename U>
     [[nodiscard]] constexpr
     T value_or(U&& def) const& {
+        // TODO: copy constructible
+        // TODO: convertible U to T
         return has_value() ? value() : static_cast<T>(std::forward<U>(def));
     }
 
-    // TODO: test ?
-    // template <typename U>
-    // [[nodiscard]] constexpr
-    // T value_or(U&& def) && {
-        // return has_value() ? value() : static_cast<T>(std::forward<U>(def));
-    // }
+    template <typename U>
+    [[nodiscard]] constexpr
+    T value_or(U&& def) && {
+        // TODO: move constructible
+        // TODO: convertible U to T
+        return has_value() ? std::move(value()) : static_cast<T>(std::forward<U>(def));
+    }
+
+    template <typename U = E>
+    [[nodiscard]] constexpr
+    E error_or(U&& def) const& {
+        // TODO: copy constructible
+        // TODO: convertible U to E
+        return has_value() ? std::forward<U>(def) : error();
+    }
+
+    template <typename U = E>
+    [[nodiscard]] constexpr
+    E error_or(U&& def) && {
+        // TODO: move constructible
+        // TODO: convertible U to E
+        return has_value() ? std::forward<U>(def) : std::move(error());
+    }
+
+    // TODO(feat): and_then
+    // TODO(feat): transform
+    // TODO(feat): or_else
+    // TODO(feat): transform_error
 
 private:
     union vex_impl {

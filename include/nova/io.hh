@@ -108,7 +108,7 @@ template <typename Parser = detail::def_parser>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return fs.error();
+        return nova::unexpected{ fs.error() };
     }
 
     auto stream = std::ifstream(*fs);
@@ -121,7 +121,7 @@ template <typename Parser = detail::def_bin_parser>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return fs.error();
+        return nova::unexpected{ fs.error() };
     }
 
     auto stream = std::ifstream(*fs, std::ios::binary);

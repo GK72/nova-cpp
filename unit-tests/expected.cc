@@ -5,6 +5,24 @@
 #include <memory>
 #include <string_view>
 
+/**
+ * @brief   Moveable only
+ */
+struct moo {
+    constexpr moo(int p) : x(p) {}
+
+    constexpr moo(const moo&)            = delete;
+    constexpr moo& operator=(const moo&) = delete;
+    constexpr moo(moo&&)                 = default;
+    constexpr moo& operator=(moo&&)      = default;
+
+    constexpr ~moo() = default;
+
+    constexpr auto operator<=>(const moo&) const = default;
+
+    int x;
+};
+
 TEST(Expected, TrivialTypes) {
     constexpr auto expect = [](bool condition) -> nova::expected<int, std::string_view> {
         if (condition) {
@@ -67,9 +85,39 @@ TEST(Expected, ErrorConversion) {
     EXPECT_EQ(x.error(), "hello");
 }
 
-TEST(Expected, Deref) {
+TEST(Expected, Deref_OperatorStar) {
     constexpr auto x = nova::expected<int, std::string_view>(9);
     EXPECT_EQ(*x, 9);
+
+    auto y = nova::expected<int, std::string_view>(9);
+    *y = 10;
+    EXPECT_EQ(*y, 10);
+}
+
+TEST(Expected, Deref_OperatorStar_RValue) {
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 9 }).operator*() ), moo{ 9 });
+    auto x = nova::expected<moo, std::string_view>(moo{ 9 });
+
+    constexpr auto create = [](auto&& ex) -> const auto&& {
+        return std::move(ex);
+    };
+
+    EXPECT_EQ(create(x).operator*(), 9);
+}
+
+TEST(Expected, Deref_OperatorArrow) {
+    struct S {
+        int x;
+        const auto& get() const { return x; }
+        void set(int p) { x = p; }
+    };
+
+    constexpr auto x = nova::expected<S, std::string_view>(S{ 9 });
+    EXPECT_EQ(x->get(), 9);
+
+    auto y = nova::expected<S, std::string_view>(S{ 9 });
+    y->set(10);
+    EXPECT_EQ(y->get(), 10);
 }
 
 TEST(Expected, HasValue) {
@@ -78,6 +126,8 @@ TEST(Expected, HasValue) {
 
     constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
     EXPECT_TRUE(not y.has_value());
+
+    EXPECT_TRUE(( nova::expected<int, std::string_view>(1).has_value() ));
 }
 
 TEST(Expected, BoolConversion) {
@@ -88,6 +138,9 @@ TEST(Expected, BoolConversion) {
     EXPECT_TRUE(not y);
 }
 
+// TEST(Expected, Copy) { }
+// TEST(Expected, Move) { }
+
 TEST(Expected_MondadicOps, ValueOr) {
     constexpr auto x = nova::expected<int, std::string_view>(9);
     EXPECT_EQ(x.value_or(2), 9);
@@ -97,6 +150,19 @@ TEST(Expected_MondadicOps, ValueOr) {
 }
 
 TEST(Expected_MondadicOps, ValueOr_OnRValue) {
-    EXPECT_EQ(( nova::expected<int, std::string_view>(9).value_or(2) ), 9);
-    EXPECT_EQ(( nova::expected<int, std::string_view>(nova::unexpected{ "a" }).value_or(2) ), 2);
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 1 }).value_or(moo{ 2 }) ), moo{ 1 });
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpected{ "a" }).value_or(moo{ 3 }) ), moo{ 3 });
+}
+
+TEST(Expected_MondadicOps, ErrorOr) {
+    constexpr auto x = nova::expected<int, std::string_view>(9);
+    EXPECT_EQ(x.error_or("e"), "e");
+
+    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
+    EXPECT_EQ(y.error_or("e"), "a");
+}
+
+TEST(Expected_MondadicOps, ErrorOr_OnRValue) {
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 1 }).error_or("e") ), "e");
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpected{ "a" }).error_or("e") ), "a");
 }
