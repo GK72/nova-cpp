@@ -67,7 +67,7 @@ public:
         : m_data(nlohmann::json::parse(content))
     {}
     catch (const nlohmann::json::exception& ex) {
-        throw parsing_error(ex.what());
+        throw exception<void>(ex.what());
     }
 
     [[nodiscard]] std::string dump(int indent = -1) const {

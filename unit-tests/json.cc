@@ -41,11 +41,21 @@ TEST(Json, DomPath) {
 }
 
 TEST(Json, EmptyInput) {
-    EXPECT_THROW(std::ignore = nova::json(""), nova::parsing_error);
+    EXPECT_THAT(
+        []() { std::ignore = nova::json(""); },
+        testing::ThrowsMessage<nova::exception<void>>(
+            testing::HasSubstr("parse error at line 1, column 1: attempting to parse an empty input;")
+        )
+    );
 }
 
 TEST(Json, InvalidInput) {
-    EXPECT_THROW(std::ignore = nova::json(R"("key": 1)"), nova::parsing_error);
+    EXPECT_THAT(
+        []() { std::ignore = nova::json(R"("key": 1)"); },
+        testing::ThrowsMessage<nova::exception<void>>(
+            testing::HasSubstr("parse error at line 1, column 6: syntax error while parsing value - unexpected ':';")
+        )
+    );
 }
 
 TEST(Json, ConstructFromJsonObject) {

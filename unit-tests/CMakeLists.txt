@@ -3,6 +3,7 @@ find_package(GTest REQUIRED)
 add_executable(test-nova
     color.cc
     data.cc
+    error.cc
     expected.cc
     flat_map.cc
     io.cc
