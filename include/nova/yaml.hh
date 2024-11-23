@@ -43,7 +43,7 @@ public:
         try {
             return m_doc.as<T>();
         } catch (const YAML::BadConversion& ex) {
-            throw nova::parsing_error(ex.what());
+            throw exception<void>(ex.what());
         }
     }
 
@@ -52,7 +52,7 @@ public:
         try {
             return lookup_impl(path).as<T>();
         } catch (const YAML::BadConversion& ex) {
-            throw nova::parsing_error(ex.what());
+            throw exception<void>(ex.what());
         }
     }
 
@@ -101,7 +101,7 @@ private:
 
             return node;
         } catch (const std::exception& ex) {
-            throw nova::parsing_error(ex.what());
+            throw exception<void>(ex.what());
         }
     }
 

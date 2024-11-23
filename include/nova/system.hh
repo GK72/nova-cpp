@@ -79,7 +79,7 @@ inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> 
  * @brief   NOT IMPLEMENTED! It's a stub.
  */
 inline auto get_pid() -> int {
-    throw not_implemented("get_pid");
+    throw exception<void>("Not implemented");
 }
 
 // TODO: emit a non-error warning that every major compiler likes
