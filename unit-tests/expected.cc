@@ -60,7 +60,7 @@ TEST(Expected, SameTypes) {
     ASSERT_TRUE(x);
     EXPECT_EQ(*x, 9);
 
-    constexpr auto y = nova::expected<int, int>(nova::unexpected{ 8 });
+    constexpr auto y = nova::expected<int, int>(nova::unexpect, 8);
     ASSERT_TRUE(not y);
     EXPECT_EQ(y.error(), 8);
 }
@@ -71,7 +71,7 @@ TEST(Expected, ValueConversion) {
 }
 
 TEST(Expected, ErrorConversion) {
-    constexpr auto x = nova::expected<int, std::string_view>(nova::unexpected{ "hello" });
+    constexpr auto x = nova::expected<int, std::string_view>(nova::unexpect, "hello");
     EXPECT_EQ(x.error(), "hello");
 }
 
@@ -114,7 +114,7 @@ TEST(Expected, HasValue) {
     constexpr auto x = nova::expected<int, std::string_view>(1);
     EXPECT_TRUE(x.has_value());
 
-    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
+    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpect, "a");
     EXPECT_TRUE(not y.has_value());
 
     EXPECT_TRUE(( nova::expected<int, std::string_view>(1).has_value() ));
@@ -124,7 +124,7 @@ TEST(Expected, BoolConversion) {
     constexpr auto x = nova::expected<int, std::string_view>(1);
     EXPECT_TRUE(x);
 
-    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
+    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpect, "a");
     EXPECT_TRUE(not y);
 }
 
@@ -135,32 +135,32 @@ TEST(Expected_MondadicOps, ValueOr) {
     constexpr auto x = nova::expected<int, std::string_view>(9);
     EXPECT_EQ(x.value_or(2), 9);
 
-    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
+    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpect, "a");
     EXPECT_EQ(y.value_or(2), 2);
 }
 
 TEST(Expected_MondadicOps, ValueOr_OnRValue) {
     EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 1 }).value_or(moo{ 2 }) ), moo{ 1 });
-    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpected{ "a" }).value_or(moo{ 3 }) ), moo{ 3 });
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpect, "a").value_or(moo{ 3 }) ), moo{ 3 });
 }
 
 TEST(Expected_MondadicOps, ErrorOr) {
     constexpr auto x = nova::expected<int, std::string_view>(9);
     EXPECT_EQ(x.error_or("e"), "e");
 
-    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpected{ "a" });
+    constexpr auto y = nova::expected<int, std::string_view>(nova::unexpect, "a");
     EXPECT_EQ(y.error_or("e"), "a");
 }
 
 TEST(Expected_MondadicOps, ErrorOr_OnRValue) {
     EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 1 }).error_or("e") ), "e");
-    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpected{ "a" }).error_or("e") ), "a");
+    EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpect, "a").error_or("e") ), "a");
 }
 
 TEST(Expected_MondadicOps, AndThen) {
     using E = nova::expected<int, std::string_view>;
     constexpr auto x = E(9);
-    constexpr auto x2 = [](int x) { return E{ x * 2 }; };
+    constexpr auto x2 = [](int y) { return E{ y * 2 }; };
     EXPECT_EQ(x.and_then(x2).value(), 18);
 }
 
@@ -175,14 +175,14 @@ TEST(Expected_MondadicOps, AndThen_TypeTransform) {
     using E = nova::expected<int, std::string_view>;
     using E2 = nova::expected<std::string, std::string_view>;
     constexpr auto x = E(9);
-    constexpr auto t = [](int x) { return E2{ std::to_string(x) }; };
+    constexpr auto t = [](int y) { return E2{ std::to_string(y) }; };
     EXPECT_EQ(x.and_then(t).value(), "9"s);
 }
 
 TEST(Expected_MondadicOps, OrElse) {
     using E = nova::expected<int, std::string_view>;
     using E2 = nova::expected<int, std::size_t>;
-    constexpr auto x = E(nova::unexpected{ "error" });
-    constexpr auto t = [](const std::string_view& x) { return E2{ nova::unexpected{ x.size() } }; };
+    constexpr auto x = E(nova::unexpect, "error");
+    constexpr auto t = [](const std::string_view& y) { return E2{ nova::unexpect, y.size() }; };
     EXPECT_EQ(x.or_else(t).error(), 5);
 }

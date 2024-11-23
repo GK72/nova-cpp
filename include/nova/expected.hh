@@ -30,6 +30,8 @@ namespace detail {
 
 namespace exp {
 
+using detail::unexpect;
+
 template <typename T, typename E>
 class expected;
 
@@ -78,6 +80,22 @@ public:
         requires std::is_convertible_v<typename E2::type, E>
     constexpr expected(const E2& unexpected)
         : m_vex(detail::unexpect, unexpected.value)
+    {}
+
+    /**
+     * @brief   Construct a value in place.
+     */
+    template <typename ...Args>
+    constexpr expected(std::in_place_t, Args&&... args)                                             // NOLINT(readability-named-parameter) | It's a tag
+        : m_vex(detail::expect, std::forward<Args>(args)...)
+    {}
+
+    /**
+     * @brief   Construct an unexpected value in place.
+     */
+    template <typename ...Args>
+    constexpr expected(detail::unexpect_t, Args&&... args)                                          // NOLINT(readability-named-parameter) | It's a tag
+        : m_vex(detail::unexpect, std::forward<Args>(args)...)
     {}
 
     // TODO(feat): rvalue pair
@@ -197,12 +215,12 @@ public:
 private:
     union vex_impl {
         template <typename ...Args>
-        constexpr vex_impl(detail::expect_t, Args&& ...args)
+        constexpr vex_impl(detail::expect_t, Args&& ...args)                                        // NOLINT(readability-named-parameter) | It's a tag
             : v(std::forward<Args>(args)...)
         {}
 
         template <typename ...Args>
-        constexpr vex_impl(detail::unexpect_t, Args&& ...args)
+        constexpr vex_impl(detail::unexpect_t, Args&& ...args)                                      // NOLINT(readability-named-parameter) | It's a tag
             : e(std::forward<Args>(args)...)
         {}
 
