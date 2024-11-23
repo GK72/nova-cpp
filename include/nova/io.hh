@@ -62,11 +62,14 @@ namespace detail {
      */
     [[nodiscard]] inline
     auto fs_path(const std::string& path) -> exp::expected<std::filesystem::path, error> {
-        const auto fs = std::filesystem::path(path);
+        auto fs = std::filesystem::path(path);
         if (not std::filesystem::is_regular_file(fs)) {
-            return exp::unexpected<error>{
-                fmt::format("{} is not a regular file!",                                            // NOLINT(misc-include-cleaner) | Clang why are you like this? `#include <fmt/format.h>`
-                std::filesystem::absolute(fs).string())
+            return {
+                exp::unexpect,
+                fmt::format(                                                                        // NOLINT(misc-include-cleaner) | Clang why are you like this? `#include <fmt/format.h>`
+                    "{} is not a regular file!",
+                    std::filesystem::absolute(fs).string()
+                )
             };
         }
 
@@ -108,7 +111,7 @@ template <typename Parser = detail::def_parser>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return exp::unexpected{ fs.error() };
+        return { exp::unexpect, fs.error() };
     }
 
     auto stream = std::ifstream(*fs);
@@ -121,7 +124,7 @@ template <typename Parser = detail::def_bin_parser>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return exp::unexpected{ fs.error() };
+        return { exp::unexpect, fs.error() };
     }
 
     auto stream = std::ifstream(*fs, std::ios::binary);

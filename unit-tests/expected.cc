@@ -23,7 +23,7 @@ TEST(Expected, TrivialTypes) {
         if (condition) {
             return 1;
         }
-        return nova::unexpected<std::string_view>{"Error message"};
+        return { nova::unexpect, "Error message" };
     };
 
     {
