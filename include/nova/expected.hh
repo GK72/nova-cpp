@@ -170,7 +170,7 @@ public:
         if (has_value()) {
             return std::invoke(func, this->operator*());
         }
-        return R{ unexpected{ error() }};
+        return R{ unexpect, error()};
     }
 
     template <typename Func,
@@ -183,7 +183,7 @@ public:
         if (has_value()) {
             return std::invoke(func, std::move(this->operator*()));
         }
-        return R{ unexpected{ std::move(error()) }};
+        return R{ unexpect, std::move(error())};
     }
 
     template <typename Func,
