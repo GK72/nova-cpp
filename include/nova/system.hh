@@ -40,7 +40,7 @@ struct process_scheduling {
  * @brief   Set CPU affinity and process priority.
  */
 [[nodiscard]] inline
-auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
+auto set_cpu_affinity(const process_scheduling& cfg) -> exp::expected<exp::empty, error> {
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
     CPU_SET(cfg.cpu, &cpu_set);
@@ -48,7 +48,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return unexpected<error>{ "Cannot set CPU affinity!" };
+        return exp::unexpected<error>{ "Cannot set CPU affinity!" };
     }
 
     const auto result_priority = setpriority(
@@ -58,9 +58,9 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     );
 
     if (result_priority == -1) {
-        return unexpected<error>{ "Cannot set process priority!" };
+        return exp::unexpected<error>{ "Cannot set process priority!" };
     }
-    return empty{};
+    return exp::empty{};
 }
 
 [[nodiscard]] inline auto get_pid() -> int {
@@ -71,8 +71,8 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
 /**
  * @brief   NOT IMPLEMENTED! It's a stub.
  */
-inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> expected<empty, error> {
-    return empty{};
+inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> exp::expected<exp::empty, error> {
+    return exp::empty{};
 }
 
 /**

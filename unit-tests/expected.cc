@@ -1,27 +1,22 @@
+#include "test_utils.hh"
+
 #include "nova/expected.h"
 
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <string>
 #include <string_view>
 
-/**
- * @brief   Moveable only
- */
-struct moo {
-    constexpr moo(int p) : x(p) {}
+namespace nova {
+    using namespace exp;
+}
 
-    constexpr moo(const moo&)            = delete;
-    constexpr moo& operator=(const moo&) = delete;
-    constexpr moo(moo&&)                 = default;
-    constexpr moo& operator=(moo&&)      = default;
-
-    constexpr ~moo() = default;
-
-    constexpr auto operator<=>(const moo&) const = default;
-
-    int x;
-};
+TEST(Expected, TypeTraits) {
+    using E = nova::expected<int, std::string_view>;
+    static_assert(nova::is_expected_v<E>);
+    static_assert(not nova::is_expected_v<int>);
+}
 
 TEST(Expected, TrivialTypes) {
     constexpr auto expect = [](bool condition) -> nova::expected<int, std::string_view> {
@@ -50,12 +45,7 @@ TEST(Expected, TrivialTypes) {
 }
 
 TEST(Expected, NonTrivialTypes) {
-    struct S {
-        constexpr S() { }
-        constexpr ~S() { }
-    };
-
-    const auto x = nova::expected<S, int>(S{ });
+    const auto x = nova::expected<nt, int>(nt{ });
     EXPECT_TRUE(x);
 }
 
@@ -165,4 +155,34 @@ TEST(Expected_MondadicOps, ErrorOr) {
 TEST(Expected_MondadicOps, ErrorOr_OnRValue) {
     EXPECT_EQ(( nova::expected<moo, std::string_view>(moo{ 1 }).error_or("e") ), "e");
     EXPECT_EQ(( nova::expected<moo, std::string_view>(nova::unexpected{ "a" }).error_or("e") ), "a");
+}
+
+TEST(Expected_MondadicOps, AndThen) {
+    using E = nova::expected<int, std::string_view>;
+    constexpr auto x = E(9);
+    constexpr auto x2 = [](int x) { return E{ x * 2 }; };
+    EXPECT_EQ(x.and_then(x2).value(), 18);
+}
+
+TEST(Expected_MondadicOps, AndThen_OnRValue) {
+    using E = nova::expected<moo, std::string_view>;
+    constexpr auto x2m = [](const moo& x) { return E{ x.x * 2 }; };
+    EXPECT_EQ(E(9).and_then(x2m).value().x, 18);
+}
+
+TEST(Expected_MondadicOps, AndThen_TypeTransform) {
+    using namespace std::literals::string_literals;
+    using E = nova::expected<int, std::string_view>;
+    using E2 = nova::expected<std::string, std::string_view>;
+    constexpr auto x = E(9);
+    constexpr auto t = [](int x) { return E2{ std::to_string(x) }; };
+    EXPECT_EQ(x.and_then(t).value(), "9"s);
+}
+
+TEST(Expected_MondadicOps, OrElse) {
+    using E = nova::expected<int, std::string_view>;
+    using E2 = nova::expected<int, std::size_t>;
+    constexpr auto x = E(nova::unexpected{ "error" });
+    constexpr auto t = [](const std::string_view& x) { return E2{ nova::unexpected{ x.size() } }; };
+    EXPECT_EQ(x.or_else(t).error(), 5);
 }
