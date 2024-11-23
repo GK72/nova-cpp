@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 namespace nova {
     using namespace exp;
@@ -42,6 +43,11 @@ TEST(Expected, TrivialTypes) {
         EXPECT_TRUE(not ret);
         EXPECT_EQ(ret.error(), "Error message"sv);
     }
+}
+
+TEST(Expected, Value_SafeAccess) {
+    constexpr auto x = nova::expected<int, int>(nova::unexpect, 8);
+    EXPECT_THROW(std::ignore = x.value(), std::runtime_error);
 }
 
 TEST(Expected, NonTrivialTypes) {

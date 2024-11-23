@@ -116,8 +116,22 @@ public:
     [[nodiscard]] constexpr bool has_value() const noexcept         { return m_vex.value; }
     [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    [[nodiscard]] constexpr const T& value()  const&                { return m_vex.impl.v; }
-    [[nodiscard]] constexpr       T& value()       &                { return m_vex.impl.v; }
+    [[nodiscard]] constexpr const T& value() const& {
+        if (not has_value()) {
+            // TODO(feat): throw the error type (feature depends on custom exception type)
+            throw std::runtime_error("Bad expected access");
+        }
+        return m_vex.impl.v;
+    }
+
+    [[nodiscard]] constexpr T& value() & {
+        if (not has_value()) {
+            // TODO(feat): throw the error type (feature depends on custom exception type)
+            throw std::runtime_error("Bad expected access");
+        }
+        return m_vex.impl.v;
+    }
+
     // TODO(feat): rvalue pairs
     // [[nodiscard]] constexpr const T&& value() const&&               { return std::move(m_vex.impl.v); }
     // [[nodiscard]] constexpr       T&& value()      &&               { return std::move(m_vex.impl.v); }

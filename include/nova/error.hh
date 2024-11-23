@@ -32,30 +32,16 @@ class not_implemented : public std::runtime_error {
 };
 
 /**
- * @brief   Error type for `std::expected`.
+ * @brief   Error type for `expected`.
  */
 struct error {
+    // P0960R3 is not implemented in Apple Clang
+    constexpr error(const std::string& msg)
+        : message(msg)
+    {}
+
     std::string message;
 };
-
-/**
- * @brief   Throwing exception with useful message in case of bad expected access.
- *
- * TODO(feat): port it over to the custom `expected` implementation
- */
-// template <typename T>
-// class expected : public expected<T, error> {
-// public:
-    // using base = expected<T, error>;
-    // using base::expected;
-
-    // [[nodiscard]] auto value() {
-        // if (not base::has_value()) {
-            // throw std::runtime_error(base::error().message);
-        // }
-        // return base::value();
-    // }
-// };
 
 } // namespace nova
 
