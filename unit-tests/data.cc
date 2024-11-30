@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "nova/data.h"
-#include "nova/utils.h"
+#include "nova/data.hh"
+#include "nova/utils.hh"
 
 #include <array>
 #include <cstddef>
@@ -49,11 +49,19 @@ TEST(DataView, SubView) {
     EXPECT_EQ(nova::data_view(data).subview(3).as_number<std::uint8_t>(0), 4);
 }
 
-TEST(DataView, ToHexString) {
+TEST(DataView, HexDump) {
     static constexpr auto data = "Hello Nova"sv;
     EXPECT_EQ(
         fmt::format("{}", nova::data_view(data).to_hex()),
         fmt::format("{}0000: 48 65 6c 6c 6f 20 4e 6f 76 61", nova::NewLine)
+    );
+}
+
+TEST(DataView, ToHexString) {
+    static constexpr auto data = "Hello Nova"sv;
+    EXPECT_EQ(
+        nova::data_view(data).as_hex_string(),
+        "48656c6c6f204e6f7661"
     );
 }
 
