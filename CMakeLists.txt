@@ -8,7 +8,7 @@ include(cmake/version.cmake)
 
 nova_extract_version()
 project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
-message(STATUS "Nova version ${NOVA_VERSION}")
+message(STATUS "Nova version ${NOVA_VERSION} (Freyja branch)")
 
 add_library(project_warnings INTERFACE)
 include(cmake/compiler-warnings.cmake)
@@ -17,7 +17,8 @@ set_project_warnings(project_warnings)
 include(cmake/settings.cmake)
 include(cmake/dependencies.cmake)
 
-add_subdirectory(include)
+add_subdirectory(src)
+include(cmake/targets.cmake)
 
 if(BUILD_TESTS)
     enable_testing()

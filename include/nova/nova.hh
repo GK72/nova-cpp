@@ -29,6 +29,8 @@
 #include <nova/vec.h>
 #include <nova/yaml.h>
 
+#include <nova/tcp.hh>
+
 constexpr auto NovaVersionMajor = 0;
 constexpr auto NovaVersionMinor = 1;
 constexpr auto NovaVersionPatch = 3;
