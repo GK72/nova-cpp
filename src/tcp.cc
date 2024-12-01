@@ -4,23 +4,26 @@
  * TCP server.
  */
 
+#include "nova/log.hh"
 #include "nova/tcp.hh"
 #include "nova/units.hh"
 
+#include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/redirect_error.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
 
-#include <spdlog/spdlog.h>
-
 #include <cstdint>
 
 #include <coroutine>
 #include <memory>
+#include <string>
 
 namespace asio = boost::asio;
 using asio::ip::tcp;
@@ -68,6 +71,7 @@ public:
     }
 
     void close() {
+        nova::topic_log::info("nova-tcp", "Disconnecting: {}:{}", m_connection_info.address, m_connection_info.port);
         m_socket.shutdown(boost::asio::socket_base::shutdown_both);
         m_socket.close();
     }
@@ -105,6 +109,7 @@ private:
 
             if (ec) {
                 m_handler->on_error(ec, m_connection_info);
+                break;
             }
 
             if (n == 0) {
@@ -169,8 +174,28 @@ auto server::accept() -> asio::awaitable<void> {
             std::make_shared<connection>(std::move(socket), m_factory->create())->start();
         }
     } catch (const std::exception& e) {
-        spdlog::error("{}", e.what());
+        topic_log::error("nova-tcp", "{}", e.what());
     }
+}
+
+client::client()
+    : m_socket(m_io_context)
+{}
+
+void client::connect(const net_config& cfg) {
+    auto resolver = ::tcp::resolver{ m_io_context };
+    ::tcp::resolver::results_type endpoints = resolver.resolve(cfg.host, std::to_string(cfg.port));
+
+    asio::connect(m_socket, endpoints);
+}
+
+auto client::send(nova::data_view data) -> bytes {
+    asio::write(m_socket, asio::buffer(data.ptr(), data.size()));
+
+    auto buffer = bytes{};
+    asio::read(m_socket, asio::buffer(buffer));
+
+    return buffer;
 }
 
 // auto send(nova::data_view data) -> asio::awaitable<void> {

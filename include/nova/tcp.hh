@@ -6,16 +6,13 @@
 
 #pragma once
 
-#include <nova/data.hh>
+#include "nova/tcp_handler.hh"
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/system/detail/error_code.hpp>
 
-#include <cstddef>
 #include <cstdint>
-#include <exception>
 #include <memory>
 #include <utility>
 
@@ -24,27 +21,8 @@ namespace nova::tcp {
 using port_type = std::uint_least16_t;
 
 struct net_config {
+    std::string host;
     port_type port;
-};
-
-struct connection_info {
-    std::string address;
-    std::uint_least16_t port;
-};
-
-class handler {
-public:
-    virtual auto process(nova::data_view) -> std::size_t = 0;
-    virtual void on_connection_init(const connection_info&) = 0;
-    virtual void on_error(const boost::system::error_code&, const connection_info&) = 0;
-    virtual void on_error(const std::exception&, const connection_info&) = 0;
-    virtual ~handler() = default;
-};
-
-class handler_factory {
-public:
-    virtual auto create() -> std::unique_ptr<handler> = 0;
-    virtual ~handler_factory() = default;
 };
 
 class server {
@@ -73,6 +51,19 @@ private:
     net_config m_config;
 
     auto accept() -> boost::asio::awaitable<void>;
+};
+
+class client {
+public:
+    client();
+
+    void connect(const net_config& cfg);
+    auto send(nova::data_view) -> bytes;
+
+private:
+    boost::asio::io_context m_io_context;
+    boost::asio::ip::tcp::socket m_socket;
+
 };
 
 } // namespace nova::tcp

@@ -4,6 +4,8 @@
  * YAML API.
  */
 
+#pragma once
+
 #include "nova/error.hh"
 #include "nova/type_traits.hh"
 #include "nova/utils.hh"
