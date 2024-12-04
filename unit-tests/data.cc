@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include "nova/data.hh"
@@ -65,6 +66,17 @@ TEST(DataView, ToHexString) {
     );
 }
 
+TEST(DataView, ToVec) {
+    static constexpr auto data = "\x00\x61"sv;
+    EXPECT_EQ(
+        nova::data_view(data).to_vec(),
+        ( std::vector<std::byte>{
+            std::byte { 0x00 },
+            std::byte { 0x61 }
+        } )
+    );
+}
+
 TEST(DataView, ErrorOutOfBounds) {
     static constexpr auto data = std::to_array<unsigned char>({ 0x01, 0x02 });
     try {
@@ -73,4 +85,54 @@ TEST(DataView, ErrorOutOfBounds) {
     catch (const nova::out_of_data_bounds& ex) {
         EXPECT_EQ(ex.what(), "Pos: 1, Len: 2, Size: 2 (End: 3)"sv);
     }
+}
+
+TEST(Serialization, Serializer_1byte_BigEndian) {
+    auto ser = nova::serializer{ 1 };
+    ser(std::uint8_t{ 9 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "09");
+}
+
+TEST(Serialization, Serializer_2bytes_BigEndian) {
+    auto ser = nova::serializer{ 2 };
+    ser(std::uint16_t{ 256 + 255 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01ff");
+}
+
+TEST(Serialization, Serializer_4bytes_BigEndian) {
+    auto ser = nova::serializer{ 4 };
+    ser(std::uint32_t{ 16909060 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01020304");
+}
+
+TEST(Serialization, Serializer_8bytes_BigEndian) {
+    auto ser = nova::serializer{ 8 };
+    ser(std::uint64_t{ 72057594037928191 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01000000" "000000ff");
+}
+
+TEST(Serialization, ph) {
+    struct data_t {
+        std::uint64_t xl;
+        std::uint32_t l;
+        std::uint16_t m;
+        std::uint8_t  s;
+    };
+
+    auto ser = nova::serializer{ 8 + 4 + 2 + 1 };
+
+    constexpr auto data = data_t { 1, 1, 1, 1 };
+
+    ser(data.xl);
+    ser(data.l);
+    ser(data.m);
+    ser(data.s);
+
+    EXPECT_EQ(
+        nova::data_view(ser.data()).as_hex_string(),
+        "00000000" "00000001"
+        "00000001"
+        "0001"
+        "01"
+    );
 }

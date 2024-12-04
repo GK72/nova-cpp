@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/bin_to_hex.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -15,6 +16,8 @@
 #include <type_traits>
 
 namespace nova {
+
+using bytes = std::vector<std::byte>;
 
 template <typename T>
 concept binary_interpretable =
@@ -167,6 +170,19 @@ public:
         return as_hex_string(0, size());
     }
 
+    [[nodiscard]]
+    auto to_vec() const -> bytes {
+        auto ret = bytes(size());
+
+        std::ranges::copy(
+            std::begin(m_data),
+            std::end(m_data),
+            std::begin(ret)
+        );
+
+        return ret;
+    }
+
 private:
     std::span<const std::byte> m_data;
 
@@ -187,5 +203,62 @@ private:
 using data_view = detail::data_view<>;
 using data_view_be = detail::data_view<endian::big>;
 using data_view_le = detail::data_view<endian::little>;
+
+class serializer {
+    static constexpr auto Byte = 8;
+
+public:
+    serializer() = default;
+    serializer(std::size_t size)
+        : m_data(size)
+    {}
+
+    template <typename T>
+    void operator()(T x) {
+        // TODO(safety): auto-resize if needed
+        // TODO(refact): generic algorithm (diff binary size and perf)
+        impl(x);
+    }
+
+    [[nodiscard]] auto data() const -> bytes {
+        return m_data;
+    }
+
+private:
+    bytes m_data;
+    std::size_t m_offset = 0;
+
+    void impl(std::uint8_t x) {
+        m_data[m_offset] = std::byte(x);
+        m_offset += 1;
+    }
+
+    void impl(std::uint16_t x) {
+        m_data[m_offset    ] = std::byte((x & 0xFF00) >> 8);
+        m_data[m_offset + 1] = std::byte( x & 0x00FF);
+        m_offset += 2;
+    }
+
+    void impl(std::uint32_t x) {
+        m_data[m_offset    ] = std::byte((x & 0xFF000000) >> 24);
+        m_data[m_offset + 1] = std::byte((x & 0x00FF0000) >> 16);
+        m_data[m_offset + 2] = std::byte((x & 0x0000FF00) >>  8);
+        m_data[m_offset + 3] = std::byte( x & 0x000000FF);
+        m_offset += 4;
+    }
+
+    void impl(std::uint64_t x) {
+        m_data[m_offset    ] = std::byte((x & 0xFF000000'00000000) >> 56);
+        m_data[m_offset + 1] = std::byte((x & 0x00FF0000'00000000) >> 48);
+        m_data[m_offset + 2] = std::byte((x & 0x0000FF00'00000000) >> 40);
+        m_data[m_offset + 3] = std::byte((x & 0x000000FF'00000000) >> 32);
+        m_data[m_offset + 4] = std::byte((x & 0x00000000'FF000000) >> 24);
+        m_data[m_offset + 5] = std::byte((x & 0x00000000'00FF0000) >> 16);
+        m_data[m_offset + 6] = std::byte((x & 0x00000000'0000FF00) >>  8);
+        m_data[m_offset + 7] = std::byte( x & 0x00000000'000000FF);
+        m_offset += 8;
+    }
+
+};
 
 } // namespace nova

@@ -18,6 +18,7 @@ struct connection_info {
     std::uint_least16_t port;
 };
 
+// tag::tcp-handler[]
 class handler {
 public:
     virtual auto process(nova::data_view) -> std::size_t = 0;
@@ -26,6 +27,7 @@ public:
     virtual void on_error(const std::exception&, const connection_info&) = 0;
     virtual ~handler() = default;
 };
+// end::tcp-handler[]
 
 class handler_factory {
 public:

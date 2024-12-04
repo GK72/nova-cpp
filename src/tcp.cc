@@ -4,6 +4,7 @@
  * TCP server.
  */
 
+#include "nova/data.hh"         // TODO(refact): only an alias definition is needed from the header
 #include "nova/log.hh"
 #include "nova/tcp.hh"
 #include "nova/units.hh"
@@ -161,6 +162,7 @@ void server::start() {
 }
 
 void server::stop() {
+    nova::topic_log::info("nova-tcp", "Stopping TCP server...");
     m_io_context.stop();
 }
 

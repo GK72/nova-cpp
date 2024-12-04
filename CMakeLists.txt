@@ -17,7 +17,6 @@ set_project_warnings(project_warnings)
 include(cmake/settings.cmake)
 include(cmake/dependencies.cmake)
 
-add_subdirectory(src)
 include(cmake/targets.cmake)
 
 if(BUILD_TESTS)

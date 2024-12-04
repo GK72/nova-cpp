@@ -1,4 +1,5 @@
 public-deps:
+  - boost/1.86.0
   - fmt/10.2.1
   - nlohmann_json/3.11.3
   - spdlog/1.13.0

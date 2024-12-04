@@ -2,7 +2,7 @@ add_library(nova-tcp tcp.cc)
 target_link_libraries(nova-tcp PUBLIC
     nova-headers
 
-    boost::boost
+    Boost::headers
     spdlog::spdlog_header_only
 )
 
