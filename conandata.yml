@@ -1,5 +1,6 @@
 public-deps:
   - fmt/10.2.1
+  - libxmlpp/5.4.0
   - nlohmann_json/3.11.3
   - spdlog/1.13.0
   - yaml-cpp/0.8.0

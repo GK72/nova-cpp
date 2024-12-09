@@ -14,6 +14,7 @@ add_executable(test-nova
     units.cc
     utils.cc
     vec.cc
+    xml.cc
     yaml.cc
 )
 
