@@ -3,11 +3,13 @@
  *
  * YAML API.
  */
+#pragma once
 
 #include "nova/error.hh"
 #include "nova/type_traits.hh"
 #include "nova/utils.hh"
 
+#include <yaml-cpp/node/emit.h>
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
@@ -35,6 +37,10 @@ public:
     explicit yaml(const YAML::Node& doc)
         : m_doc(YAML::Clone(doc))
     {}
+
+    [[nodiscard]] std::string dump() const {
+        return YAML::Dump(m_doc);
+    }
 
     template <typename T>
     [[nodiscard]] T as() const {
@@ -74,8 +80,29 @@ public:
         return ret;
     }
 
+    /**
+     * @brief   Return a YAML object without leaking the underlying API.
+     */
+    [[nodiscard]] auto at(const std::string& path) const {
+        auto doc = yaml();
+        doc.set(lookup_impl(path));
+        return doc;
+    }
+
 private:
     YAML::Node m_doc;
+
+    /**
+     * @brief   Hidden default constructor to overcome ambiguity.
+     */
+    yaml() = default;
+
+    /**
+     * @brief   Implicit conversions make the constructor ambiguous.
+     */
+    void set(const YAML::Node& yaml_object) {
+        m_doc = yaml_object;
+    }
 
     YAML::Node lookup_impl(std::string_view path) const {
         try {
