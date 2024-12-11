@@ -21,6 +21,12 @@ array:
     inner2: 3
 )";
 
+TEST(Yaml, ConstructFromYamlObject) {
+    const auto doc = nova::yaml(data);
+    const auto inner = doc.at("root");
+    EXPECT_EQ(inner.lookup<std::string>("key"), "string");
+}
+
 // TODO: stoi exception
 TEST(Yaml, FundamentalTypes) {
     const auto doc = nova::yaml(data);
@@ -48,4 +54,22 @@ TEST(Yaml, Objects) {
     const auto object = doc.lookup<std::map>("array.3");
     EXPECT_EQ(object.at("inner1").as<int>(), 2);
     EXPECT_EQ(object.at("inner2").as<int>(), 3);
+}
+
+TEST(Yaml, Dump) {
+    const auto doc = nova::yaml(data);
+    constexpr auto ref = R"(int: 9
+string: bla
+float: 9.9
+bool: true
+root:
+  key: string
+array:
+  - elem1
+  - elem2
+  - elem3:
+      inner: 1
+  - inner1: 2
+    inner2: 3)";
+    EXPECT_EQ(doc.dump(), ref);
 }
