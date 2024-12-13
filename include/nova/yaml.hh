@@ -76,6 +76,11 @@ public:
         return ret;
     }
 
+    // [[nodiscard]] bool contains(const std::string& path) const {
+        // m_doc.
+        // return m_data.contains(make_json_pointer(path));
+    // }
+
 private:
     YAML::Node m_doc;
 

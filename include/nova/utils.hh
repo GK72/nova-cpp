@@ -92,6 +92,14 @@ std::chrono::nanoseconds now() {
  * @brief   Convert a duration to seconds with fractional part.
  */
 [[nodiscard]] constexpr
+auto to_sec(chrono_duration auto x) {
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(x).count());
+}
+
+/**
+ * @brief   Convert a duration to microseconds with fractional part.
+ */
+[[nodiscard]] constexpr
 auto to_us(chrono_duration auto x) {
     return static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(x).count());
 }
@@ -191,7 +199,7 @@ public:
     /**
      * @brief   Measure the elapsed time since last call this function.
      */
-    auto lap() -> std::chrono::nanoseconds {
+    auto reset() -> std::chrono::nanoseconds {
         const auto time = now();
         const auto ret = time - m_clock;
         m_clock = time;

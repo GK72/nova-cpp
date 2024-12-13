@@ -8,9 +8,12 @@
 
 #include "nova/tcp_handler.hh"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#pragma GCC diagnostic pop
 
 #include <cstdint>
 #include <memory>
@@ -58,6 +61,7 @@ public:
     client();
 
     void connect(const net_config& cfg);
+    void connect(const std::string& address);
     auto send(nova::data_view) -> bytes;
 
 private:

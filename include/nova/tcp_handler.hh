@@ -11,8 +11,6 @@
 
 namespace nova::tcp {
 
-using bytes = std::vector<std::uint8_t>;
-
 struct connection_info {
     std::string address;
     std::uint_least16_t port;

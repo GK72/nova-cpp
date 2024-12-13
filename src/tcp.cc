@@ -9,6 +9,10 @@
 #include "nova/tcp.hh"
 #include "nova/units.hh"
 
+#include <boost/algorithm/string.hpp>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
 #include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -19,12 +23,14 @@
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
+#pragma GCC diagnostic pop
 
 #include <cstdint>
 
 #include <coroutine>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace asio = boost::asio;
 using asio::ip::tcp;
@@ -187,6 +193,16 @@ client::client()
 void client::connect(const net_config& cfg) {
     auto resolver = ::tcp::resolver{ m_io_context };
     ::tcp::resolver::results_type endpoints = resolver.resolve(cfg.host, std::to_string(cfg.port));
+
+    asio::connect(m_socket, endpoints);
+}
+
+void client::connect(const std::string& address) {
+    std::vector<std::string> parts;
+    boost::split(parts, address, boost::is_any_of(":"), boost::algorithm::token_compress_on);
+
+    auto resolver = ::tcp::resolver{ m_io_context };
+    ::tcp::resolver::results_type endpoints = resolver.resolve(parts[0], parts[1]);
 
     asio::connect(m_socket, endpoints);
 }

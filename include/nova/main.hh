@@ -8,6 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdlib>
 #include <ranges>
 #include <string_view>
 #include <span>
@@ -31,7 +32,11 @@
 #define NOVA_MAIN_ARG_PARSE(func, parse)                                        \
     int main(int argc, char* argv[]) {                                          \
         try {                                                                   \
-            return func(parse(argc, argv));                                     \
+            const auto args = parse(argc, argv);                                \
+            if (not args.has_value()) {                                         \
+                return EXIT_SUCCESS;                                            \
+            }                                                                   \
+            return func(*args);                                                 \
         } catch (std::exception& ex) {                                          \
             spdlog::error("Exception caught in main: {}", ex.what());           \
         } catch (const char* msg) {                                             \
