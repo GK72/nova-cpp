@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <span>
 #include <stdexcept>
 #include <string_view>
@@ -82,6 +83,11 @@ public:
     [[nodiscard]] data_view subview(std::size_t offset, std::size_t length) {
         return data_view(m_data.subspan(offset, length));
     }
+
+    [[nodiscard]] auto begin() const { return std::begin(m_data); }
+    [[nodiscard]] auto begin()       { return std::begin(m_data); }
+    [[nodiscard]] auto end()   const { return std::end(m_data); }
+    [[nodiscard]] auto end()         { return std::end(m_data); }
 
     [[nodiscard]] auto span()  const -> std::span<const std::byte>  { return m_data; }
     [[nodiscard]] auto ptr()   const -> const std::byte*            { return m_data.data(); }
@@ -257,6 +263,11 @@ private:
         m_data[m_offset + 6] = std::byte((x & 0x00000000'0000FF00) >>  8);
         m_data[m_offset + 7] = std::byte( x & 0x00000000'000000FF);
         m_offset += 8;
+    }
+
+    void impl(std::string_view x) {
+        using DT = bytes::difference_type;
+        std::ranges::copy(data_view{ x }, std::next(std::begin(m_data), static_cast<DT>(m_offset)));
     }
 
 };
