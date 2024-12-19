@@ -35,8 +35,18 @@ inline void load_env_levels() {
  * @brief   Initialize logging.
  *
  * Format: [2024-03-16 21:22:25.542140 +01:00] [NAME @THREAD_ID] [info]
+ *
+ * By default, the logging level is configurable via environment variable.
+ *
+ * ```sh
+ * SPDLOG_LEVEL=debug,<logger_name/topic>=off[,...]
+ * ```
  */
-inline auto init(const std::string& name) -> spdlog::logger& {
+inline auto init(const std::string& name, bool env_config = true) -> spdlog::logger& {
+    if (env_config) {
+        load_env_levels();
+    }
+
     spdlog::set_default_logger(spdlog::create<spdlog::sinks::ansicolor_stderr_sink_mt>(name));
     return detail::init(*spdlog::get(name));
 }
