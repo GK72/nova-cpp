@@ -5,6 +5,7 @@
  */
 
 #include "nova/data.hh"         // TODO(refact): only an alias definition is needed from the header
+#include "nova/error.hh"
 #include "nova/log.hh"
 #include "nova/tcp.hh"
 #include "nova/units.hh"
@@ -37,35 +38,24 @@ using asio::ip::tcp;
 
 namespace nova::tcp {
 
-// class connection;
-
-/**
- * @brief   Connection proxy
- */
-// class conproxy {
-// public:
-    // conproxy(connection& conn)
-        // : m_connection(conn)
-    // {}
-
-    // auto send(nova::data_view data) -> asio::awaitable<void>;
-
-// private:
-    // connection& m_connection;
-// };
-
 class connection : public std::enable_shared_from_this<connection> {
     static constexpr nova::units::bytes BufferSize { nova::units::MBytes{ 1 } };
 
 public:
-    explicit connection(::tcp::socket socket, std::unique_ptr<handler> handler)
+    connection(
+            ::tcp::socket socket,
+            std::unique_ptr<handler> handler,
+            std::shared_ptr<server_metrics> metrics
+    )
         : m_socket(std::move(socket))
         , m_handler(std::move(handler))
+        , m_metrics(std::move(metrics))
         , m_connection_info({
             m_socket.remote_endpoint().address().to_string(),
             m_socket.remote_endpoint().port()
         })
     {
+        m_metrics->n_connections += 1;
         m_handler->on_connection_init(m_connection_info);
     }
 
@@ -87,9 +77,14 @@ public:
         co_await asio::async_write(m_socket, asio::buffer(data.ptr(), data.size()), asio::use_awaitable);
     }
 
+    ~connection() {
+        m_metrics->n_connections -= 1;
+    }
+
 private:
     ::tcp::socket m_socket;
     std::unique_ptr<handler> m_handler;
+    std::shared_ptr<server_metrics> m_metrics;
 
     connection_info m_connection_info;
 
@@ -124,6 +119,8 @@ private:
             }
 
             buf.commit(n);
+            m_metrics->buffer += n;
+            m_metrics->buffer_capacity = buf.capacity();
 
             try {
                 while (
@@ -135,6 +132,7 @@ private:
                     )
                 ) {
                     buf.consume(processed);
+                    m_metrics->buffer -= processed;
                 }
             } catch (const std::exception& ex) {
                 m_handler->on_error(ex, m_connection_info);
@@ -158,6 +156,10 @@ server::server(const net_config& cfg)
 {}
 
 void server::start() {
+    if (m_factory == nullptr) {
+        throw exception<void>("No handler factory is set in TCP server");
+    }
+
     asio::co_spawn(
         m_acceptor.get_executor(),
         [this]() { return accept(); },
@@ -179,7 +181,12 @@ auto server::accept() -> asio::awaitable<void> {
     try {
         while (true) {
             ::tcp::socket socket = co_await m_acceptor.async_accept(asio::use_awaitable);
-            std::make_shared<connection>(std::move(socket), m_factory->create())->start();
+
+            std::make_shared<connection>(
+                std::move(socket),
+                m_factory->create(),
+                m_metrics
+            )->start();
         }
     } catch (const std::exception& e) {
         topic_log::error("nova-tcp", "{}", e.what());

@@ -15,6 +15,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #pragma GCC diagnostic pop
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -26,6 +27,12 @@ using port_type = std::uint_least16_t;
 struct net_config {
     std::string host;
     port_type port;
+};
+
+struct server_metrics {
+    std::atomic_uint64_t n_connections;
+    std::atomic_uint64_t buffer;
+    std::atomic_uint64_t buffer_capacity;
 };
 
 class server {
@@ -46,12 +53,17 @@ public:
     }
 
     [[nodiscard]] auto port() const -> port_type { return m_config.port; }
+    [[nodiscard]] auto metrics() -> const server_metrics& { return *m_metrics; }
+
+    [[nodiscard]] auto factory() -> handler_factory* { return m_factory.get(); }
 
 private:
     boost::asio::io_context m_io_context;
     boost::asio::ip::tcp::acceptor m_acceptor;
-    std::unique_ptr<handler_factory> m_factory;
+    std::unique_ptr<handler_factory> m_factory { nullptr };
     net_config m_config;
+
+    std::shared_ptr<server_metrics> m_metrics = std::make_shared<server_metrics>();
 
     auto accept() -> boost::asio::awaitable<void>;
 };
