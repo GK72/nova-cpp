@@ -6,6 +6,7 @@ else()
     message("Ccache cannot be found")
 endif()
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOVA_EXPERIMENTAL_FEATURE_SET)

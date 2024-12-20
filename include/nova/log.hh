@@ -41,8 +41,10 @@ inline void load_env_levels() {
  * ```sh
  * SPDLOG_LEVEL=debug,<logger_name/topic>=off[,...]
  * ```
+ *
+ * TODO(feat): setting facility
  */
-inline auto init(const std::string& name, bool env_config = true) -> spdlog::logger& {
+inline auto init(const std::string& name = "default", bool env_config = true) -> spdlog::logger& {
     if (env_config) {
         load_env_levels();
     }
@@ -106,6 +108,9 @@ inline void create(const std::string& name) {
     }
 }
 
+/**
+ * @brief   Create multiple loggers.
+ */
 inline void create(const std::vector<std::string>& names) {
     for (const auto& name : names) {
         create(name);
@@ -119,8 +124,6 @@ inline auto get(const std::string& name) -> spdlog::logger& {
     }
     return *logger;
 }
-
-// TODO: fallback to a default logger if not initialized
 
 template <typename ...Args>
 inline void critical(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {

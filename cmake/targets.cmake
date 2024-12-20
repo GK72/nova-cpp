@@ -40,3 +40,7 @@ target_link_libraries(nova INTERFACE
     nova-headers
     nova-tcp
 )
+
+if(NOVA_EXPERIMENTAL_FEATURE_SET)
+    target_link_libraries(nova INTERFACE stdc++exp)
+endif()

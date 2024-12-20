@@ -31,7 +31,6 @@ public:
 class handler_factory {
 public:
     virtual auto create() -> std::unique_ptr<handler> = 0;
-    virtual void context(std::any) { /* optional */ }
     virtual ~handler_factory() = default;
 };
 

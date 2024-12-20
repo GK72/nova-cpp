@@ -89,10 +89,13 @@ public:
     [[nodiscard]] auto end()   const { return std::end(m_data); }
     [[nodiscard]] auto end()         { return std::end(m_data); }
 
-    [[nodiscard]] auto span()  const -> std::span<const std::byte>  { return m_data; }
-    [[nodiscard]] auto ptr()   const -> const std::byte*            { return m_data.data(); }
-    [[nodiscard]] auto empty() const -> bool                        { return m_data.empty(); }
-    [[nodiscard]] auto size()  const -> std::size_t                 { return m_data.size(); }
+    [[nodiscard]] auto span()        const -> std::span<const std::byte>  { return m_data; }
+    [[nodiscard]] auto empty()       const -> bool                        { return m_data.empty(); }
+    [[nodiscard]] auto size()        const -> std::size_t                 { return m_data.size(); }
+
+    [[nodiscard]] auto ptr()         const -> const std::byte*  { return m_data.data(); }
+    [[nodiscard]] auto char_ptr()    const -> const char*       { return reinterpret_cast<const char*>(m_data.data()); }
+    [[nodiscard]] auto nc_char_ptr() const -> char*             { return const_cast<char*>(reinterpret_cast<const char*>(m_data.data())); }
 
     /**
      * @brief   Interpret data as number according to the type `T`.
