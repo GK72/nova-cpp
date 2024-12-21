@@ -43,10 +43,17 @@ namespace detail {
         #endif
         {}
 
-        [[nodiscard]] auto where() const noexcept -> const std::source_location& { return m_location; }
+        [[nodiscard]] auto where() const noexcept -> const std::source_location& {
+            return m_location;
+        }
+
+        [[nodiscard]] auto backtrace() const noexcept {
         #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
-        [[nodiscard]] auto backtrace() const noexcept { return m_backtrace; }
+            return m_backtrace;
+        #else
+            return "Backtrace: Not supported";
         #endif
+        }
 
     protected:
         std::source_location m_location;

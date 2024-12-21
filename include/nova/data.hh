@@ -76,11 +76,11 @@ public:
         : m_data(reinterpret_cast<const std::byte*>(ptr), size)
     {}
 
-    [[nodiscard]] data_view subview(std::size_t offset) {
+    [[nodiscard]] data_view subview(std::size_t offset) const {
         return data_view(m_data.subspan(offset));
     }
 
-    [[nodiscard]] data_view subview(std::size_t offset, std::size_t length) {
+    [[nodiscard]] data_view subview(std::size_t offset, std::size_t length) const {
         return data_view(m_data.subspan(offset, length));
     }
 

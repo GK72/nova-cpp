@@ -15,8 +15,6 @@
 #include <string_view>
 #include <span>
 
-// TODO: Make backtrace logging optional through the "experimental" macro
-
 #define NOVA_MAIN(func)                                                         \
     int main(int argc, char* argv[]) {                                          \
         try {                                                                   \
