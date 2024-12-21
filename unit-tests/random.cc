@@ -9,6 +9,12 @@
 #include <ranges>
 #include <cmath>
 
+TEST(Random, Seed) {
+    static constexpr auto Seed = 1;
+    const auto seed = nova::random(Seed).seed();
+    EXPECT_EQ(seed, Seed);
+}
+
 TEST(Random, OneNumber) {
     static constexpr int Number = 1;
     const auto number = nova::random().number(nova::range<int>{ Number, Number });

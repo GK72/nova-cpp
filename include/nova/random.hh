@@ -180,4 +180,16 @@ inline rng& random() {
     return obj;
 }
 
+/**
+ * @brief   Convenience accessor to the global `rng` instance
+ *
+ * Each thread will get its own instance.
+ *
+ * @param seed
+ */
+inline rng& random(std::random_device::result_type seed) {
+    static thread_local rng obj{ seed };
+    return obj;
+}
+
 } // namespace nova
