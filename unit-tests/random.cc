@@ -4,6 +4,7 @@
 #include "nova/random.h"
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <array>
 #include <ranges>
@@ -93,11 +94,16 @@ TEST(Random, RandomString_AlphabeticDistribution) {
 }
 
 TEST(Random, LowLessThanEqualHigh_Int_Assertion) {
-    EXPECT_THROW(nova::random().number(nova::range<int>{ 3, 2 }), nova::assertion_error);
+    EXPECT_THAT(
+        []() { nova::random().number(nova::range<int>{ 3, 2 }); },
+        testing::ThrowsMessage<nova::exception<void>>(
+            testing::HasSubstr("Assertion failed: ")
+        )
+    );
 }
 
 TEST(Random, LowLessThanEqualHigh_FloatNan_Assertion) {
-    EXPECT_THROW(nova::random().number(nova::range<float>{ 3.0F, NAN }), nova::assertion_error);
-    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN, 3.0F }), nova::assertion_error);
-    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN,  NAN }), nova::assertion_error);
+    EXPECT_THROW(nova::random().number(nova::range<float>{ 3.0F, NAN }), nova::exception<void>);
+    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN, 3.0F }), nova::exception<void>);
+    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN,  NAN }), nova::exception<void>);
 }
