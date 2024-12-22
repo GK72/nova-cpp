@@ -32,13 +32,10 @@ enum class endian : std::uint8_t {
     little,
 };
 
-class out_of_data_bounds : public std::out_of_range {
-public:
-    out_of_data_bounds(std::size_t pos, std::size_t length, std::size_t size)
-        : std::out_of_range(
-            fmt::format("Pos: {}, Len: {}, Size: {} (End: {})", pos, length, size, pos + length)
-        )
-    {}
+struct datacursor {
+    std::size_t pos;
+    std::size_t length;
+    std::size_t size;
 };
 
 namespace detail {
@@ -198,7 +195,7 @@ private:
     void boundary_check(std::size_t pos, std::size_t length) const {
         if constexpr (RuntimeBoundCheck) {
             if (size() < pos + length) {
-                throw out_of_data_bounds(pos, length, size());
+                throw exception<datacursor>("Out of bounds access", datacursor{ pos, length, size() });
             }
         }
         else {
@@ -276,3 +273,23 @@ private:
 };
 
 } // namespace nova
+
+template <>
+class fmt::formatter<nova::datacursor> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    constexpr auto format(const nova::datacursor& cursor, FmtContext& ctx) const {
+        return fmt::format_to(
+            ctx.out(),
+            "Pos={} Len={} End={} (Size={})",
+            cursor.pos,
+            cursor.length,
+            cursor.pos + cursor.length,
+            cursor.size
+        );
+    }
+};

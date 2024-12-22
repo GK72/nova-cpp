@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nova/data.hh"
+#include "nova/error.hh"
 
 #include <boost/system/detail/error_code.hpp>
 
@@ -23,7 +24,7 @@ public:
     virtual auto process(nova::data_view) -> std::size_t = 0;
     virtual void on_connection_init(const connection_info&) = 0;
     virtual void on_error(const boost::system::error_code&, const connection_info&) = 0;
-    virtual void on_error(const std::exception&, const connection_info&) = 0;
+    virtual void on_error(const exception_base&, const connection_info&) = 0;
     virtual ~handler() = default;
 };
 // end::tcp-handler[]

@@ -14,7 +14,6 @@
 #include <fmt/format.h>
 
 #include <cassert>
-#include <format>
 #include <source_location>
 #include <stdexcept>
 #include <string>
@@ -25,48 +24,44 @@
 
 namespace nova {
 
-namespace detail {
+class exception_base : public std::runtime_error {
+public:
+    exception_base(
+        const std::string& msg,
+        const std::source_location& location
+    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+        , const std::stacktrace& trace = std::stacktrace::current()
+    #endif
+    )
+        : std::runtime_error(msg)
+        , m_location(location)
+    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+        , m_backtrace(trace)
+    #endif
+    {}
 
-    class exception_base : public std::runtime_error {
-    public:
-        exception_base(
-            const std::string& msg,
-            const std::source_location& location
-        #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
-            , const std::stacktrace& trace = std::stacktrace::current()
-        #endif
-        )
-            : std::runtime_error(msg)
-            , m_location(location)
-        #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
-            , m_backtrace(trace)
-        #endif
-        {}
+    [[nodiscard]] auto where() const noexcept -> const std::source_location& {
+        return m_location;
+    }
 
-        [[nodiscard]] auto where() const noexcept -> const std::source_location& {
-            return m_location;
-        }
+    [[nodiscard]] auto backtrace() const noexcept {
+    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+        return m_backtrace;
+    #else
+        return "Backtrace: Not supported";
+    #endif
+    }
 
-        [[nodiscard]] auto backtrace() const noexcept {
-        #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
-            return m_backtrace;
-        #else
-            return "Backtrace: Not supported";
-        #endif
-        }
+protected:
+    std::source_location m_location;
+    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+    std::stacktrace m_backtrace;
+    #endif
 
-    protected:
-        std::source_location m_location;
-        #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
-        std::stacktrace m_backtrace;
-        #endif
-
-    };
-
-} // namespace detail
+};
 
 template <typename T>
-class exception : public detail::exception_base {
+class exception : public exception_base {
 public:
     exception(
         const std::string& msg,
@@ -77,7 +72,7 @@ public:
         #endif
     )
         : exception_base(
-            msg,
+            fmt::format("{} [{}]", msg, data),
             location
             #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
             , trace
@@ -93,7 +88,7 @@ private:
 };
 
 template <>
-class exception<void> : public detail::exception_base {
+class exception<void> : public exception_base {
 public:
     exception(
         const std::string& msg,
@@ -160,7 +155,7 @@ public:
     */
     template <typename FmtContext>
     constexpr auto format(const std::source_location& loc, FmtContext& ctx) const {
-        return std::format_to(
+        return fmt::format_to(
             ctx.out(),
             "{}:{}, from function `{}`",
             loc.file_name(),
@@ -180,7 +175,7 @@ public:
 
     template <typename FmtContext>
     constexpr auto format(const std::stacktrace_entry& entry, FmtContext& ctx) const {
-        return std::format_to(
+        return fmt::format_to(
             ctx.out(),
             "{}:{} : {}",
             entry.source_file(),

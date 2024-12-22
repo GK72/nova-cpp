@@ -134,12 +134,16 @@ private:
                     buf.consume(processed);
                     m_metrics->buffer -= processed;
                 }
-            } catch (const std::exception& ex) {
+            } catch (const exception_base& ex) {
                 m_handler->on_error(ex, m_connection_info);
                 close();
                 break;
+            } catch (const std::exception& ex) {
+                m_handler->on_error(exception<void>(ex.what()), m_connection_info);
+                close();
+                break;
             } catch (...) {
-                m_handler->on_error(std::runtime_error("Unknown error"), m_connection_info);
+                m_handler->on_error(exception<void>("Unknown error"), m_connection_info);
                 close();
                 break;
             }

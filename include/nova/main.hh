@@ -22,7 +22,7 @@
             return func(args | std::views::transform(                           \
                 [](const auto& x) { return std::string_view(x); })              \
             );                                                                  \
-        } catch (nova::detail::exception_base& ex) {                            \
+        } catch (nova::exception_base& ex) {                                    \
             spdlog::error(                                                      \
                 "Exception caught in main: {}\n{}\n{}",                         \
                 ex.what(),                                                      \
@@ -46,7 +46,7 @@
                 return EXIT_SUCCESS;                                            \
             }                                                                   \
             return func(*args);                                                 \
-        } catch (nova::detail::exception_base& ex) {                            \
+        } catch (nova::exception_base& ex) {                                    \
             spdlog::error(                                                      \
                 "Exception caught in main: {}\n{}\n{}",                         \
                 ex.what(),                                                      \

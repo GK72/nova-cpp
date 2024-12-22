@@ -2,6 +2,21 @@
  * Part of Nova C++ Library.
  *
  * Logging utilies.
+ *
+ * The following log levels are available both for the basic and topic logging.
+ * - critical
+ * - error
+ * - warn
+ * - info
+ * - debug
+ * - trace (for debugging state)
+ * - devel (trace level logs only in debug builds: use `SPDLOG_LEVEL=trace`
+ *   environment variable)
+ *
+ * TODOs:
+ * - Customizable logging facility, like "security"
+ * - Syslog support
+ * - File support with rotation
  */
 
 #pragma once
@@ -41,8 +56,6 @@ inline void load_env_levels() {
  * ```sh
  * SPDLOG_LEVEL=debug,<logger_name/topic>=off[,...]
  * ```
- *
- * TODO(feat): setting facility
  */
 inline auto init(const std::string& name = "default", bool env_config = true) -> spdlog::logger& {
     if (env_config) {
@@ -81,6 +94,16 @@ inline void debug(spdlog::format_string_t<Args...> fmt, Args &&...args) {
 template <typename ...Args>
 inline void trace(spdlog::format_string_t<Args...> fmt, Args &&...args) {
     spdlog::trace(fmt, std::forward<Args>(args)...);
+}
+
+template <typename ...Args>
+inline void devel(
+        [[maybe_unused]] spdlog::format_string_t<Args...> fmt,
+        [[maybe_unused]] Args&&...args)
+{
+    #ifndef NDEBUG
+    spdlog::trace(fmt, std::forward<Args>(args)...);
+    #endif
 }
 
 } // namespace log
@@ -153,6 +176,17 @@ inline void debug(const std::string& name, spdlog::format_string_t<Args...> fmt,
 template <typename ...Args>
 inline void trace(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
     get(name).trace(fmt, std::forward<Args>(args)...);
+}
+
+template <typename ...Args>
+inline void devel(
+        [[maybe_unused]] const std::string& name,
+        [[maybe_unused]] spdlog::format_string_t<Args...> fmt,
+        [[maybe_unused]] Args&&...args)
+{
+    #ifndef NDEBUG
+    get(name).trace(fmt, std::forward<Args>(args)...);
+    #endif
 }
 
 } // namespace topic_log
