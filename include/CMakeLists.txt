@@ -32,5 +32,6 @@ target_link_libraries(nova-deps INTERFACE
     fmt::fmt-header-only
     nlohmann_json::nlohmann_json
     spdlog::spdlog_header_only
+    libxmlpp::libxmlpp
     yaml-cpp::yaml-cpp
 )
