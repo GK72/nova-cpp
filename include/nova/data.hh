@@ -235,17 +235,20 @@ private:
     std::size_t m_offset = 0;
 
     void impl(std::uint8_t x) {
+        if (m_offset >= m_data.size()) { THROWUP; }
         m_data[m_offset] = std::byte(x);
         m_offset += 1;
     }
 
     void impl(std::uint16_t x) {
+        if (m_offset >= m_data.size()) { THROWUP; }
         m_data[m_offset    ] = std::byte((x & 0xFF00) >> 8);
         m_data[m_offset + 1] = std::byte( x & 0x00FF);
         m_offset += 2;
     }
 
     void impl(std::uint32_t x) {
+        if (m_offset >= m_data.size()) { THROWUP; }
         m_data[m_offset    ] = std::byte((x & 0xFF000000) >> 24);
         m_data[m_offset + 1] = std::byte((x & 0x00FF0000) >> 16);
         m_data[m_offset + 2] = std::byte((x & 0x0000FF00) >>  8);
@@ -254,6 +257,7 @@ private:
     }
 
     void impl(std::uint64_t x) {
+        if (m_offset >= m_data.size()) { THROWUP; }
         m_data[m_offset    ] = std::byte((x & 0xFF000000'00000000) >> 56);
         m_data[m_offset + 1] = std::byte((x & 0x00FF0000'00000000) >> 48);
         m_data[m_offset + 2] = std::byte((x & 0x0000FF00'00000000) >> 40);

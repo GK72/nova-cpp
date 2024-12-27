@@ -13,18 +13,19 @@
  * - devel (trace level logs only in debug builds: use `SPDLOG_LEVEL=trace`
  *   environment variable)
  *
- * TODOs:
- * - Customizable logging facility, like "security"
- * - Syslog support
- * - File support with rotation
+ * `nova::log::init()` must be called after the sinks and logger are created.
  */
 
 #pragma once
 
 #include <fmt/format.h>
+#include <memory>
+#include <spdlog/common.h>
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/ansicolor_sink.h>
 #include <spdlog/cfg/env.h>
+#include <spdlog/sinks/ansicolor_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/syslog_sink.h>
 
 #include <string>
 
@@ -111,7 +112,7 @@ inline void devel(
 namespace topic_log {
 
 /**
- * @brief   Initialize a topic logger.
+ * @brief   Initialize a topic logger with `stderr` color logger.
  *
  * It is a no-op if the logger is already initialized.
  *
@@ -132,11 +133,34 @@ inline void create(const std::string& name) {
 }
 
 /**
- * @brief   Create multiple loggers.
+ * @brief   Initialize multiple topic loggers with `stderr` color logger.
  */
 inline void create(const std::vector<std::string>& names) {
     for (const auto& name : names) {
         create(name);
+    }
+}
+
+/**
+ * @brief   Create a logger with custom sinks.
+ *
+ * No configuration happens, just registration.
+ */
+inline void create(const std::string& name, spdlog::sinks_init_list sinks) {
+    auto logger = std::make_shared<spdlog::logger>(name, sinks);
+    spdlog::register_logger(logger);
+}
+
+/**
+ * @brief   Create multiple loggers with custom sinks.
+ *
+ * All loggers receive the same sinks.
+ *
+ * No configuration happens, just registrations.
+ */
+inline void create(const std::vector<std::string>& names, spdlog::sinks_init_list sinks) {
+    for (const auto& name : names) {
+        create(name, sinks);
     }
 }
 
