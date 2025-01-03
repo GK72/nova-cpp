@@ -38,6 +38,9 @@ function msg() {
 function build-and-test() {
     baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" --config "${PROJECT_DIR}/.baldr-clang.yaml"
     ctest --output-on-failure --test-dir "${BUILD_DIR}/debug-clang++"
+
+    baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" -DNOVA_EXPERIMENTAL_FEATURE_SET=ON
+    ctest --output-on-failure --test-dir "${BUILD_DIR}/debug"
 }
 
 function main() {

@@ -1,3 +1,4 @@
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
 
 #include "nova/error.h"
@@ -36,7 +37,13 @@ TEST(Yaml, FundamentalTypes) {
     EXPECT_FLOAT_EQ(doc.lookup<float>("float"), 9.9f);
     EXPECT_EQ(doc.lookup<bool>("bool"), true);
     EXPECT_EQ(doc.lookup<std::string>("root.key"), "string");
-    EXPECT_THROW(std::ignore = doc.lookup<int>("root.key"), nova::parsing_error);
+
+    EXPECT_THAT(
+        [&]{ std::ignore = doc.lookup<int>("root.key"); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("error at line 1, column 1: bad conversion")
+        )
+    );
 }
 
 TEST(Yaml, Arrays) {

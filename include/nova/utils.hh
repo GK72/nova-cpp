@@ -7,7 +7,7 @@
 #pragma once
 
 #include "nova/error.hh"
-#include "nova/intrinsics.hh"
+#include "nova/expected.hh"
 #include "nova/types.hh"
 #include "nova/type_traits.hh"
 
@@ -20,8 +20,6 @@
 #include <chrono>
 #include <concepts>
 #include <cstdlib>
-#include <memory>
-#include <numeric>
 #include <ranges>
 #include <string>
 #include <string_view>

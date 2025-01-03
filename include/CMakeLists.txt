@@ -24,6 +24,10 @@ target_include_directories(nova INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
+if(NOVA_EXPERIMENTAL_FEATURE_SET)
+    target_link_libraries(nova INTERFACE stdc++exp)
+endif()
+
 code_analysis(nova INTERFACE)
 
 add_library(nova-deps INTERFACE)

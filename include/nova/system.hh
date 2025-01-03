@@ -10,10 +10,9 @@
 #pragma once
 
 #include "nova/error.hh"
+#include "nova/expected.hh"
 #include "nova/intrinsics.hh"
 #include "nova/std_extensions.hh"
-
-#include <utility>
 
 #ifdef NOVA_LINUX
 #include <sched.h>
@@ -22,6 +21,8 @@
 #else
 // TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif
+
+#include <string>
 
 namespace nova {
 
@@ -48,7 +49,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return unexpected<error>{ "Cannot set CPU affinity!" };
+        return unexpected<error>{ std::string{ "Cannot set CPU affinity!" } };
     }
 
     const auto result_priority = setpriority(
@@ -58,7 +59,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     );
 
     if (result_priority == -1) {
-        return unexpected<error>{ "Cannot set process priority!" };
+        return unexpected<error>{ std::string{ "Cannot set process priority!" } };
     }
     return empty{};
 }
@@ -79,7 +80,7 @@ inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> 
  * @brief   NOT IMPLEMENTED! It's a stub.
  */
 inline auto get_pid() -> int {
-    throw not_implemented("get_pid");
+    throw exception("Not implemented: `get_pid()`");
 }
 
 // TODO: emit a non-error warning that every major compiler likes
