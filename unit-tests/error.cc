@@ -16,6 +16,8 @@ TEST(Error, Exception) {
         EXPECT_STREQ(ex.what(), "ERROAR");
 
         const auto& nex = dynamic_cast<const nova::exception&>(ex);
+
+#ifdef NOVA_EXPERIMENTAL_FEATURE_SET
         EXPECT_THAT(
             fmt::format("{}", nex.where()),
             testing::HasSubstr(
@@ -23,10 +25,19 @@ TEST(Error, Exception) {
             )
         );
 
-#ifdef NOVA_EXPERIMENTAL_FEATURE_SET
         EXPECT_THAT(
             fmt::format("{}", nex.backtrace()),
             testing::HasSubstr("error.cc")
+        );
+#else
+        EXPECT_THAT(
+            fmt::format("{}", nex.where()),
+            testing::HasSubstr("Source location: Not supported")
+        );
+
+        EXPECT_THAT(
+            fmt::format("{}", nex.backtrace()),
+            testing::HasSubstr("Backtrace: Not supported")
         );
 #endif
     }

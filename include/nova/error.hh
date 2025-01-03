@@ -55,8 +55,12 @@ public:
         return m_message.c_str();
     }
 
-    [[nodiscard]] auto where() const noexcept -> const std::source_location& {
+    [[nodiscard]] auto where() const noexcept {
+    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
         return m_location;
+    #else
+        return "Source location: Not supported";
+    #endif
     }
 
     [[nodiscard]] auto backtrace() const noexcept {
