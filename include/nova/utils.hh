@@ -173,20 +173,6 @@ template <std::floating_point R = float, typename T>
 }
 
 /**
- * @brief   Initailize logging.
- *
- * Format: [2024-03-16 21:22:25.542140 +01:00] [NAME @THREAD_ID] [info]
- */
-inline auto log_init(const std::string& name) -> spdlog::logger& {
-    spdlog::set_default_logger(spdlog::create<spdlog::sinks::ansicolor_stdout_sink_mt>(name));
-
-    auto& logger = *spdlog::get(name);
-    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%f %z] [%n @%t] %^[%l]%$ %v");
-
-    return logger;
-}
-
-/**
  * @brief   A simple stopwatch measuring in nanosecond resolution.
  */
 class stopwatch {
