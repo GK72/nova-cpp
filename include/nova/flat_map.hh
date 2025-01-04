@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "type_traits.h"
+#include "type_traits.hh"
 
 #include <algorithm>
 #include <array>

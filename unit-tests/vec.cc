@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
+#include "nova/vec.hh"
 
-#include "nova/vec.h"
+#include <gtest/gtest.h>
 
 constexpr auto Epsilon = 1e-5;
 

@@ -12,10 +12,10 @@
  * Capability must be enabled: `sudo setcap cap_sys_nice+ep shielded`
  */
 
-#include "nova/main.h"
-#include "nova/system.h"
-#include "nova/threading.h"
-#include "nova/utils.h"
+#include <nova/main.hh>
+#include <nova/system.hh>
+#include <nova/threading.hh>
+#include <nova/utils.hh>
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>

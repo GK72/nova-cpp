@@ -31,4 +31,4 @@
 
 constexpr auto NovaVersionMajor = 0;
 constexpr auto NovaVersionMinor = 1;
-constexpr auto NovaVersionPatch = 3;
+constexpr auto NovaVersionPatch = 6;

@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
+#include "nova/units.hh"
 
-#include "nova/units.h"
+#include <gtest/gtest.h>
 
 #include <chrono>
 

@@ -1,6 +1,6 @@
-#include <gmock/gmock.h>
+#include "nova/flat_map.hh"
 
-#include "nova/flat_map.h"
+#include <gmock/gmock.h>
 
 #include <algorithm>
 #include <array>

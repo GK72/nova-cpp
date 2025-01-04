@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
+#include "nova/color.hh"
 
-#include "nova/color.h"
+#include <gtest/gtest.h>
 
 #include <type_traits>
 

@@ -1,6 +1,7 @@
-#include "nova/std_extensions.h"
+#include "nova/std_extensions.hh"
 
 #include <gtest/gtest.h>
+
 #include <type_traits>
 
 TEST(StdExt, ToUnderlying) {

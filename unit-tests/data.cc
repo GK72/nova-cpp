@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
+#include "nova/data.hh"
+#include "nova/utils.hh"
 
-#include "nova/data.h"
-#include "nova/utils.h"
+#include <gtest/gtest.h>
 
 #include <array>
 #include <cstddef>

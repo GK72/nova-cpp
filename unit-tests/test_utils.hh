@@ -2,10 +2,10 @@
  * Nova test utilities.
  */
 
+#include "nova/error.hh"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include "nova/error.hh"
 
 #define EXPECT_ASSERTION_FAIL(expr)                                            \
     EXPECT_THAT(                                                               \
