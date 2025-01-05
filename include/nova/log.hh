@@ -25,6 +25,7 @@
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
+#include <spdlog/sinks/ansicolor_sink.h>
 
 #include <memory>
 #include <string>
