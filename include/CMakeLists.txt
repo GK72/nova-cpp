@@ -1,6 +1,5 @@
 add_library(nova INTERFACE)
 
-file(GLOB_RECURSE NOVA_HEADER_FILES_DEPRECATED "*.h")
 file(GLOB_RECURSE NOVA_HEADER_FILES "*.hh")
 
 target_sources(nova
@@ -11,7 +10,6 @@ target_sources(nova
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}
     FILES
-    ${NOVA_HEADER_FILES_DEPRECATED}
     ${NOVA_HEADER_FILES}
 )
 
