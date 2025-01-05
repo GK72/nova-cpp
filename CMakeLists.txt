@@ -5,6 +5,7 @@ if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_BENCH "Build benchmark tests" OFF)
 option(NOVA_EXPERIMENTAL_FEATURE_SET "Enable experimental features that requires compiler/lib support" OFF)
 
 include(cmake/version.cmake)
@@ -26,6 +27,10 @@ if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(unit-tests)
     add_subdirectory(functional-tests)
+endif()
+
+if(BUILD_BENCH)
+    add_subdirectory(bench)
 endif()
 
 add_subdirectory(examples)

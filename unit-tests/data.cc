@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <string>
 #include <string_view>
 
 using namespace std::literals;
@@ -97,4 +98,81 @@ TEST(DataView, ErrorOutOfBounds) {
             testing::HasSubstr("Out of bounds access: Pos=1 Len=2 End=3 (Size=2)")
         )
     );
+}
+
+TEST(Serialization, Serializer_1byte_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint8_t{ 9 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "09");
+}
+
+TEST(Serialization, Serializer_2bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint16_t{ 256 + 255 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01ff");
+}
+
+TEST(Serialization, Serializer_4bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint32_t{ 16909060 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01020304");
+}
+
+TEST(Serialization, Serializer_8bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint64_t{ 72057594037928191 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01000000" "000000ff");
+}
+
+TEST(Serialization, Serializer_String) {
+    auto ser = nova::serializer_context{ };
+    ser("abc"s);
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "616263");
+}
+
+TEST(Serialization, Serializer_StringView) {
+    auto ser = nova::serializer_context{ };
+    ser("abc"sv);
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "616263");
+}
+
+struct data_t {
+    std::uint64_t xl;
+    std::string str;
+    std::uint32_t l;
+    std::uint16_t m;
+    std::uint8_t s;
+};
+
+namespace nova {
+
+template <>
+struct serializer<data_t> {
+    void operator()(serializer_context& ser, const data_t& x) {
+        ser(x.xl);
+        ser(x.str);
+        ser(x.l);
+        ser(x.m);
+        ser(x.s);
+    }
+};
+
+} // namespace nova
+
+TEST(Serialization, Serialize_FreeFunction) {
+    const auto data = data_t { 1, "abc", 1, 1, 1 };
+
+    EXPECT_EQ(
+        nova::data_view(nova::serialize(data)).as_hex_string(),
+        "00000000" "00000001"
+        "616263"
+        "00000001"
+        "0001"
+        "01"
+    );
+}
+
+TEST(Data, Identity_DataView_Serialization_BigEndian) {
+    constexpr auto x = std::uint16_t{ 333 };
+    EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);
 }
