@@ -76,8 +76,8 @@ namespace {
                 "Test failed!\n"
                 "Expected:{}\n"
                 "Actual: {}`",
-                nova::data_view(std::span(expected)).to_hex(),
-                nova::data_view(std::span(*file)).to_hex()
+                nova::data_view(std::span(expected)).as_hex_string(),
+                nova::data_view(std::span(*file)).as_hex_string()
             );
 
             return EXIT_FAILURE;

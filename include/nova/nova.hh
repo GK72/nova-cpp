@@ -30,5 +30,5 @@
 #include <nova/yaml.h>
 
 constexpr auto NovaVersionMajor = 0;
-constexpr auto NovaVersionMinor = 1;
-constexpr auto NovaVersionPatch = 3;
+constexpr auto NovaVersionMinor = 2;
+constexpr auto NovaVersionPatch = 0;
