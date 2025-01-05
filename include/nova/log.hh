@@ -1,7 +1,8 @@
 /**
  * Part of Nova C++ Library.
  *
- * Logging utilies.
+ * A logging wrapper around `spdlog`. The logger functions are completely abstracts `spdlog`,
+ * however the initialization functions and sinks are exposing `spdlog`.
  *
  * The following log levels are available both for the basic and topic logging.
  * - critical
@@ -13,18 +14,17 @@
  * - devel (trace level logs only in debug builds: use `SPDLOG_LEVEL=trace`
  *   environment variable)
  *
+ * Include `spdlog` headers for sinks, like: `#include <spdlog/sinks/ansicolor_sink.h>`
+ *
  * `nova::log::init()` must be called after the sinks and logger are created.
  */
 
 #pragma once
 
+#include <fmt/core.h>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/cfg/env.h>
-#include <spdlog/sinks/ansicolor_sink.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/syslog_sink.h>
 
 #include <memory>
 #include <string>
@@ -69,38 +69,38 @@ inline auto init(const std::string& name = "default", bool env_config = true) ->
 }
 
 template <typename ...Args>
-inline void critical(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void critical(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::critical(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void error(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void error(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::error(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void warn(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void warn(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::warn(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void info(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void info(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::info(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void debug(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void debug(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::debug(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void trace(spdlog::format_string_t<Args...> fmt, Args &&...args) {
+inline void trace(fmt::format_string<Args...> fmt, Args &&...args) {
     spdlog::trace(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void devel(
-        [[maybe_unused]] spdlog::format_string_t<Args...> fmt,
+        [[maybe_unused]] fmt::format_string<Args...> fmt,
         [[maybe_unused]] Args&&...args)
 {
     #ifndef NDEBUG
@@ -174,39 +174,39 @@ inline auto get(const std::string& name) -> spdlog::logger& {
 }
 
 template <typename ...Args>
-inline void critical(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void critical(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).critical(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void error(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void error(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).error(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void warn(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void warn(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).warn(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void info(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void info(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).info(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void debug(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void debug(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).debug(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
-inline void trace(const std::string& name, spdlog::format_string_t<Args...> fmt, Args&&...args) {
+inline void trace(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
     get(name).trace(fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void devel(
         [[maybe_unused]] const std::string& name,
-        [[maybe_unused]] spdlog::format_string_t<Args...> fmt,
+        [[maybe_unused]] fmt::format_string<Args...> fmt,
         [[maybe_unused]] Args&&...args)
 {
     #ifndef NDEBUG

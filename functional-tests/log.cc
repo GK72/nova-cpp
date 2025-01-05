@@ -2,6 +2,8 @@
 #include <nova/log.hh>
 #include <nova/main.hh>
 
+#include <spdlog/sinks/basic_file_sink.h>
+
 #include <cstdlib>
 
 constexpr auto logfile = "nova-test.log";
