@@ -16,6 +16,7 @@
 #include <nova/intrinsics.h>
 #include <nova/io.h>
 #include <nova/json.h>
+#include <nova/log.hh>
 #include <nova/main.h>
 #include <nova/random.h>
 #include <nova/static_string.h>
@@ -30,5 +31,5 @@
 #include <nova/yaml.h>
 
 constexpr auto NovaVersionMajor = 0;
-constexpr auto NovaVersionMinor = 1;
-constexpr auto NovaVersionPatch = 6;
+constexpr auto NovaVersionMinor = 2;
+constexpr auto NovaVersionPatch = 2;

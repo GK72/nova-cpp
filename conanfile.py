@@ -5,7 +5,7 @@ from conan.tools.build import check_min_cppstd
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.1.6"
+    version = "0.2.2"
     package_type = "library"
 
     license = "BSL"

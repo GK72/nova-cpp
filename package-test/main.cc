@@ -1,10 +1,9 @@
-#include <nova/nova.h>
+#include <nova/nova.hh>
 
 #include <cstdlib>
-#include <spdlog/spdlog.h>
 
 int main() {
-    nova::log_init("Test");
+    nova::log::init("Test");
     spdlog::info("Nova version: v{}.{}.{}", NovaVersionMajor, NovaVersionMinor, NovaVersionPatch);
 
     return EXIT_SUCCESS;
