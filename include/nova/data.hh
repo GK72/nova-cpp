@@ -1,11 +1,40 @@
+/**
+ * Part of Nova C++ Library.
+ *
+ * Handling binary data; serialization and deserialization.
+ *
+ * - Deserialization: `data_view` for safely interpreting binary data.
+ * - Serialization:
+ *   - `serializer_context` class for low-level handling
+ *   - `serialize(x)` free function for convenience
+ *
+ * A `serializer<T>` specialization is required for type `T` to be able to
+ * serialize it.
+ *
+ * ```cpp
+ * struct data {
+ *     std::uint8_t member;
+ * };
+ *
+ * template <>
+ * struct serializer<data>
+ *     void operator()(serializer_context& ser, const data& x) {
+ *         ser(x.member);
+ *     }
+ * };
+ * ```
+ */
+
 #pragma once
 
 #include "nova/error.hh"
+#include "nova/type_traits.hh"
 
 #include <fmt/core.h>
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -219,5 +248,109 @@ private:
 using data_view = detail::data_view<>;
 using data_view_be = detail::data_view<endian::big>;
 using data_view_le = detail::data_view<endian::little>;
+
+class serializer_context;
+
+template <typename T>
+struct serializer {
+    void operator()(serializer_context&, const T&) {
+        static_assert(dependent_false<T>, "Cannot serialize the type. Provide a serializer<T> specialization.");
+    }
+};
+
+/**
+ * @brief   Serializer that holds a byte array.
+ *
+ * The underlying vector holding the bytes is automatically resized with a
+ * geometric growth if needed. For performance oriented use cases consider
+ * creating the context with a predefined sized to avoid unnecessary
+ * reallocations. It will still resize if the preallocation is not large enough.
+ */
+class serializer_context {
+    static constexpr auto Byte = 8;
+
+public:
+    serializer_context(std::size_t size = 1)
+        : m_data(std::min(std::size_t{ 1 }, size))
+    {}
+
+    /**
+     * @brief   Serialize a value (Big-Endian).
+     */
+    template <typename T>
+    void operator()(T value) {
+        impl(value);
+    }
+
+    /**
+     * @brief   Return a copy of the serialized data in a byte array.
+     *
+     * If the underlying vector is bigger than the serialized bytes, it will be
+     * truncated.
+     */
+    [[nodiscard]] auto data() const -> bytes {
+        auto ret = m_data;
+        ret.resize(m_offset);
+        return ret;
+    }
+
+private:
+    bytes m_data;
+    std::size_t m_offset = 0;
+
+    template <std::unsigned_integral T>
+    void impl(const T& x) {
+        resize_if_needed(sizeof(T));
+
+        for (std::size_t i = 0; i < sizeof(T); ++i) {
+            const auto shift = (sizeof(T) - i - 1) * Byte;
+            const auto mask = static_cast<T>(T{ 0xFF } << shift);
+
+            m_data[m_offset] = std::byte{ static_cast<std::uint8_t>((x & mask) >> shift) };
+            ++m_offset;
+        }
+    }
+
+    void impl(std::string_view x) {
+        copy_range(x);
+    }
+
+    void impl(const std::string& x) {
+        copy_range(x);
+    }
+
+    template <typename T>
+    void impl(const T& x) {
+        serializer<T>{ }(*this, x);
+    }
+
+    template <typename Range>
+        requires std::contiguous_iterator<typename Range::iterator>
+            or std::is_array_v<Range>
+    void copy_range(const Range& src) {
+        resize_if_needed(src.size());
+
+        using DT = bytes::difference_type;
+        std::ranges::copy(data_view{ src }, std::next(std::begin(m_data), static_cast<DT>(m_offset)));
+        m_offset += std::size(src);
+    }
+
+    void resize_if_needed(std::size_t size) {
+        while (m_offset + size > m_data.size()) {
+            m_data.resize(m_data.size() * 2);
+        }
+    }
+
+};
+
+/**
+ * @brief   Serialize a type into a byte array.
+ */
+template <typename T>
+[[nodiscard]] auto serialize(const T& x, std::size_t size = 1) -> bytes {
+    auto ser = serializer_context{ size };
+    ser(x);
+    return ser.data();
+}
 
 } // namespace nova

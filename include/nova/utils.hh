@@ -12,8 +12,6 @@
 #include "nova/type_traits.hh"
 
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/ansicolor_sink.h>
 
 #include <algorithm>
 #include <array>
