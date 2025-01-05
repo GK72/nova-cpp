@@ -17,7 +17,7 @@
 
 namespace nova::detail {
 
-    struct datacursor {
+    struct data_cursor {
         std::size_t pos;
         std::size_t length;
         std::size_t size;
@@ -26,14 +26,14 @@ namespace nova::detail {
 } // namespace nova::detail
 
 template <>
-class fmt::formatter<nova::detail::datacursor> {
+class fmt::formatter<nova::detail::data_cursor> {
 public:
     constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
     template <typename FmtContext>
-    constexpr auto format(const nova::detail::datacursor& cursor, FmtContext& ctx) const {
+    constexpr auto format(const nova::detail::data_cursor& cursor, FmtContext& ctx) const {
         return fmt::format_to(
             ctx.out(),
             "Pos={} Len={} End={} (Size={})",
@@ -205,7 +205,7 @@ private:
     void boundary_check(std::size_t pos, std::size_t length) const {
         if constexpr (RuntimeBoundCheck) {
             if (size() < pos + length) {
-                throw exception("Out of bounds access: {}", detail::datacursor{ pos, length, size() });
+                throw exception("Out of bounds access: {}", detail::data_cursor{ pos, length, size() });
             }
         }
         else {
