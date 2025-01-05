@@ -1,10 +1,8 @@
-#include "gmock/gmock.h"
+#include "nova/error.hh"
+#include "nova/json.hh"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include "nova/error.h"
-#include "nova/json.h"
-#include "nova/io.h"
 
 #include <sstream>
 #include <tuple>

@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "nova/io.hh"
+
+#include <gtest/gtest.h>
 
 #include <cstddef>
 #include <sstream>

@@ -1,9 +1,10 @@
-#include "nova/intrinsics.h"
+#include "nova/intrinsics.hh"
 
 #ifndef NOVA_WIN
-#include <gtest/gtest.h>
 
-#include "nova/static_string.h"
+#include "nova/static_string.hh"
+
+#include <gtest/gtest.h>
 
 #include <string>
 #include <type_traits>

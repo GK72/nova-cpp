@@ -1,8 +1,8 @@
-#include "gmock/gmock.h"
-#include <gtest/gtest.h>
+#include "nova/error.hh"
+#include "nova/yaml.hh"
 
-#include "nova/error.h"
-#include "nova/yaml.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <tuple>
 

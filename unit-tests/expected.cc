@@ -1,4 +1,4 @@
-#include "nova/expected.h"
+#include "nova/expected.hh"
 
 #include <gtest/gtest.h>
 

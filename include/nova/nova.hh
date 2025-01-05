@@ -8,28 +8,28 @@
 
 #pragma once
 
-#include <nova/color.h>
-#include <nova/data.h>
-#include <nova/error.h>
-#include <nova/expected.h>
-#include <nova/flat_map.h>
-#include <nova/intrinsics.h>
-#include <nova/io.h>
-#include <nova/json.h>
+#include <nova/color.hh>
+#include <nova/data.hh>
+#include <nova/error.hh>
+#include <nova/expected.hh>
+#include <nova/flat_map.hh>
+#include <nova/intrinsics.hh>
+#include <nova/io.hh>
+#include <nova/json.hh>
 #include <nova/log.hh>
-#include <nova/main.h>
-#include <nova/random.h>
-#include <nova/static_string.h>
-#include <nova/std_extensions.h>
-#include <nova/system.h>
-#include <nova/threading.h>
-#include <nova/type_traits.h>
-#include <nova/types.h>
-#include <nova/units.h>
-#include <nova/utils.h>
-#include <nova/vec.h>
-#include <nova/yaml.h>
+#include <nova/main.hh>
+#include <nova/random.hh>
+#include <nova/static_string.hh>
+#include <nova/std_extensions.hh>
+#include <nova/system.hh>
+#include <nova/threading.hh>
+#include <nova/type_traits.hh>
+#include <nova/types.hh>
+#include <nova/units.hh>
+#include <nova/utils.hh>
+#include <nova/vec.hh>
+#include <nova/yaml.hh>
 
 constexpr auto NovaVersionMajor = 0;
-constexpr auto NovaVersionMinor = 2;
-constexpr auto NovaVersionPatch = 1;
+constexpr auto NovaVersionMinor = 3;
+constexpr auto NovaVersionPatch = 0;

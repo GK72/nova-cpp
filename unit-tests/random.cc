@@ -2,8 +2,7 @@
 
 #include "test_utils.hh"
 
-#include "nova/error.h"
-#include "nova/random.h"
+#include "nova/random.hh"
 
 #include <array>
 #include <ranges>
