@@ -29,8 +29,6 @@ namespace detail {
 
 } // namespace detail
 
-namespace exp {
-
 using detail::unexpect;
 
 template <typename T, typename E>
@@ -99,6 +97,38 @@ public:
         : m_vex(detail::unexpect, std::forward<Args>(args)...)
     {}
 
+    constexpr expected(const expected& other)
+        requires std::is_copy_constructible_v<T>
+             and std::is_copy_constructible_v<E>
+             and std::is_trivially_copy_constructible_v<T>
+             and std::is_trivially_copy_constructible_v<E>
+        = default;
+
+    constexpr expected(const expected& other)
+        requires std::is_copy_constructible_v<T>
+             and std::is_copy_constructible_v<E>
+             and (not (std::is_trivially_copy_constructible_v<T>
+                 and std::is_trivially_copy_constructible_v<E>
+             ))
+        : m_vex(other.has_value(), other.m_vex)
+    {}
+
+    constexpr expected(expected&& other)
+        requires std::is_move_constructible_v<T>
+             and std::is_move_constructible_v<E>
+             and std::is_trivially_move_constructible_v<T>
+             and std::is_trivially_move_constructible_v<E>
+        = default;
+
+    constexpr expected(expected&& other) noexcept
+        requires std::is_move_constructible_v<T>
+             and std::is_move_constructible_v<E>
+             and (not (std::is_trivially_move_constructible_v<T>
+                 and std::is_trivially_move_constructible_v<E>
+            ))
+        : m_vex(other.has_value(), std::move(other.m_vex))
+    {}
+
     // TODO(feat): rvalue pair
     // template <typename E2>
         // requires std::is_convertible_v<typename E2::type, E>
@@ -131,6 +161,17 @@ public:
             throw std::runtime_error("Bad expected access");
         }
         return m_vex.impl.v;
+    }
+
+    template <typename T2, typename E2>
+    [[nodiscard]] friend constexpr bool operator==(const expected& lhs, const expected<T2, E2>& rhs) {
+        return (
+            lhs.has_value() and rhs.has_value()
+                and *lhs == * rhs
+            ) or (
+            not lhs.has_value() and not rhs.has_value()
+                and lhs.error() == rhs.error()
+        );
     }
 
     // TODO(feat): rvalue pairs
@@ -239,9 +280,10 @@ private:
             : e(std::forward<Args>(args)...)
         {}
 
-        // TODO(feat): Copy and move constructors
-        //               default if trivially copyable/movable
-        //               else delete
+        constexpr vex_impl(const vex_impl&) = default;
+        constexpr vex_impl(vex_impl&&) = default;
+        constexpr vex_impl& operator=(const vex_impl&) = default;
+        constexpr vex_impl& operator=(vex_impl&&) = default;
 
         constexpr ~vex_impl() requires std::is_trivially_destructible_v<T>
                                     && std::is_trivially_destructible_v<E>
@@ -264,6 +306,12 @@ private:
     * Contains the `union` in a (somewhat) safe manner.
     */
     struct vex {
+        template <typename Other>
+        constexpr vex(bool has_value, Other&& other)
+            : impl(make_union(has_value, std::forward<Other>(other)))
+            , value(has_value)
+        {}
+
         template <typename ...Args>
         constexpr vex(detail::expect_t tag, Args&& ...args)
             : impl(tag, std::forward<Args>(args)...)
@@ -276,9 +324,18 @@ private:
             , value(false)
         {}
 
-        // TODO(feat): Copy and move constructors
-        //               default if trivially copyable/movable
-        //               else delete
+        template <typename Other>
+        constexpr vex_impl make_union(bool has_value, Other&& other) {
+            if (has_value) {
+                return vex_impl{ detail::expect, std::forward<Other>(other).impl.v };
+            }
+            return vex_impl{ detail::unexpect, std::forward<Other>(other).impl.e };
+        }
+
+        constexpr vex(const vex&) = default;
+        constexpr vex(vex&&) = default;
+        constexpr vex& operator=(const vex&) = default;
+        constexpr vex& operator=(vex&&) = default;
 
         constexpr ~vex() requires std::is_trivially_destructible_v<T>
                                && std::is_trivially_destructible_v<E>
@@ -298,5 +355,4 @@ private:
 
 };
 
-} // namespace exp
 } // namespace nova

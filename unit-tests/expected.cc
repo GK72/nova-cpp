@@ -9,10 +9,6 @@
 #include <string_view>
 #include <tuple>
 
-namespace nova {
-    using namespace exp;
-}
-
 TEST(Expected, TypeTraits) {
     using E = nova::expected<int, std::string_view>;
     static_assert(nova::is_expected_v<E>);
@@ -134,8 +130,55 @@ TEST(Expected, BoolConversion) {
     EXPECT_TRUE(not y);
 }
 
-// TEST(Expected, Copy) { }
-// TEST(Expected, Move) { }
+TEST(Expected, Copy) {
+    constexpr auto x = nova::expected<int, std::string_view>(1);
+    constexpr auto y = x;
+    constexpr auto z{ x };
+    EXPECT_EQ(*y, 1);
+    EXPECT_EQ(*z, 1);
+}
+
+TEST(Expected, Copy_NonTrivial) {
+    struct S {
+        int x;
+    };
+
+    constexpr auto x = nova::expected<S, int>(S{ 9 });
+    constexpr auto y = x;
+    EXPECT_EQ(y->x, 9);
+}
+
+TEST(Expected, Move) {
+    constexpr auto x = nova::expected<int, std::string_view>(1);
+    constexpr auto y = std::move(x);
+    EXPECT_EQ(*y, 1);
+}
+
+TEST(Expected, Move_NonTrivial) {
+    auto x = nova::expected<std::unique_ptr<int>, int>(std::make_unique<int>(9));
+    auto y = std::move(x);
+    EXPECT_EQ(**y, 9);
+
+    auto z{ std::move(y) };
+    EXPECT_EQ(**z, 9);
+}
+
+TEST(Expected, Equality) {
+    constexpr auto value_x = nova::expected<int, std::string_view>(1);
+    constexpr auto value_y = nova::expected<int, std::string_view>(1);
+    constexpr auto value_z = nova::expected<int, std::string_view>(3);
+    constexpr auto error_x = nova::expected<int, std::string_view>(nova::unexpect, "a");
+    constexpr auto error_y = nova::expected<int, std::string_view>(nova::unexpect, "a");
+    constexpr auto error_z = nova::expected<int, std::string_view>(nova::unexpect, "b");
+
+    EXPECT_EQ(value_x, value_y);
+    EXPECT_EQ(error_x, error_y);
+    EXPECT_NE(value_x, error_y);
+    EXPECT_NE(error_x, value_y);
+
+    EXPECT_NE(value_x, value_z);
+    EXPECT_NE(error_x, error_z);
+}
 
 TEST(Expected_MondadicOps, ValueOr) {
     constexpr auto x = nova::expected<int, std::string_view>(9);
