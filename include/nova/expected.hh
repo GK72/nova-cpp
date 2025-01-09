@@ -186,7 +186,7 @@ public:
 
     template <typename U>
         requires std::is_copy_constructible_v<T>
-              && std::is_convertible_v<U, T>
+             and std::is_convertible_v<U, T>
     [[nodiscard]] constexpr
     T value_or(U&& def) const& {
         return has_value() ? value() : static_cast<T>(std::forward<U>(def));
@@ -194,7 +194,7 @@ public:
 
     template <typename U>
         requires std::is_move_constructible_v<T>
-              && std::is_convertible_v<U, T>
+             and std::is_convertible_v<U, T>
     [[nodiscard]] constexpr
     T value_or(U&& def) && {
         return has_value() ? std::move(value()) : static_cast<T>(std::forward<U>(def));
@@ -202,7 +202,7 @@ public:
 
     template <typename U = E>
         requires std::is_copy_constructible_v<U>
-              && std::is_convertible_v<U, E>
+             and std::is_convertible_v<U, E>
     [[nodiscard]] constexpr
     E error_or(U&& def) const& {
         return has_value() ? std::forward<U>(def) : error();
@@ -210,7 +210,7 @@ public:
 
     template <typename U = E>
         requires std::is_move_constructible_v<U>
-              && std::is_convertible_v<U, E>
+             and std::is_convertible_v<U, E>
     [[nodiscard]] constexpr
     E error_or(U&& def) && {
         return has_value() ? std::forward<U>(def) : std::move(error());
@@ -220,7 +220,7 @@ public:
               typename R = std::remove_cvref_t<std::invoke_result_t<Func, T&>>
              >
         requires std::is_invocable_r_v<R, Func, T&>
-              && is_expected_v<R>
+             and is_expected_v<R>
     [[nodiscard]] constexpr
     auto and_then(Func func) const& {
         if (has_value()) {
@@ -233,7 +233,7 @@ public:
               typename R = std::remove_cvref_t<std::invoke_result_t<Func, T&&>>
              >
         requires std::is_invocable_r_v<R, Func, T&&>
-              && is_expected_v<R>
+             and is_expected_v<R>
     [[nodiscard]] constexpr
     auto and_then(Func func) && {
         if (has_value()) {
@@ -246,7 +246,7 @@ public:
               typename R = std::remove_cvref_t<std::invoke_result_t<Func, E&>>
              >
         requires std::is_invocable_r_v<R, Func, E&>
-              && is_expected_v<R>
+             and is_expected_v<R>
     [[nodiscard]] constexpr
     auto or_else(Func func) const& {
         if (has_value()) {
@@ -259,7 +259,7 @@ public:
               typename R = std::remove_cvref_t<std::invoke_result_t<Func, E&>>
              >
         requires std::is_invocable_r_v<R, Func, E&>
-              && is_expected_v<R>
+             and is_expected_v<R>
     [[nodiscard]] constexpr
     auto or_else(Func func) && {
         if (has_value()) {
@@ -280,13 +280,8 @@ private:
             : e(std::forward<Args>(args)...)
         {}
 
-        constexpr vex_impl(const vex_impl&) = default;
-        constexpr vex_impl(vex_impl&&) = default;
-        constexpr vex_impl& operator=(const vex_impl&) = default;
-        constexpr vex_impl& operator=(vex_impl&&) = default;
-
         constexpr ~vex_impl() requires std::is_trivially_destructible_v<T>
-                                    && std::is_trivially_destructible_v<E>
+                                    and std::is_trivially_destructible_v<E>
                               = default;
 
         /**
@@ -332,13 +327,8 @@ private:
             return vex_impl{ detail::unexpect, std::forward<Other>(other).impl.e };
         }
 
-        constexpr vex(const vex&) = default;
-        constexpr vex(vex&&) = default;
-        constexpr vex& operator=(const vex&) = default;
-        constexpr vex& operator=(vex&&) = default;
-
         constexpr ~vex() requires std::is_trivially_destructible_v<T>
-                               && std::is_trivially_destructible_v<E>
+                              and std::is_trivially_destructible_v<E>
                          = default;
 
         constexpr ~vex() {
