@@ -49,7 +49,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return unexpected<error>{ std::string{ "Cannot set CPU affinity!" } };
+        return { unexpect, "Cannot set CPU affinity!" };
     }
 
     const auto result_priority = setpriority(
@@ -59,7 +59,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     );
 
     if (result_priority == -1) {
-        return unexpected<error>{ std::string{ "Cannot set process priority!" } };
+        return { unexpect, "Cannot set process priority!" };
     }
     return empty{};
 }
