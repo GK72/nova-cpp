@@ -1,8 +1,8 @@
+#include "nova/types.hh"
+#include "nova/utils.hh"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include "nova/types.h"
-#include "nova/utils.h"
 
 #include <array>
 #include <chrono>

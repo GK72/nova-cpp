@@ -1,9 +1,8 @@
+#include "nova/error.hh"
+#include "nova/json.hh"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include "nova/error.h"
-#include "nova/json.h"
-#include "nova/io.h"
 
 #include <sstream>
 #include <tuple>
@@ -41,11 +40,21 @@ TEST(Json, DomPath) {
 }
 
 TEST(Json, EmptyInput) {
-    EXPECT_THROW(std::ignore = nova::json(""), nova::parsing_error);
+    EXPECT_THAT(
+        []{ std::ignore = nova::json(""); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("parse error at line 1, column 1")
+        )
+    );
 }
 
 TEST(Json, InvalidInput) {
-    EXPECT_THROW(std::ignore = nova::json(R"("key": 1)"), nova::parsing_error);
+    EXPECT_THAT(
+        []{ std::ignore = nova::json(R"("key": 1)"); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("parse error at line 1, column 6")
+        )
+    );
 }
 
 TEST(Json, ConstructFromJsonObject) {

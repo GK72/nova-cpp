@@ -1,6 +1,5 @@
 add_library(nova INTERFACE)
 
-file(GLOB_RECURSE NOVA_HEADER_FILES_DEPRECATED "*.h")
 file(GLOB_RECURSE NOVA_HEADER_FILES "*.hh")
 
 target_sources(nova
@@ -11,7 +10,6 @@ target_sources(nova
     FILE_SET HEADERS
     BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}
     FILES
-    ${NOVA_HEADER_FILES_DEPRECATED}
     ${NOVA_HEADER_FILES}
 )
 
@@ -23,6 +21,10 @@ target_include_directories(nova INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
+if(NOVA_EXPERIMENTAL_FEATURE_SET)
+    target_link_libraries(nova INTERFACE stdc++exp)
+endif()
 
 code_analysis(nova INTERFACE)
 

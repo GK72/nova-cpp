@@ -1,10 +1,12 @@
-#include <gtest/gtest.h>
+#include "nova/data.hh"
 
-#include "nova/data.h"
-#include "nova/utils.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <array>
+#include <cstdint>
 #include <cstddef>
+#include <string>
 #include <string_view>
 
 using namespace std::literals;
@@ -25,7 +27,21 @@ TEST(DataView, FromArray) {
     EXPECT_EQ(view_le.as_number<std::uint16_t>(0), 513);
 }
 
-TEST(DataView, InterpretAsNumberIndexed) {
+TEST(DataView, FromPtr) {
+    static constexpr auto data = "blah";
+    const auto view = nova::data_view(data, 4);
+    EXPECT_EQ(view.as_string(), "blah"sv);
+}
+
+TEST(DataView, InterpretAsNumber_NonStdLength) {
+    static constexpr auto data = std::to_array<unsigned char>({ 0x00, 0x01, 0x02, 0x03 });
+    const auto view_be = nova::data_view(data);
+    const auto view_le = nova::data_view_le(data);
+    EXPECT_EQ(view_be.as_number(0, 3), 258);
+    EXPECT_EQ(view_le.as_number(0, 3), (2 << 16) + (1 << 8));
+}
+
+TEST(DataView, InterpretAsNumber_Indexed) {
     static constexpr auto data = std::to_array<unsigned char>({ 0x00, 0x01, 0x02 });
     const auto view_be = nova::data_view(data);
     const auto view_le = nova::data_view_le(data);
@@ -49,20 +65,114 @@ TEST(DataView, SubView) {
     EXPECT_EQ(nova::data_view(data).subview(3).as_number<std::uint8_t>(0), 4);
 }
 
+TEST(DataView, SubView_Length) {
+    static constexpr auto data = std::to_array<unsigned char>({ 0x01, 0x02, 0x03, 0x04, 0x05 });
+    EXPECT_EQ(nova::data_view(data).subview(3, 1).size(), 1);
+}
+
 TEST(DataView, ToHexString) {
     static constexpr auto data = "Hello Nova"sv;
     EXPECT_EQ(
-        fmt::format("{}", nova::data_view(data).to_hex()),
-        fmt::format("{}0000: 48 65 6c 6c 6f 20 4e 6f 76 61", nova::NewLine)
+        nova::data_view(data).as_hex_string(),
+        "48656c6c6f204e6f7661"
+    );
+}
+
+TEST(DataView, ToVec) {
+    static constexpr auto data = "\x00\x61"sv;
+    EXPECT_EQ(
+        nova::data_view(data).to_vec(),
+        ( std::vector<std::byte>{
+            std::byte { 0x00 },
+            std::byte { 0x61 }
+        } )
     );
 }
 
 TEST(DataView, ErrorOutOfBounds) {
     static constexpr auto data = std::to_array<unsigned char>({ 0x01, 0x02 });
-    try {
-        std::ignore = nova::data_view(data).as_number(1, 2);
+
+    EXPECT_THAT(
+        []{ std::ignore = nova::data_view(data).as_number(1, 2); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("Out of bounds access: Pos=1 Len=2 End=3 (Size=2)")
+        )
+    );
+}
+
+TEST(Serialization, Serializer_1byte_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint8_t{ 9 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "09");
+}
+
+TEST(Serialization, Serializer_2bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint16_t{ 256 + 255 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01ff");
+}
+
+TEST(Serialization, Serializer_4bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint32_t{ 16909060 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01020304");
+}
+
+TEST(Serialization, Serializer_8bytes_BigEndian) {
+    auto ser = nova::serializer_context{ };
+    ser(std::uint64_t{ 72057594037928191 });
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "01000000" "000000ff");
+}
+
+TEST(Serialization, Serializer_String) {
+    auto ser = nova::serializer_context{ };
+    ser("abc"s);
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "616263");
+}
+
+TEST(Serialization, Serializer_StringView) {
+    auto ser = nova::serializer_context{ };
+    ser("abc"sv);
+    EXPECT_EQ(nova::data_view{ ser.data() }.as_hex_string(), "616263");
+}
+
+struct data_t {
+    std::uint64_t xl;
+    std::string str;
+    std::uint32_t l;
+    std::uint16_t m;
+    std::uint8_t s;
+};
+
+namespace nova {
+
+template <>
+struct serializer<data_t> {
+    void operator()(serializer_context& ser, const data_t& x) {
+        ser(x.xl);
+        ser(x.str);
+        ser(x.l);
+        ser(x.m);
+        ser(x.s);
     }
-    catch (const nova::out_of_data_bounds& ex) {
-        EXPECT_EQ(ex.what(), "Pos: 1, Len: 2, Size: 2 (End: 3)"sv);
-    }
+};
+
+} // namespace nova
+
+TEST(Serialization, Serialize_FreeFunction) {
+    const auto data = data_t { 1, "abc", 1, 1, 1 };
+
+    EXPECT_EQ(
+        nova::data_view(nova::serialize(data)).as_hex_string(),
+        "00000000" "00000001"
+        "616263"
+        "00000001"
+        "0001"
+        "01"
+    );
+}
+
+TEST(Data, Identity_DataView_Serialization_BigEndian) {
+    constexpr auto x = std::uint16_t{ 333 };
+    EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);
 }

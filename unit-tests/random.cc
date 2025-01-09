@@ -1,9 +1,8 @@
 #define NOVA_RUNTIME_ASSERTIONS
 
-#include "nova/error.h"
-#include "nova/random.h"
+#include "test_utils.hh"
 
-#include <gtest/gtest.h>
+#include "nova/random.hh"
 
 #include <array>
 #include <ranges>
@@ -93,11 +92,11 @@ TEST(Random, RandomString_AlphabeticDistribution) {
 }
 
 TEST(Random, LowLessThanEqualHigh_Int_Assertion) {
-    EXPECT_THROW(nova::random().number(nova::range<int>{ 3, 2 }), nova::assertion_error);
+    EXPECT_ASSERTION_FAIL(nova::random().number(nova::range<int>{ 3, 2 }));
 }
 
 TEST(Random, LowLessThanEqualHigh_FloatNan_Assertion) {
-    EXPECT_THROW(nova::random().number(nova::range<float>{ 3.0F, NAN }), nova::assertion_error);
-    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN, 3.0F }), nova::assertion_error);
-    EXPECT_THROW(nova::random().number(nova::range<float>{ NAN,  NAN }), nova::assertion_error);
+    EXPECT_ASSERTION_FAIL(nova::random().number(nova::range<float>{ 3.0F, NAN }));
+    EXPECT_ASSERTION_FAIL(nova::random().number(nova::range<float>{ NAN, 3.0F }));
+    EXPECT_ASSERTION_FAIL(nova::random().number(nova::range<float>{ NAN,  NAN }));
 }

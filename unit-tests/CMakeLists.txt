@@ -26,6 +26,7 @@ endfunction()
 
 test_file(test-color color.cc)
 test_file(test-data data.cc)
+test_file(test-error error.cc)
 test_file(test-expected expected.cc)
 test_file(test-flat-map flat_map.cc)
 test_file(test-io io.cc)

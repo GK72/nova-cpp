@@ -7,21 +7,17 @@
 #pragma once
 
 #include "nova/error.hh"
-#include "nova/intrinsics.hh"
+#include "nova/expected.hh"
 #include "nova/types.hh"
 #include "nova/type_traits.hh"
 
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/ansicolor_sink.h>
 
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <concepts>
 #include <cstdlib>
-#include <memory>
-#include <numeric>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -172,20 +168,6 @@ template <std::floating_point R = float, typename T>
     }
 
     return ret;
-}
-
-/**
- * @brief   Initailize logging.
- *
- * Format: [2024-03-16 21:22:25.542140 +01:00] [NAME @THREAD_ID] [info]
- */
-inline auto log_init(const std::string& name) -> spdlog::logger& {
-    spdlog::set_default_logger(spdlog::create<spdlog::sinks::ansicolor_stdout_sink_mt>(name));
-
-    auto& logger = *spdlog::get(name);
-    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%f %z] [%n @%t] %^[%l]%$ %v");
-
-    return logger;
 }
 
 /**

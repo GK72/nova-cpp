@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
+#include "nova/utils.hh"
 
-#include "nova/utils.h"
+#include <gtest/gtest.h>
 
 #include <chrono>
 #include <type_traits>

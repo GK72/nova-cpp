@@ -10,10 +10,9 @@
 #pragma once
 
 #include "nova/error.hh"
+#include "nova/expected.hh"
 #include "nova/intrinsics.hh"
 #include "nova/std_extensions.hh"
-
-#include <utility>
 
 #ifdef NOVA_LINUX
 #include <sched.h>
@@ -22,6 +21,8 @@
 #else
 // TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif
+
+#include <string>
 
 namespace nova {
 
@@ -40,7 +41,7 @@ struct process_scheduling {
  * @brief   Set CPU affinity and process priority.
  */
 [[nodiscard]] inline
-auto set_cpu_affinity(const process_scheduling& cfg) -> exp::expected<exp::empty, error> {
+auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     cpu_set_t cpu_set;
     CPU_ZERO(&cpu_set);
     CPU_SET(cfg.cpu, &cpu_set);
@@ -48,7 +49,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> exp::expected<exp::empty
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return { exp::unexpect, "Cannot set CPU affinity!" };
+        return { unexpect, "Cannot set CPU affinity!" };
     }
 
     const auto result_priority = setpriority(
@@ -58,9 +59,9 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> exp::expected<exp::empty
     );
 
     if (result_priority == -1) {
-        return { exp::unexpect, "Cannot set process priority!" };
+        return { unexpect, "Cannot set process priority!" };
     }
-    return exp::empty{};
+    return empty{};
 }
 
 [[nodiscard]] inline auto get_pid() -> int {
@@ -71,15 +72,15 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> exp::expected<exp::empty
 /**
  * @brief   NOT IMPLEMENTED! It's a stub.
  */
-inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> exp::expected<exp::empty, error> {
-    return exp::empty{};
+inline auto set_cpu_affinity([[maybe_unused]] const process_scheduling& cfg) -> expected<empty, error> {
+    return empty{};
 }
 
 /**
  * @brief   NOT IMPLEMENTED! It's a stub.
  */
 inline auto get_pid() -> int {
-    throw not_implemented("get_pid");
+    throw exception("Not implemented: `get_pid()`");
 }
 
 // TODO: emit a non-error warning that every major compiler likes
