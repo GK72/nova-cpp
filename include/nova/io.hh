@@ -61,11 +61,11 @@ namespace detail {
      * @brief   Validate path and return with it if it points to a file.
      */
     [[nodiscard]] inline
-    auto fs_path(const std::string& path) -> exp::expected<std::filesystem::path, error> {
+    auto fs_path(const std::string& path) -> expected<std::filesystem::path, error> {
         auto fs = std::filesystem::path(path);
         if (not std::filesystem::is_regular_file(fs)) {
             return {
-                exp::unexpect,
+                unexpect,
                 fmt::format(                                                                        // NOLINT(misc-include-cleaner) | Clang why are you like this? `#include <fmt/format.h>`
                     "{} is not a regular file!",
                     std::filesystem::absolute(fs).string()
@@ -107,11 +107,11 @@ private:
  */
 template <typename Parser = detail::def_parser>
 [[nodiscard]] auto read_file(const std::string& path, Parser parser = {})
-        -> exp::expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>, error>
+        -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>, error>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return { exp::unexpect, fs.error() };
+        return { unexpect, fs.error() };
     }
 
     auto stream = std::ifstream(*fs);
@@ -120,11 +120,11 @@ template <typename Parser = detail::def_parser>
 
 template <typename Parser = detail::def_bin_parser>
 [[nodiscard]] auto read_bin(const std::string& path, Parser parser = {})
-        -> exp::expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>, error>
+        -> expected<std::remove_cvref_t<std::invoke_result_t<Parser, std::istream&>>, error>
 {
     const auto fs = detail::fs_path(path);
     if (not fs.has_value()) {
-        return { exp::unexpect, fs.error() };
+        return { unexpect, fs.error() };
     }
 
     auto stream = std::ifstream(*fs, std::ios::binary);

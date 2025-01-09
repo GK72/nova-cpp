@@ -115,18 +115,18 @@ template <typename First, typename Second, typename ...Tail>
     return concat(result, tail...);
 }
 
-[[nodiscard]] inline auto getenv(const std::string& env_name) -> exp::expected<std::string, error> {
+[[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string, error> {
 #ifdef NOVA_WIN
     char* env;
     // size_t len;
     errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
 
     if (env == nullptr) {
-        return { exp::unexpect,fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect,fmt::format("Environment variable is not set: {}", env_name) };
     }
 
     if (err) {
-        return { exp::unexpect,fmt::format("Error querying environment variable: {}", env_name) };
+        return { unexpect,fmt::format("Error querying environment variable: {}", env_name) };
     }
 
     const auto ret = std::string{ env };
@@ -136,7 +136,7 @@ template <typename First, typename Second, typename ...Tail>
 #else
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return { exp::unexpect, fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect, fmt::format("Environment variable is not set: {}", env_name) };
     }
     return { env };
 #endif
