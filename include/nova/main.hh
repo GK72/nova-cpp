@@ -36,6 +36,7 @@
         } catch (...) {                                                         \
             spdlog::error("Unknown exception caught in main");                  \
         }                                                                       \
+        return EXIT_FAILURE;                                                    \
     }
 
 #define NOVA_MAIN_ARG_PARSE(func, parse)                                        \
@@ -60,4 +61,5 @@
         } catch (...) {                                                         \
             spdlog::error("Unknown exception caught in main");                  \
         }                                                                       \
+        return EXIT_FAILURE;                                                    \
     }

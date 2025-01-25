@@ -112,4 +112,4 @@ auto entrypoint([[maybe_unused]] auto args) -> int {
     return EXIT_SUCCESS;
 }
 
-MAIN(entrypoint);
+NOVA_MAIN(entrypoint);
