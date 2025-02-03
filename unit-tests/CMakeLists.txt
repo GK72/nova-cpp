@@ -1,9 +1,17 @@
+# All test targets are discovered automatically.
+
+# The convention is to use underscores for multi-word filenames.
+# The will be replaced with hyphens for target names and they are prefixed with
+# `test-`.
+
+# All targets are linked with `nova` target with all dependencies.
+
 find_package(GTest REQUIRED)
 
 include(CTest)
 include(GoogleTest)
 
-function(test_file TARGET_NAME SOURCE_FILE)
+function(add_test_target TARGET_NAME SOURCE_FILE)
     add_executable(${TARGET_NAME} ${SOURCE_FILE})
 
     target_link_libraries(${TARGET_NAME} PRIVATE
@@ -24,18 +32,13 @@ function(test_file TARGET_NAME SOURCE_FILE)
     )
 endfunction()
 
-test_file(test-color color.cc)
-test_file(test-data data.cc)
-test_file(test-error error.cc)
-test_file(test-expected expected.cc)
-test_file(test-flat-map flat_map.cc)
-test_file(test-io io.cc)
-test_file(test-json json.cc)
-test_file(test-random random.cc)
-test_file(test-static-string static_string.cc)
-test_file(test-std-extensions std_extensions.cc)
-test_file(test-type-traits type_traits.cc)
-test_file(test-units units.cc)
-test_file(test-utils utils.cc)
-test_file(test-vec vec.cc)
-test_file(test-yaml yaml.cc)
+function(discover_tests_in_directory)
+    file(GLOB TEST_SOURCES "*.cc")
+    foreach(TEST_SOURCE ${TEST_SOURCES})
+        get_filename_component(MODULE_NAME ${TEST_SOURCE} NAME_WE)
+        string(REPLACE "_" "-" MODULE_NAME ${MODULE_NAME})
+        add_test_target(test-${MODULE_NAME} ${TEST_SOURCE})
+    endforeach()
+endfunction()
+
+discover_tests_in_directory()
