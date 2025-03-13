@@ -176,3 +176,28 @@ TEST(Data, Identity_DataView_Serialization_BigEndian) {
     constexpr auto x = std::uint16_t{ 333 };
     EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);
 }
+
+TEST(Data, StreamBuffer) {
+    const auto data = nova::data_view("abc"sv);
+    auto buf = nova::stream_buffer{ 6 };
+    buf.write(data.ptr(), 3);
+    buf.write(data.ptr(), 3);
+
+    EXPECT_EQ(buf.view().as_string(), "abcabc");
+    buf.consume(2);
+    EXPECT_EQ(buf.view().as_string(),   "cabc");
+
+    // FIXME: Test fails; throw!
+    EXPECT_THROW(buf.write(data.ptr(), 3), nova::exception);
+    EXPECT_EQ(buf.view().as_string(), "cabcabc");
+}
+
+TEST(Data, StreamBuffer_Overflow) {
+    const auto data = std::string(256, 'a');
+    const auto view = nova::data_view(data);
+    auto buf = nova::stream_buffer{ 512 };
+    buf.write(view.ptr(), 256);
+
+    EXPECT_EQ(buf.size(), 256);
+    EXPECT_EQ(buf.view().size(), 256);
+}

@@ -39,6 +39,7 @@
 #include <cstdint>
 #include <iterator>
 #include <span>
+#include <streambuf>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -352,5 +353,127 @@ template <typename T>
     ser(x);
     return ser.data();
 }
+
+// TODO(feat): Allocator-aware buffer.
+class stream_buffer : public std::basic_streambuf<std::byte> {
+    using Base = std::basic_streambuf<std::byte>;
+    using difference_type = std::vector<std::byte>::difference_type;
+
+    static constexpr auto BufferDelta = 128;
+
+public:
+    stream_buffer(long max_size)
+        : m_stream(this)
+        , m_max_size(max_size)
+    {
+        long pend = BufferDelta;
+        m_data.reserve(BufferDelta);
+        Base::setg(m_data.data(), m_data.data(), m_data.data());
+        Base::setp(m_data.data(), std::next(m_data.data(), pend));
+    }
+
+    [[nodiscard]] auto size() const -> std::size_t {
+        const auto d = std::distance(Base::gptr(), Base::pptr());
+        nova_assert(d >= 0);    // TODO: Prove that this is always true.
+        return static_cast<std::size_t>(d);
+    }
+
+    [[nodiscard]] auto view() const -> data_view {
+        return { std::next(m_data.data(), beg()), size() };
+    }
+
+    auto write(const std::byte* ptr, long n) {
+        m_stream.write(ptr, n);
+    }
+
+    auto consume(difference_type n) {
+        if (Base::egptr() < Base::pptr()) {
+            setg(m_data.data(), Base::gptr(), Base::pptr());
+        }
+
+        if (std::next(Base::gptr(), n) > Base::pptr()) {
+            n = std::distance(Base::gptr(), Base::pptr());
+        }
+
+        Base::gbump(static_cast<int>(n));
+    }
+
+private:
+    std::vector<std::byte> m_data;
+    std::basic_ostream<std::byte> m_stream;
+    long m_max_size;
+
+    [[nodiscard]] auto beg() const -> difference_type {
+        const auto* ptr = Base::gptr();
+        return std::distance(m_data.data(), ptr);
+    }
+
+    int_type underflow() override {
+        if (Base::gptr() < Base::pptr()) {
+            Base::setg(m_data.data(), gptr(), pptr());
+            return traits_type::to_int_type(*gptr());
+        }
+        return traits_type::eof();
+    }
+
+    int_type overflow(int_type c = traits_type::eof()) override {
+        if (traits_type::eq_int_type(c, traits_type::eof())) {
+            return traits_type::not_eof(c);
+        }
+
+        if (Base::pptr() == Base::epptr()) {
+            auto buffer_size = std::distance(Base::gptr(), Base::pptr());
+            if (buffer_size < m_max_size && m_max_size - buffer_size < BufferDelta) {
+                reserve(m_max_size - buffer_size);
+            }
+            else {
+                reserve(BufferDelta);
+            }
+        }
+
+        *Base::pptr() = traits_type::to_char_type(c);
+        Base::pbump(1);
+        return c;
+    }
+
+    void reserve(long n) {
+        // Get current stream positions as offsets.
+        auto gnext = std::distance(m_data.data(), Base::gptr());
+        auto pnext = std::distance(m_data.data(), Base::pptr());
+        auto pend = std::distance(m_data.data(), Base::epptr());
+
+        // Check if there is already enough space in the put area.
+        if (n <= pend - pnext) {
+            return;
+        }
+
+        // Shift existing contents of get area to start of buffer.
+        if (gnext > 0) {
+            pnext -= gnext;
+            std::memmove(
+                m_data.data(),
+                std::next(m_data.data(), gnext),
+                static_cast<std::size_t>(pnext)
+            );
+        }
+
+        // Ensure buffer is large enough to hold at least the specified size.
+        if (n > pend - pnext) {
+            if (n <= m_max_size && pnext <= m_max_size - n) {
+                pend = pnext + n;
+                m_data.resize(static_cast<std::size_t>(std::max<long>(pend, 1)));
+            }
+            else {
+                // TODO(err): Avoid exceptions.
+                throw exception("Streambuf too long");
+            }
+        }
+
+        // Update stream positions.
+        setg(m_data.data(), m_data.data(), std::next(m_data.data(), pnext));
+        setp(std::next(m_data.data(), pnext), std::next(m_data.data(), pend));
+    }
+
+};
 
 } // namespace nova
