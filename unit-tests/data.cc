@@ -1,4 +1,5 @@
 #include "nova/data.hh"
+#include "test_utils.hh"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -9,6 +10,7 @@
 #include <string>
 #include <string_view>
 
+using namespace nova::literals;
 using namespace std::literals;
 
 TEST(DataView, FromString) {
@@ -87,6 +89,11 @@ TEST(DataView, ToVec) {
             std::byte { 0x61 }
         } )
     );
+}
+
+TEST(DataView, DataLiteral) {
+    EXPECT_EQ("abc"_data.as_hex_string(), "616263");
+    EXPECT_EQ("\x00\x01\x02"_data.as_hex_string(), "000102");
 }
 
 TEST(DataView, ErrorOutOfBounds) {
@@ -177,26 +184,58 @@ TEST(Data, Identity_DataView_Serialization_BigEndian) {
     EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);
 }
 
-TEST(Data, StreamBuffer) {
-    const auto data = nova::data_view("abc"sv);
-    auto buf = nova::stream_buffer{ 6 };
-    buf.write(data.ptr(), 3);
-    buf.write(data.ptr(), 3);
+TEST(Data, StreamBuffer_Write) {
+    auto buf = nova::stream_buffer{ 10 };
+    EXPECT_EQ(buf.write("Hello"_data), 5);
+    EXPECT_EQ(buf.write(" Nova"_data), 5);
 
-    EXPECT_EQ(buf.view().as_string(), "abcabc");
-    buf.consume(2);
-    EXPECT_EQ(buf.view().as_string(),   "cabc");
-
-    // FIXME: Test fails; throw!
-    EXPECT_THROW(buf.write(data.ptr(), 3), nova::exception);
-    EXPECT_EQ(buf.view().as_string(), "cabcabc");
+    EXPECT_EQ(buf.view().as_string(), "Hello Nova");
 }
 
-TEST(Data, StreamBuffer_Overflow) {
+TEST(Data, StreamBuffer_Consume) {
+    auto buf = nova::stream_buffer{ 10 };
+    EXPECT_EQ(buf.write("Hello Nova"_data), 10);
+    buf.consume(6);
+    EXPECT_EQ(buf.view().as_string(), "Nova");
+}
+
+TEST(Data, StreamBuffer_WriteConsumeLoop) {
+    auto buf = nova::stream_buffer{ 10 };
+    EXPECT_EQ(buf.write("Hello "_data), 6);
+
+    auto data = "overflow"_data;
+    auto n = buf.write(data);
+    EXPECT_EQ(n, 4);
+    EXPECT_EQ(buf.view().as_string(), "Hello over");
+
+    buf.consume(4);
+    EXPECT_EQ(buf.view().as_string(),     "o over");
+
+    EXPECT_EQ(buf.write(data.subview(n)), 4);
+    EXPECT_EQ(buf.view().as_string(), "o overflow");
+}
+
+TEST(Data, StreamBuffer_WriteToFull) {
+    auto buf = nova::stream_buffer{ 10 };
+    EXPECT_EQ(buf.write("Hello Nova"_data), 10);
+    EXPECT_EQ(buf.write("a"_data), 0);
+    EXPECT_EQ(buf.write("a"_data), 0);
+    EXPECT_EQ(buf.write("Hello Nova"_data), 0);
+}
+
+TEST(Data, StreamBuffer_ConsumeAll) {
+    auto buf = nova::stream_buffer{ 10 };
+    EXPECT_EQ(buf.write("Hello Nova"_data), 10);
+    EXPECT_EQ(buf.view().as_string(), "Hello Nova");
+
+    buf.consume();
+    EXPECT_TRUE(buf.view().empty());
+}
+
+TEST(Data, StreamBuffer_ResizingBuffer) {
     const auto data = std::string(256, 'a');
-    const auto view = nova::data_view(data);
     auto buf = nova::stream_buffer{ 512 };
-    buf.write(view.ptr(), 256);
+    EXPECT_EQ(buf.write(nova::data_view(data)), 256);
 
     EXPECT_EQ(buf.size(), 256);
     EXPECT_EQ(buf.view().size(), 256);

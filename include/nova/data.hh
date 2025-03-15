@@ -45,6 +45,12 @@
 #include <type_traits>
 #include <vector>
 
+// TODO: Implement `std::char_traits<std::byte>` or find another way.
+//
+// References:
+// - /usr/include/c++/14.2.1/bits/char_traits.h
+// - https://github.com/llvm/llvm-project/blob/llvmorg-16.0.6/libcxx/include/__string/char_traits.h
+
 namespace nova::detail {
 
     struct data_cursor {
@@ -250,6 +256,15 @@ using data_view = detail::data_view<>;
 using data_view_be = detail::data_view<endian::big>;
 using data_view_le = detail::data_view<endian::little>;
 
+namespace literals {
+
+    [[nodiscard]] inline
+    auto operator""_data(const char* str, std::size_t n) noexcept {
+        return data_view{ str, n };
+    }
+
+} // namespace literals
+
 class serializer_context;
 
 template <typename T>
@@ -354,100 +369,197 @@ template <typename T>
     return ser.data();
 }
 
-// TODO(feat): Allocator-aware buffer.
+/**
+ * @brief   A stream buffer for binary data integrated with `data_view` (Big-Endian).
+ *
+ * Example code for writing into a socket.
+ *
+ * ```
+ * auto buf = nova::stream_buffer{ 4096 };
+ *
+ * // Check `n` to see whether the complete data is written to buffer.
+ * std::size_t n = buf.write("some binary data: \x00\x01\x02..."_data);
+ *
+ * while (not buf.empty()) {
+ *     auto data = buf.view();
+ *     auto n = send(socket, data.ptr(), data.size());
+ *     buf.consume(n);
+ * }
+ * ```
+ *
+ * Six pointers are used to keep track of read and write area of the buffer.
+ * - `eback`: Beginning of get area.
+ * - `gptr`: Current byte of get area.
+ * - `egptr`: End of get area.
+ *
+ * - `pbase`: Beginning of put area.
+ * - `pptr`: Current byte of put area.
+ * - `epptr`: End of put area.
+ */
+template <typename Allocator = std::allocator<std::byte>>
 class stream_buffer : public std::basic_streambuf<std::byte> {
-    using Base = std::basic_streambuf<std::byte>;
+    using base = std::basic_streambuf<std::byte>;
     using difference_type = std::vector<std::byte>::difference_type;
 
-    static constexpr auto BufferDelta = 128;
+    static constexpr long DefaultBufferDelta = 128;
 
 public:
-    stream_buffer(long max_size)
-        : m_stream(this)
-        , m_max_size(max_size)
+    using streamsize = std::streamsize;
+
+    /**
+     * @brief   Allocates a buffer.
+     *
+     * Initial size is at most `buffer_delta`.
+     */
+    stream_buffer(long max_size, long buffer_delta = DefaultBufferDelta)
+        : m_max_size(max_size)
+        , m_buffer_delta(buffer_delta)
     {
-        long pend = BufferDelta;
-        m_data.reserve(BufferDelta);
-        Base::setg(m_data.data(), m_data.data(), m_data.data());
-        Base::setp(m_data.data(), std::next(m_data.data(), pend));
+        long pend = std::min(max_size, m_buffer_delta);
+        m_data.reserve(static_cast<std::size_t>(pend));
+        base::setg(m_data.data(), m_data.data(), m_data.data());
+        base::setp(m_data.data(), std::next(m_data.data(), pend));
     }
 
     [[nodiscard]] auto size() const -> std::size_t {
-        const auto d = std::distance(Base::gptr(), Base::pptr());
-        nova_assert(d >= 0);    // TODO: Prove that this is always true.
+        const auto d = std::distance(base::gptr(), base::pptr());
         return static_cast<std::size_t>(d);
     }
 
+    [[nodiscard]] auto empty() const -> bool {
+        return size() == 0;
+    }
+
+    /**
+     * @brief   Data between `gptr` and `pptr`, i.e. avaliable but unread data.
+     */
     [[nodiscard]] auto view() const -> data_view {
         return { std::next(m_data.data(), beg()), size() };
     }
 
-    auto write(const std::byte* ptr, long n) {
-        m_stream.write(ptr, n);
+    /**
+     * @brief   Write data from view into the buffer.
+     *
+     * @returns with the number of bytes written into the buffer.
+     */
+    [[nodiscard]] auto write(data_view data) -> std::size_t {
+        return static_cast<std::size_t>(
+            base::sputn(data.ptr(), static_cast<streamsize>(data.size()))
+        );
     }
 
-    auto consume(difference_type n) {
-        if (Base::egptr() < Base::pptr()) {
-            setg(m_data.data(), Base::gptr(), Base::pptr());
+    /**
+     * @brief   Read some number of bytes.
+     *
+     * @returns with the number of successfully read bytes.
+     *
+     * Note: Not (yet) supported use case.
+     */
+    // [[nodiscard]] auto read(std::size_t n) -> std::size_t {
+        // auto* ptr = ...;
+        // const auto r = base::sgetn(ptr, static_cast<streamsize>(n));
+        // return r;
+    // }
+
+    /**
+     * @brief   Consume everything, effectively clearing the buffer.
+     *
+     * It will not resize the underlying buffer.
+     */
+    void consume() {
+        consume(static_cast<difference_type>(size()));
+    }
+
+    /**
+     * @brief   Consume some number of bytes from the buffer.
+     */
+    void consume(difference_type n) {
+        if (base::egptr() < base::pptr()) {
+            setg(m_data.data(), base::gptr(), base::pptr());
         }
 
-        if (std::next(Base::gptr(), n) > Base::pptr()) {
-            n = std::distance(Base::gptr(), Base::pptr());
+        if (std::next(base::gptr(), n) > base::pptr()) {
+            n = std::distance(base::gptr(), base::pptr());
         }
 
-        Base::gbump(static_cast<int>(n));
+        base::gbump(static_cast<int>(n));
     }
 
 private:
     std::vector<std::byte> m_data;
-    std::basic_ostream<std::byte> m_stream;
     long m_max_size;
+    long m_buffer_delta;
 
+    /**
+     * @brief   Get area calculated from the beginning of the buffer.
+     */
     [[nodiscard]] auto beg() const -> difference_type {
-        const auto* ptr = Base::gptr();
+        const auto* ptr = base::gptr();
         return std::distance(m_data.data(), ptr);
     }
 
+    /**
+     * @brief   Called when there is no more data to read.
+     *
+     * Note: Read operation is not (yet) supported.
+     * Use `view()` to access the content of the buffer and
+     * call `consume()` to discard the data that is no longer needed.
+     */
     int_type underflow() override {
-        if (Base::gptr() < Base::pptr()) {
-            Base::setg(m_data.data(), gptr(), pptr());
+        if (base::gptr() < base::pptr()) {
+            base::setg(m_data.data(), gptr(), pptr());
             return traits_type::to_int_type(*gptr());
         }
         return traits_type::eof();
     }
 
+    /**
+     * @brief   Called when the end of the write buffer is reached.
+     *
+     * @returns `eof` to indicate failure to ensure free write space.
+     */
     int_type overflow(int_type c = traits_type::eof()) override {
         if (traits_type::eq_int_type(c, traits_type::eof())) {
             return traits_type::not_eof(c);
         }
 
-        if (Base::pptr() == Base::epptr()) {
-            auto buffer_size = std::distance(Base::gptr(), Base::pptr());
-            if (buffer_size < m_max_size && m_max_size - buffer_size < BufferDelta) {
-                reserve(m_max_size - buffer_size);
-            }
-            else {
-                reserve(BufferDelta);
+        if (base::pptr() == base::epptr()) {
+            long n = [&]() {
+                auto buffer_size = std::distance(base::gptr(), base::pptr());
+                if (buffer_size < m_max_size && m_max_size - buffer_size < m_buffer_delta) {
+                    return m_max_size - buffer_size;
+                }
+                return m_buffer_delta;
+            }();
+
+            if (not reserve(n)) {
+                return traits_type::eof();
             }
         }
 
-        *Base::pptr() = traits_type::to_char_type(c);
-        Base::pbump(1);
+        *base::pptr() = traits_type::to_char_type(c);
+        base::pbump(1);
         return c;
     }
 
-    void reserve(long n) {
-        // Get current stream positions as offsets.
-        auto gnext = std::distance(m_data.data(), Base::gptr());
-        auto pnext = std::distance(m_data.data(), Base::pptr());
-        auto pend = std::distance(m_data.data(), Base::epptr());
+    /**
+     * @brief   Resize the underlying buffer if needed and if `max_size` is not reached.
+     *
+     * @returns false is the buffer is full.
+     *
+     * Shifts existing contents of get area to start of buffer.
+     * Updates get and put pointers.
+     *
+     */
+    auto reserve(long n) -> bool {
+        auto gnext = std::distance(m_data.data(), base::gptr());
+        auto pnext = std::distance(m_data.data(), base::pptr());
+        auto pend = std::distance(m_data.data(), base::epptr());
 
-        // Check if there is already enough space in the put area.
         if (n <= pend - pnext) {
-            return;
+            return true;
         }
 
-        // Shift existing contents of get area to start of buffer.
         if (gnext > 0) {
             pnext -= gnext;
             std::memmove(
@@ -457,21 +569,20 @@ private:
             );
         }
 
-        // Ensure buffer is large enough to hold at least the specified size.
         if (n > pend - pnext) {
             if (n <= m_max_size && pnext <= m_max_size - n) {
                 pend = pnext + n;
                 m_data.resize(static_cast<std::size_t>(std::max<long>(pend, 1)));
             }
             else {
-                // TODO(err): Avoid exceptions.
-                throw exception("Streambuf too long");
+                return false;
             }
         }
 
-        // Update stream positions.
         setg(m_data.data(), m_data.data(), std::next(m_data.data(), pnext));
         setp(std::next(m_data.data(), pnext), std::next(m_data.data(), pend));
+
+        return true;
     }
 
 };
