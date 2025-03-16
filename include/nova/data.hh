@@ -495,13 +495,15 @@ template <typename T>
  */
 template <typename Allocator = std::allocator<std::byte>>
 class stream_buffer : public std::basic_streambuf<std::byte> {
-    using base = std::basic_streambuf<std::byte>;
-
-    static constexpr difference_type DefaultBufferDelta = 128;
-
 public:
     using streamsize = std::streamsize;
     using difference_type = std::vector<std::byte>::difference_type;
+
+private:
+    using base = std::basic_streambuf<std::byte>;
+    static constexpr difference_type DefaultBufferDelta = 128;
+
+public:
 
     /**
      * @brief   Allocates a buffer.
