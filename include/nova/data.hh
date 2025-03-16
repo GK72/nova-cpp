@@ -496,19 +496,19 @@ template <typename T>
 template <typename Allocator = std::allocator<std::byte>>
 class stream_buffer : public std::basic_streambuf<std::byte> {
     using base = std::basic_streambuf<std::byte>;
-    using difference_type = std::vector<std::byte>::difference_type;
 
     static constexpr long DefaultBufferDelta = 128;
 
 public:
     using streamsize = std::streamsize;
+    using difference_type = std::vector<std::byte>::difference_type;
 
     /**
      * @brief   Allocates a buffer.
      *
      * Initial size is at most `buffer_delta`.
      */
-    stream_buffer(long max_size, long buffer_delta = DefaultBufferDelta)
+    stream_buffer(long max_size, difference_type buffer_delta = DefaultBufferDelta)
         : m_max_size(max_size)
         , m_buffer_delta(buffer_delta)
     {
@@ -585,7 +585,7 @@ public:
 private:
     std::vector<std::byte> m_data;
     long m_max_size;
-    long m_buffer_delta;
+    difference_type m_buffer_delta;
 
     /**
      * @brief   Get area calculated from the beginning of the buffer.
@@ -621,7 +621,7 @@ private:
         }
 
         if (base::pptr() == base::epptr()) {
-            long n = [&]() {
+            difference_type n = [&]() {
                 auto buffer_size = std::distance(base::gptr(), base::pptr());
                 if (buffer_size < m_max_size && m_max_size - buffer_size < m_buffer_delta) {
                     return m_max_size - buffer_size;
