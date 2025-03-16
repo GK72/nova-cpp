@@ -11,7 +11,7 @@
 
 #define EXPECT_ASSERTION_FAIL(expr)                                            \
     EXPECT_THAT(                                                               \
-        [](){ expr; },                                                         \
+        [&](){ expr; },                                                        \
         testing::ThrowsMessage<nova::exception>(testing::StartsWith("Assertion failed: ")))
 
 /**
