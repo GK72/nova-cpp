@@ -13,6 +13,51 @@
 using namespace nova::literals;
 using namespace std::literals;
 
+TEST(CharTraitsByte, Compare) {
+    using Trait = std::char_traits<std::byte>;
+
+    const auto xs  = std::to_array<std::byte>({
+        std::byte{ 0x01 },
+        std::byte{ 0x02 },
+        std::byte{ 0x03 },
+    });
+
+    const auto ys  = std::to_array<std::byte>({
+        std::byte{ 0x02 },
+        std::byte{ 0x03 },
+        std::byte{ 0x04 },
+    });
+
+    EXPECT_EQ(Trait::compare(&xs[0], &ys[0], 3), -1);
+    EXPECT_EQ(Trait::compare(&ys[0], &xs[0], 3), 1);
+    EXPECT_EQ(Trait::compare(&xs[1], &ys[0], 2), 0);
+}
+
+TEST(CharTraitsByte, Find) {
+    using Trait = std::char_traits<std::byte>;
+
+    const auto xs  = std::to_array<std::byte>({
+        std::byte{ 0x01 },
+        std::byte{ 0x02 },
+        std::byte{ 0x03 },
+    });
+
+    EXPECT_EQ(Trait::find(xs.data(), 3, std::byte{ 0x03 }), &xs[2]);
+    EXPECT_EQ(Trait::find(xs.data(), 2, std::byte{ 0x03 }), nullptr);
+}
+
+TEST(CharTraitsByte, NotEof) {
+    using Trait = std::char_traits<std::byte>;
+
+    const auto x = std::byte{ 1 };
+    const auto itx = Trait::to_int_type(x);
+    EXPECT_TRUE(std::char_traits<std::byte>::not_eof(itx));
+    EXPECT_EQ(std::char_traits<std::byte>::not_eof(itx), 1);
+
+    const auto eof = Trait::eof();
+    EXPECT_FALSE(std::char_traits<std::byte>::not_eof(eof));
+}
+
 TEST(DataView, FromString) {
     static constexpr auto data = "\x01\x02"sv;
     const auto view_be = nova::data_view(data);

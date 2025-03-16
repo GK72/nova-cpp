@@ -7,6 +7,7 @@
  * - Serialization:
  *   - `serializer_context` class for low-level handling
  *   - `serialize(x)` free function for convenience
+ * - Stream buffer
  *
  * A `serializer<T>` specialization is required for type `T` to be able to
  * serialize it.
@@ -37,6 +38,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <span>
 #include <streambuf>
@@ -45,11 +47,106 @@
 #include <type_traits>
 #include <vector>
 
-// TODO: Implement `std::char_traits<std::byte>` or find another way.
-//
-// References:
-// - /usr/include/c++/14.2.1/bits/char_traits.h
-// - https://github.com/llvm/llvm-project/blob/llvmorg-16.0.6/libcxx/include/__string/char_traits.h
+namespace std {
+
+template <>
+struct char_traits<std::byte> {
+    using char_type = std::byte;
+
+    // An integer type the can represent a character of `char_type` values, as
+    // well as an end-of-file value, eof().
+    using int_type = short;
+
+    // An integer type that can represent positions in a stream.
+    using pos_type = streampos;
+
+    // An integer type that can represent offsets between positions in a stream.
+    using off_type = streamoff;
+
+    // A type that represents the conversion state in for multibyte characters in a stream.
+    // Reference: https://en.cppreference.com/w/c/string/multibyte/mbstate_t
+    using state_type = mbstate_t;
+
+    static constexpr void assign(char_type& lhs, char_type rhs) noexcept {
+        lhs = rhs;
+    }
+
+    static constexpr auto eq(char_type lhs, char_type rhs) noexcept -> bool {
+        return lhs == rhs;
+    }
+
+    static constexpr auto lt(char_type lhs, char_type rhs) noexcept -> bool {
+        return lhs < rhs;
+    }
+
+    static constexpr auto compare(const char_type* lhs, const char_type* rhs, size_t n) -> int {
+        if (n == 0) {
+            return 0;
+        }
+
+        for (size_t i = 0; i < n; ++i) {
+            if (lt(lhs[i], rhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                return -1;
+            }
+            if (lt(rhs[i], lhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
+    static constexpr auto length(const char_type* ch) -> size_t NOVA_DELETE("Cannot tell the length of a byte array given only a pointer");
+
+    static constexpr auto find(const char_type* where, size_t n, const char_type& what) -> const char_type* {
+        for (size_t i = 0; i < n; ++i) {
+            if (*where == what) {
+                return where;
+            }
+            advance(where, 1);
+        }
+        return nullptr;
+    }
+
+    static auto move(char_type* dest, const char_type* src, size_t n) -> char_type* {
+        memmove(dest, src, n);
+        return dest;
+    }
+
+    static auto copy(char_type* dest, const char_type* src, size_t n) -> char_type* {
+        memcpy(dest, src, n);
+        return dest;
+    }
+
+    static auto assign(char_type* ptr, size_t n, char_type ch) -> char_type* {
+        memset(ptr, to_integer<int>(ch), n);
+        return ptr;
+    }
+
+    static constexpr auto eof() noexcept -> int_type { return -1; }
+
+    static constexpr auto not_eof(int_type ch) noexcept -> int_type {
+        return eq_int_type(ch, eof())
+             ? static_cast<int_type>(~eof())
+             : ch;
+    }
+
+    // If there is no equivalent char_type value the result is unspecified.
+    static constexpr auto to_char_type(int_type ch) noexcept -> char_type {
+      return static_cast<char_type>(ch);
+    };
+
+    static constexpr auto to_int_type(char_type ch) noexcept -> int_type {
+        return static_cast<int_type>(ch);
+    }
+
+    static constexpr auto eq_int_type(int_type lhs, int_type rhs) noexcept -> bool {
+        return lhs == rhs;
+    }
+
+};
+
+} // namespace std
 
 namespace nova::detail {
 
