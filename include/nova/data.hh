@@ -508,7 +508,7 @@ public:
      *
      * Initial size is at most `buffer_delta`.
      */
-    stream_buffer(long max_size, difference_type buffer_delta = DefaultBufferDelta)
+    stream_buffer(difference_type max_size, difference_type buffer_delta = DefaultBufferDelta)
         : m_max_size(max_size)
         , m_buffer_delta(buffer_delta)
     {
@@ -584,7 +584,7 @@ public:
 
 private:
     std::vector<std::byte> m_data;
-    long m_max_size;
+    difference_type m_max_size;
     difference_type m_buffer_delta;
 
     /**
@@ -648,7 +648,7 @@ private:
      * Updates get and put pointers.
      *
      */
-    auto reserve(long n) -> bool {
+    auto reserve(difference_type n) -> bool {
         auto gnext = std::distance(m_data.data(), base::gptr());
         auto pnext = std::distance(m_data.data(), base::pptr());
         auto pend = std::distance(m_data.data(), base::epptr());
