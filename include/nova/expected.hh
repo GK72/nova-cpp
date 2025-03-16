@@ -70,11 +70,6 @@ public:
         : m_vex(detail::unexpect, unexpected.value)
     {}
 
-    // TODO(feat): rvalue pair
-    // constexpr expected(unexpected_type&& unexpected)
-        // : _value_or_unexpected(std::move(unexpected.value))
-    // {}
-
     template <typename E2>
         requires std::is_convertible_v<typename E2::type, E>
     constexpr expected(const E2& unexpected)
@@ -129,20 +124,12 @@ public:
         : m_vex(other.has_value(), std::move(other.m_vex))
     {}
 
-    // TODO(feat): rvalue pair
-    // template <typename E2>
-        // requires std::is_convertible_v<typename E2::type, E>
-    // constexpr expected(E2&& unexpected)
-        // : _value_or_unexpected(std::move(unexpected.value))
-    // {}
-
     [[nodiscard]] constexpr const T*  operator->() const   noexcept { return std::addressof(m_vex.impl.v); }
     [[nodiscard]] constexpr       T*  operator->()         noexcept { return std::addressof(m_vex.impl.v); }
     [[nodiscard]] constexpr const T&  operator*()  const&  noexcept { return m_vex.impl.v; }
     [[nodiscard]] constexpr       T&  operator*()       &  noexcept { return m_vex.impl.v; }
-    // TODO(feat): rvalue pairs
-    // [[nodiscard]] constexpr const T&& operator*()  const&& noexcept { return std::move(m_vex.impl.v); }
-    // [[nodiscard]] constexpr       T&& operator*()       && noexcept { return std::move(m_vex.impl.v); }
+    [[nodiscard]] constexpr const T&& operator*()  const&& noexcept { return std::move(m_vex.impl.v); }
+    [[nodiscard]] constexpr       T&& operator*()       && noexcept { return std::move(m_vex.impl.v); }
 
     [[nodiscard]] constexpr bool has_value() const noexcept         { return m_vex.value; }
     [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
@@ -174,15 +161,13 @@ public:
         );
     }
 
-    // TODO(feat): rvalue pairs
-    // [[nodiscard]] constexpr const T&& value() const&&               { return std::move(m_vex.impl.v); }
-    // [[nodiscard]] constexpr       T&& value()      &&               { return std::move(m_vex.impl.v); }
+    [[nodiscard]] constexpr const T&& value() const&&               { return std::move(m_vex.impl.v); }
+    [[nodiscard]] constexpr       T&& value()      &&               { return std::move(m_vex.impl.v); }
 
     [[nodiscard]] constexpr const E&  error() const&                { return m_vex.impl.e; }
     [[nodiscard]] constexpr E&        error()      &                { return m_vex.impl.e; }
-    // TODO(feat): rvalue pairs
-    // [[nodiscard]] constexpr const E&& error() const&&               { return std::move(m_vex.impl.e); }
-    // [[nodiscard]] constexpr E&&       error()      &&               { return std::move(m_vex.impl.e); }
+    [[nodiscard]] constexpr const E&& error() const&&               { return std::move(m_vex.impl.e); }
+    [[nodiscard]] constexpr E&&       error()      &&               { return std::move(m_vex.impl.e); }
 
     template <typename U>
         requires std::is_copy_constructible_v<T>
@@ -216,56 +201,116 @@ public:
         return has_value() ? std::forward<U>(def) : std::move(error());
     }
 
-    template <typename Func,
-              typename R = std::remove_cvref_t<std::invoke_result_t<Func, T&>>
-             >
-        requires std::is_invocable_r_v<R, Func, T&>
-             and is_expected_v<R>
+    template <typename Func>
+        requires std::is_constructible_v<E, E&>
     [[nodiscard]] constexpr
-    auto and_then(Func func) const& {
+    auto and_then(Func&& func) & {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, T&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::error_type, E>);
+
         if (has_value()) {
-            return std::invoke(func, this->operator*());
+            return std::invoke(std::forward<Func>(func), this->operator*());
         }
         return R{ unexpect, error()};
     }
 
-    template <typename Func,
-              typename R = std::remove_cvref_t<std::invoke_result_t<Func, T&&>>
-             >
-        requires std::is_invocable_r_v<R, Func, T&&>
-             and is_expected_v<R>
+    template <typename Func>
+        requires std::is_constructible_v<E, const E&>
     [[nodiscard]] constexpr
-    auto and_then(Func func) && {
+    auto and_then(Func&& func) const& {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, const T&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::error_type, E>);
+
         if (has_value()) {
-            return std::invoke(func, std::move(this->operator*()));
+            return std::invoke(std::forward<Func>(func), this->operator*());
+        }
+        return R{ unexpect, error()};
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<E, const E&&>
+    [[nodiscard]] constexpr
+    auto and_then(Func&& func) const&& {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, const T&&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::error_type, E>);
+
+        if (has_value()) {
+            return std::invoke(std::forward<Func>(func), std::move(this->operator*()));
         }
         return R{ unexpect, std::move(error())};
     }
 
-    template <typename Func,
-              typename R = std::remove_cvref_t<std::invoke_result_t<Func, E&>>
-             >
-        requires std::is_invocable_r_v<R, Func, E&>
-             and is_expected_v<R>
+    template <typename Func>
+        requires std::is_constructible_v<E, E&&>
     [[nodiscard]] constexpr
-    auto or_else(Func func) const& {
+    auto and_then(Func&& func) && {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, T&&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::error_type, E>);
+
+        if (has_value()) {
+            return std::invoke(std::forward<Func>(func), std::move(this->operator*()));
+        }
+        return R{ unexpect, std::move(error())};
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, T&>
+    [[nodiscard]] constexpr
+    auto or_else(Func&& func) & {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, E&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::value_type, T>);
+
         if (has_value()) {
             return R{ this->operator*() };
         }
-        return std::invoke(func, error());
+        return std::invoke(std::forward<Func>(func), error());
     }
 
-    template <typename Func,
-              typename R = std::remove_cvref_t<std::invoke_result_t<Func, E&>>
-             >
-        requires std::is_invocable_r_v<R, Func, E&>
-             and is_expected_v<R>
+    template <typename Func>
+        requires std::is_constructible_v<T, const T&>
     [[nodiscard]] constexpr
-    auto or_else(Func func) && {
+    auto or_else(Func&& func) const& {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, const E&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::value_type, T>);
+
+        if (has_value()) {
+            return R{ this->operator*() };
+        }
+        return std::invoke(std::forward<Func>(func), error());
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, T&&>
+    [[nodiscard]] constexpr
+    auto or_else(Func&& func) && {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, E&&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::value_type, T>);
+
         if (has_value()) {
             return R{ std::move(this->operator*()) };
         }
-        return std::invoke(func, std::move(error()));
+        return std::invoke(std::forward<Func>(func), std::move(error()));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, const T&&>
+    [[nodiscard]] constexpr
+    auto or_else(Func&& func) const&& {
+        using R = std::remove_cvref_t<std::invoke_result_t<Func, const E&&>>;
+        static_assert(is_expected_v<R>);
+        static_assert(std::is_same_v<typename R::value_type, T>);
+
+        if (has_value()) {
+            return R{ std::move(this->operator*()) };
+        }
+        return std::invoke(std::forward<Func>(func), std::move(error()));
     }
 
 private:
