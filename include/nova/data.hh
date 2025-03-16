@@ -512,7 +512,7 @@ public:
         : m_max_size(max_size)
         , m_buffer_delta(buffer_delta)
     {
-        long pend = std::min(max_size, m_buffer_delta);
+        auto pend = std::min(max_size, m_buffer_delta);
         m_data.reserve(static_cast<std::size_t>(pend));
         base::setg(m_data.data(), m_data.data(), m_data.data());
         base::setp(m_data.data(), std::next(m_data.data(), pend));
