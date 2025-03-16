@@ -497,7 +497,7 @@ template <typename Allocator = std::allocator<std::byte>>
 class stream_buffer : public std::basic_streambuf<std::byte> {
     using base = std::basic_streambuf<std::byte>;
 
-    static constexpr long DefaultBufferDelta = 128;
+    static constexpr difference_type DefaultBufferDelta = 128;
 
 public:
     using streamsize = std::streamsize;
@@ -669,7 +669,7 @@ private:
         if (n > pend - pnext) {
             if (n <= m_max_size && pnext <= m_max_size - n) {
                 pend = pnext + n;
-                m_data.resize(static_cast<std::size_t>(std::max<long>(pend, 1)));
+                m_data.resize(static_cast<std::size_t>(std::max<difference_type>(pend, 1)));
             }
             else {
                 return false;
