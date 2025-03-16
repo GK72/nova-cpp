@@ -122,11 +122,11 @@ template <typename First, typename Second, typename ...Tail>
     errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
 
     if (env == nullptr) {
-        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect,fmt::format("Environment variable is not set: {}", env_name) };
     }
 
     if (err) {
-        return unexpected<error>{ fmt::format("Error querying environment variable: {}", env_name) };
+        return { unexpect,fmt::format("Error querying environment variable: {}", env_name) };
     }
 
     const auto ret = std::string{ env };
@@ -136,7 +136,7 @@ template <typename First, typename Second, typename ...Tail>
 #else
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect, fmt::format("Environment variable is not set: {}", env_name) };
     }
     return { env };
 #endif

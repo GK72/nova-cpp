@@ -7,6 +7,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <compare>
+
 #define EXPECT_ASSERTION_FAIL(expr)                                            \
     EXPECT_THAT(                                                               \
         [&](){ expr; },                                                        \
