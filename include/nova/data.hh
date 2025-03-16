@@ -7,6 +7,7 @@
  * - Serialization:
  *   - `serializer_context` class for low-level handling
  *   - `serialize(x)` free function for convenience
+ * - Stream buffer
  *
  * A `serializer<T>` specialization is required for type `T` to be able to
  * serialize it.
@@ -37,12 +38,115 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <span>
+#include <streambuf>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <vector>
+
+namespace std {
+
+template <>
+struct char_traits<std::byte> {
+    using char_type = std::byte;
+
+    // An integer type the can represent a character of `char_type` values, as
+    // well as an end-of-file value, eof().
+    using int_type = short;
+
+    // An integer type that can represent positions in a stream.
+    using pos_type = streampos;
+
+    // An integer type that can represent offsets between positions in a stream.
+    using off_type = streamoff;
+
+    // A type that represents the conversion state in for multibyte characters in a stream.
+    // Reference: https://en.cppreference.com/w/c/string/multibyte/mbstate_t
+    using state_type = mbstate_t;
+
+    static constexpr void assign(char_type& lhs, char_type rhs) noexcept {
+        lhs = rhs;
+    }
+
+    static constexpr auto eq(char_type lhs, char_type rhs) noexcept -> bool {
+        return lhs == rhs;
+    }
+
+    static constexpr auto lt(char_type lhs, char_type rhs) noexcept -> bool {
+        return lhs < rhs;
+    }
+
+    static constexpr auto compare(const char_type* lhs, const char_type* rhs, size_t n) -> int {
+        if (n == 0) {
+            return 0;
+        }
+
+        for (size_t i = 0; i < n; ++i) {
+            if (lt(lhs[i], rhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                return -1;
+            }
+            if (lt(rhs[i], lhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
+    static constexpr auto length(const char_type* ch) -> size_t NOVA_DELETE("Cannot tell the length of a byte array given only a pointer");
+
+    static constexpr auto find(const char_type* where, size_t n, const char_type& what) -> const char_type* {
+        for (size_t i = 0; i < n; ++i) {
+            if (*where == what) {
+                return where;
+            }
+            advance(where, 1);
+        }
+        return nullptr;
+    }
+
+    static auto move(char_type* dest, const char_type* src, size_t n) -> char_type* {
+        memmove(dest, src, n);
+        return dest;
+    }
+
+    static auto copy(char_type* dest, const char_type* src, size_t n) -> char_type* {
+        memcpy(dest, src, n);
+        return dest;
+    }
+
+    static auto assign(char_type* ptr, size_t n, char_type ch) -> char_type* {
+        memset(ptr, to_integer<int>(ch), n);
+        return ptr;
+    }
+
+    static constexpr auto eof() noexcept -> int_type { return -1; }
+
+    static constexpr auto not_eof(int_type ch) noexcept -> int_type {
+        return eq_int_type(ch, eof())
+             ? static_cast<int_type>(~eof())
+             : ch;
+    }
+
+    // If there is no equivalent char_type value the result is unspecified.
+    static constexpr auto to_char_type(int_type ch) noexcept -> char_type {
+      return static_cast<char_type>(ch);
+    };
+
+    static constexpr auto to_int_type(char_type ch) noexcept -> int_type {
+        return static_cast<int_type>(ch);
+    }
+
+    static constexpr auto eq_int_type(int_type lhs, int_type rhs) noexcept -> bool {
+        return lhs == rhs;
+    }
+
+};
+
+} // namespace std
 
 namespace nova::detail {
 
@@ -249,6 +353,15 @@ using data_view = detail::data_view<>;
 using data_view_be = detail::data_view<endian::big>;
 using data_view_le = detail::data_view<endian::little>;
 
+namespace literals {
+
+    [[nodiscard]] inline
+    auto operator""_data(const char* str, std::size_t n) noexcept {
+        return data_view{ str, n };
+    }
+
+} // namespace literals
+
 class serializer_context;
 
 template <typename T>
@@ -352,5 +465,225 @@ template <typename T>
     ser(x);
     return ser.data();
 }
+
+/**
+ * @brief   A stream buffer for binary data integrated with `data_view` (Big-Endian).
+ *
+ * Example code for writing into a socket.
+ *
+ * ```
+ * auto buf = nova::stream_buffer{ 4096 };
+ *
+ * // Check `n` to see whether the complete data is written to buffer.
+ * std::size_t n = buf.write("some binary data: \x00\x01\x02..."_data);
+ *
+ * while (not buf.empty()) {
+ *     auto data = buf.view();
+ *     auto n = send(socket, data.ptr(), data.size());
+ *     buf.consume(n);
+ * }
+ * ```
+ *
+ * Six pointers are used to keep track of read and write area of the buffer.
+ * - `eback`: Beginning of get area.
+ * - `gptr`: Current byte of get area.
+ * - `egptr`: End of get area.
+ *
+ * - `pbase`: Beginning of put area.
+ * - `pptr`: Current byte of put area.
+ * - `epptr`: End of put area.
+ */
+template <typename Allocator = std::allocator<std::byte>>
+class stream_buffer : public std::basic_streambuf<std::byte> {
+public:
+    using streamsize = std::streamsize;
+    using difference_type = std::vector<std::byte>::difference_type;
+
+private:
+    using base = std::basic_streambuf<std::byte>;
+    static constexpr difference_type DefaultBufferDelta = 128;
+
+public:
+
+    /**
+     * @brief   Allocates a buffer.
+     *
+     * Initial size is at most `buffer_delta`.
+     */
+    stream_buffer(difference_type max_size, difference_type buffer_delta = DefaultBufferDelta)
+        : m_max_size(max_size)
+        , m_buffer_delta(buffer_delta)
+    {
+        auto pend = std::min(max_size, m_buffer_delta);
+        m_data.reserve(static_cast<std::size_t>(pend));
+        base::setg(m_data.data(), m_data.data(), m_data.data());
+        base::setp(m_data.data(), std::next(m_data.data(), pend));
+    }
+
+    [[nodiscard]] auto size() const -> std::size_t {
+        const auto d = std::distance(base::gptr(), base::pptr());
+        return static_cast<std::size_t>(d);
+    }
+
+    [[nodiscard]] auto empty() const -> bool {
+        return size() == 0;
+    }
+
+    /**
+     * @brief   Data between `gptr` and `pptr`, i.e. avaliable but unread data.
+     */
+    [[nodiscard]] auto view() const -> data_view {
+        return { std::next(m_data.data(), beg()), size() };
+    }
+
+    /**
+     * @brief   Write data from view into the buffer.
+     *
+     * @returns with the number of bytes written into the buffer.
+     */
+    [[nodiscard]] auto write(data_view data) -> std::size_t {
+        return static_cast<std::size_t>(
+            base::sputn(data.ptr(), static_cast<streamsize>(data.size()))
+        );
+    }
+
+    /**
+     * @brief   Read some number of bytes.
+     *
+     * @returns with the number of successfully read bytes.
+     *
+     * Note: Not (yet) supported use case.
+     */
+    // [[nodiscard]] auto read(std::size_t n) -> std::size_t {
+        // auto* ptr = ...;
+        // const auto r = base::sgetn(ptr, static_cast<streamsize>(n));
+        // return r;
+    // }
+
+    /**
+     * @brief   Consume everything, effectively clearing the buffer.
+     *
+     * It will not resize the underlying buffer.
+     */
+    void consume() {
+        consume(static_cast<difference_type>(size()));
+    }
+
+    /**
+     * @brief   Consume some number of bytes from the buffer.
+     */
+    void consume(difference_type n) {
+        if (base::egptr() < base::pptr()) {
+            setg(m_data.data(), base::gptr(), base::pptr());
+        }
+
+        if (std::next(base::gptr(), n) > base::pptr()) {
+            n = std::distance(base::gptr(), base::pptr());
+        }
+
+        base::gbump(static_cast<int>(n));
+    }
+
+private:
+    std::vector<std::byte> m_data;
+    difference_type m_max_size;
+    difference_type m_buffer_delta;
+
+    /**
+     * @brief   Get area calculated from the beginning of the buffer.
+     */
+    [[nodiscard]] auto beg() const -> difference_type {
+        const auto* ptr = base::gptr();
+        return std::distance(m_data.data(), ptr);
+    }
+
+    /**
+     * @brief   Called when there is no more data to read.
+     *
+     * Note: Read operation is not (yet) supported.
+     * Use `view()` to access the content of the buffer and
+     * call `consume()` to discard the data that is no longer needed.
+     */
+    int_type underflow() override {
+        if (base::gptr() < base::pptr()) {
+            base::setg(m_data.data(), gptr(), pptr());
+            return traits_type::to_int_type(*gptr());
+        }
+        return traits_type::eof();
+    }
+
+    /**
+     * @brief   Called when the end of the write buffer is reached.
+     *
+     * @returns `eof` to indicate failure to ensure free write space.
+     */
+    int_type overflow(int_type c = traits_type::eof()) override {
+        if (traits_type::eq_int_type(c, traits_type::eof())) {
+            return traits_type::not_eof(c);
+        }
+
+        if (base::pptr() == base::epptr()) {
+            difference_type n = [&]() {
+                auto buffer_size = std::distance(base::gptr(), base::pptr());
+                if (buffer_size < m_max_size && m_max_size - buffer_size < m_buffer_delta) {
+                    return m_max_size - buffer_size;
+                }
+                return m_buffer_delta;
+            }();
+
+            if (not reserve(n)) {
+                return traits_type::eof();
+            }
+        }
+
+        *base::pptr() = traits_type::to_char_type(c);
+        base::pbump(1);
+        return c;
+    }
+
+    /**
+     * @brief   Resize the underlying buffer if needed and if `max_size` is not reached.
+     *
+     * @returns false is the buffer is full.
+     *
+     * Shifts existing contents of get area to start of buffer.
+     * Updates get and put pointers.
+     *
+     */
+    auto reserve(difference_type n) -> bool {
+        auto gnext = std::distance(m_data.data(), base::gptr());
+        auto pnext = std::distance(m_data.data(), base::pptr());
+        auto pend = std::distance(m_data.data(), base::epptr());
+
+        if (n <= pend - pnext) {
+            return true;
+        }
+
+        if (gnext > 0) {
+            pnext -= gnext;
+            std::memmove(
+                m_data.data(),
+                std::next(m_data.data(), gnext),
+                static_cast<std::size_t>(pnext)
+            );
+        }
+
+        if (n > pend - pnext) {
+            if (n <= m_max_size && pnext <= m_max_size - n) {
+                pend = pnext + n;
+                m_data.resize(static_cast<std::size_t>(std::max<difference_type>(pend, 1)));
+            }
+            else {
+                return false;
+            }
+        }
+
+        setg(m_data.data(), m_data.data(), std::next(m_data.data(), pnext));
+        setp(std::next(m_data.data(), pnext), std::next(m_data.data(), pend));
+
+        return true;
+    }
+
+};
 
 } // namespace nova

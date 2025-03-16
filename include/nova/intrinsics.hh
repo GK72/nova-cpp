@@ -37,6 +37,12 @@
     #endif
 #endif
 
+#if defined(__cpp_deleted_function) and defined (NOVA_EXPERIMENTAL_FEATURE_SET)
+    #define NOVA_DELETE(expr) = delete(expr)
+#else
+    #define NOVA_DELETE(expr) = delete
+#endif
+
 namespace nova {
 
 /**
