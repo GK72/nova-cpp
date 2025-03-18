@@ -2,9 +2,11 @@
 
 #include <cstdlib>
 
-int main() {
+auto entrypoint([[maybe_unused]] auto args) -> int {
     nova::log::init("Test");
-    spdlog::info("Nova version: v{}.{}.{}", NovaVersionMajor, NovaVersionMinor, NovaVersionPatch);
+    nova::log::info("Nova version: v{}.{}.{}", NovaVersionMajor, NovaVersionMinor, NovaVersionPatch);
 
     return EXIT_SUCCESS;
 }
+
+NOVA_MAIN(entrypoint);

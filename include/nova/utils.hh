@@ -83,19 +83,19 @@ constexpr auto NewLine = '\n';
  */
 [[nodiscard]] inline
 std::chrono::nanoseconds now() {
-    return std::chrono::steady_clock().now().time_since_epoch();
+    return std::chrono::steady_clock::now().time_since_epoch();
 }
 
 /**
  * @brief   Convert a duration to seconds with fractional part.
  */
 [[nodiscard]] constexpr
-auto to_us(chrono_duration auto x) {
-    return static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(x).count());
+auto to_sec(chrono_duration auto x) {
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::duration<double>>(x).count());
 }
 
 template <typename First>
-[[nodiscard]] consteval auto concat(First&& first) {
+[[nodiscard]] consteval auto concat(const First& first) {
     return first;
 }
 
@@ -189,7 +189,7 @@ public:
     /**
      * @brief   Measure the elapsed time since last call this function.
      */
-    auto lap() -> std::chrono::nanoseconds {
+    auto reset() -> std::chrono::nanoseconds {
         const auto time = now();
         const auto ret = time - m_clock;
         m_clock = time;
