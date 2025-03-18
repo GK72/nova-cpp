@@ -86,6 +86,23 @@ namespace nova {
     }
 #endif
 
+/**
+ * @brief   Invokes undefined behaviour for optimizing impossible code branches away.
+ *
+ * Available in C++23.
+ * - GCC 12
+ * - Clang 15
+ * - MSVC 19.32
+ * - Apple Clang 14.0.3
+ */
+[[noreturn]] inline void unreachable() {
+#if defined(NOVA_MSVC) && not defined(NOVA_CLANG)
+    __assume(false);
+#else
+    __builtin_unreachable();
+#endif
+}
+
 } // namespace nova
 
 #if defined(NOVA_MSVC)
