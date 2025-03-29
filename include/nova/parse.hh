@@ -40,7 +40,7 @@ namespace detail {
         constexpr auto limit = std::numeric_limits<T>::max();
 
         if (limit / lhs < rhs) {
-            return unexpected{ parse_error::out_of_range };
+            return unexpected<parse_error>{ parse_error::out_of_range };
         }
         return lhs * static_cast<T>(rhs);
     }
@@ -51,7 +51,7 @@ namespace detail {
         constexpr auto limit = std::numeric_limits<T>::max();
 
         if (limit / lhs < static_cast<T>(rhs)) {
-            return unexpected{ parse_error::out_of_range };
+            return unexpected<parse_error>{ parse_error::out_of_range };
         }
         return lhs * static_cast<T>(rhs);
     }
@@ -185,7 +185,7 @@ namespace detail {
 
         const auto number = detail::to_number<R>(str.substr(0, static_cast<std::size_t>(suffix_pos)));
         if (not number.has_value()) {
-            return unexpected{ number.error() };
+            return unexpected<parse_error>{ number.error() };
         }
 
         const auto suffix = str.substr(static_cast<std::size_t>(suffix_pos));
@@ -204,7 +204,7 @@ template <typename R> requires chrono_duration<R>
 [[nodiscard]] auto to_chrono(const std::string& str) -> expected<R, parse_error> {
     const auto result = detail::split_num_n_suffix<typename R::rep>(str);
     if (not result.has_value()) {
-        return unexpected{ result.error() };
+        return unexpected<parse_error>{ result.error() };
     }
 
     const auto [number, suffix] = *result;
@@ -251,7 +251,7 @@ template <typename R>
 [[nodiscard]] auto to_number(std::string_view str) -> expected<R, parse_error> {                    // NOLINT(readability-function-cognitive-complexity) | `if` statements as switch-case.
     const auto result = detail::split_num_n_suffix<R>(str);
     if (not result.has_value()) {
-        return unexpected{ result.error() };
+        return unexpected<parse_error>{ result.error() };
     }
 
     const auto [number, suffix] = *result;
