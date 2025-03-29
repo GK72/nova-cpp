@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nova/type_traits.h"
+#include "nova/type_traits.hh"
 
 #include <algorithm>
 #include <array>

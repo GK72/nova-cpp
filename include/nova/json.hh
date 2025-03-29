@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "nova/error.h"
+#include "nova/error.hh"
 
 #include <fmt/format.h>
 
@@ -23,10 +23,7 @@
 #endif
 
 #include <algorithm>
-#include <concepts>
-#include <stdexcept>
 #include <string>
-#include <string_view>
 #include <type_traits>
 
 namespace nova {
@@ -67,7 +64,7 @@ public:
         : m_data(nlohmann::json::parse(content))
     {}
     catch (const nlohmann::json::exception& ex) {
-        throw parsing_error(ex.what());
+        throw exception("Parsing error: {}", ex.what());
     }
 
     [[nodiscard]] std::string dump(int indent = -1) const {

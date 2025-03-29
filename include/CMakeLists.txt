@@ -1,6 +1,6 @@
 add_library(nova INTERFACE)
 
-file(GLOB_RECURSE NOVA_HEADER_FILES "*.h")
+file(GLOB_RECURSE NOVA_HEADER_FILES "*.hh")
 
 target_sources(nova
     # TODO: When there will be compiled artifacts
@@ -21,6 +21,10 @@ target_include_directories(nova INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
+if(NOVA_EXPERIMENTAL_FEATURE_SET)
+    target_link_libraries(nova INTERFACE stdc++exp)
+endif()
 
 code_analysis(nova INTERFACE)
 

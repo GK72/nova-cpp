@@ -12,10 +12,10 @@
  * Capability must be enabled: `sudo setcap cap_sys_nice+ep shielded`
  */
 
-#include "nova/main.h"
-#include "nova/system.h"
-#include "nova/threading.h"
-#include "nova/utils.h"
+#include <nova/log.hh>
+#include <nova/main.hh>
+#include <nova/system.hh>
+#include <nova/threading.hh>
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>
@@ -42,7 +42,7 @@ public:
     }
 
     void operator()(std::chrono::nanoseconds delta, std::uint64_t cycles) {
-        spdlog::debug("Delta: {}, Cycles: {}", delta, cycles);
+        nova::log::debug("Delta: {}, Cycles: {}", delta, cycles);
         m_measurements.push_back(delta);
         m_cycles.push_back(cycles);
     }
@@ -73,7 +73,7 @@ private:
  * @brief   Run the loop for a little while and log some statistics.
  */
 auto entrypoint([[maybe_unused]] auto args) -> int {
-    auto& logger = nova::log_init("Shielded");
+    auto& logger = nova::log::init("shielded");
     logger.set_level(spdlog::level::debug);
 
     const auto timings = parse_args(args);
@@ -85,7 +85,7 @@ auto entrypoint([[maybe_unused]] auto args) -> int {
     };
 
     if (const auto result = nova::set_cpu_affinity(cfg); not result.has_value()) {
-        spdlog::warn("{}", result.error().message);
+        nova::log::warn("{}", result.error().message);
     }
 
     auto logic = event_loop_impl{};
@@ -101,15 +101,15 @@ auto entrypoint([[maybe_unused]] auto args) -> int {
 
     std::ranges::sort(xs);
 
-    spdlog::info("Min delta: {}", std::ranges::min(xs));
-    spdlog::info("Max delta: {}", std::ranges::max(xs));
-    spdlog::info("Avg delta: {}", std::accumulate(std::begin(xs), std::end(xs), 0ns) / xs.size());
-    spdlog::info("Med delta: {}", xs.at(xs.size() / 2));
-    spdlog::info("Size: {}", xs.size());
+    nova::log::info("Min delta: {}", std::ranges::min(xs));
+    nova::log::info("Max delta: {}", std::ranges::max(xs));
+    nova::log::info("Avg delta: {}", std::accumulate(std::begin(xs), std::end(xs), 0ns) / xs.size());
+    nova::log::info("Med delta: {}", xs.at(xs.size() / 2));
+    nova::log::info("Size: {}", xs.size());
 
-    spdlog::info("Total elapsed time: {}", stopwatch.elapsed());
+    nova::log::info("Total elapsed time: {}", stopwatch.elapsed());
 
     return EXIT_SUCCESS;
 }
 
-MAIN(entrypoint);
+NOVA_MAIN(entrypoint);

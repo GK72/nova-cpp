@@ -37,6 +37,12 @@
     #endif
 #endif
 
+#if defined(__cpp_deleted_function) and defined (NOVA_EXPERIMENTAL_FEATURE_SET)
+    #define NOVA_DELETE(expr) = delete(expr)
+#else
+    #define NOVA_DELETE(expr) = delete
+#endif
+
 namespace nova {
 
 /**
@@ -80,18 +86,35 @@ namespace nova {
     }
 #endif
 
+/**
+ * @brief   Invokes undefined behaviour for optimizing impossible code branches away.
+ *
+ * Available in C++23.
+ * - GCC 12
+ * - Clang 15
+ * - MSVC 19.32
+ * - Apple Clang 14.0.3
+ */
+[[noreturn]] inline void unreachable() {
+#if defined(NOVA_MSVC) && not defined(NOVA_CLANG)
+    __assume(false);
+#else
+    __builtin_unreachable();
+#endif
+}
+
 } // namespace nova
 
 #if defined(NOVA_MSVC)
-    #define nova_breakpoint()           if (is_debugger_present()) { __debugbreak(); }
+    #define nova_breakpoint()           if (nova::is_debugger_present()) { __debugbreak(); }
 #elif defined(NOVA_CLANG)
-    #define nova_breakpoint()           if (is_debugger_present()) { __builtin_debugtrap(); }
+    #define nova_breakpoint()           if (nova::is_debugger_present()) { __builtin_debugtrap(); }
 #elif defined(NOVA_GCC)
     #if (defined(__i386__) || defined(__x86_64__))
-        #define nova_breakpoint()       if (is_debugger_present()) { __asm__ volatile("int $0x03"); }
+        #define nova_breakpoint()       if (nova::is_debugger_present()) { __asm__ volatile("int $0x03"); }
     #elif defined(__aarch64__)
         // https://developer.arm.com/documentation/ddi0602/2023-12/Base-Instructions/BRK--Breakpoint-instruction-?lang=en
-        #define nova_breakpoint()       if (is_debugger_present()) { __asm__ volatile("brk #0"); }
+        #define nova_breakpoint()       if (nova::is_debugger_present()) { __asm__ volatile("brk #0"); }
     #endif
 #else
     #define nova_breakpoint()

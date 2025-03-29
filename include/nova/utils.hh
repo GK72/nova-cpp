@@ -6,22 +6,18 @@
 
 #pragma once
 
-#include "nova/error.h"
-#include "nova/intrinsics.h"
-#include "nova/types.h"
-#include "nova/type_traits.h"
+#include "nova/error.hh"
+#include "nova/expected.hh"
+#include "nova/types.hh"
+#include "nova/type_traits.hh"
 
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/ansicolor_sink.h>
 
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <concepts>
 #include <cstdlib>
-#include <memory>
-#include <numeric>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -87,19 +83,19 @@ constexpr auto NewLine = '\n';
  */
 [[nodiscard]] inline
 std::chrono::nanoseconds now() {
-    return std::chrono::steady_clock().now().time_since_epoch();
+    return std::chrono::steady_clock::now().time_since_epoch();
 }
 
 /**
  * @brief   Convert a duration to seconds with fractional part.
  */
 [[nodiscard]] constexpr
-auto to_us(chrono_duration auto x) {
-    return static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(x).count());
+auto to_sec(chrono_duration auto x) {
+    return static_cast<double>(std::chrono::duration_cast<std::chrono::duration<double>>(x).count());
 }
 
 template <typename First>
-[[nodiscard]] consteval auto concat(First&& first) {
+[[nodiscard]] consteval auto concat(const First& first) {
     return first;
 }
 
@@ -126,11 +122,11 @@ template <typename First, typename Second, typename ...Tail>
     errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
 
     if (env == nullptr) {
-        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect,fmt::format("Environment variable is not set: {}", env_name) };
     }
 
     if (err) {
-        return unexpected<error>{ fmt::format("Error querying environment variable: {}", env_name) };
+        return { unexpect,fmt::format("Error querying environment variable: {}", env_name) };
     }
 
     const auto ret = std::string{ env };
@@ -140,7 +136,7 @@ template <typename First, typename Second, typename ...Tail>
 #else
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return unexpected<error>{ fmt::format("Environment variable is not set: {}", env_name) };
+        return { unexpect, fmt::format("Environment variable is not set: {}", env_name) };
     }
     return { env };
 #endif
@@ -175,20 +171,6 @@ template <std::floating_point R = float, typename T>
 }
 
 /**
- * @brief   Initailize logging.
- *
- * Format: [2024-03-16 21:22:25.542140 +01:00] [NAME @THREAD_ID] [info]
- */
-inline auto log_init(const std::string& name) -> spdlog::logger& {
-    spdlog::set_default_logger(spdlog::create<spdlog::sinks::ansicolor_stdout_sink_mt>(name));
-
-    auto& logger = *spdlog::get(name);
-    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%f %z] [%n @%t] %^[%l]%$ %v");
-
-    return logger;
-}
-
-/**
  * @brief   A simple stopwatch measuring in nanosecond resolution.
  */
 class stopwatch {
@@ -207,7 +189,7 @@ public:
     /**
      * @brief   Measure the elapsed time since last call this function.
      */
-    auto lap() -> std::chrono::nanoseconds {
+    auto reset() -> std::chrono::nanoseconds {
         const auto time = now();
         const auto ret = time - m_clock;
         m_clock = time;

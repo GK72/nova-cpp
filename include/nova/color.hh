@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nova/vec.h"
+#include "nova/vec.hh"
 
 #include <array>
 #include <type_traits>

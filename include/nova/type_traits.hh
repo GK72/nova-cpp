@@ -53,4 +53,10 @@ template <typename T> concept vector_like = is_std_vector_v<T>;
 template <typename T> concept map_like = is_std_map_v<T>;
 template <typename T> concept string_like = std::is_convertible_v<T, std::string_view>;
 
+template <bool Value, typename... Args>
+inline constexpr bool dependent_bool_value = Value;
+
+template <typename... Args>
+inline constexpr bool dependent_false = dependent_bool_value<false, Args...>;
+
 } // namespace nova

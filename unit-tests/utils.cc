@@ -1,8 +1,8 @@
+#include "nova/types.hh"
+#include "nova/utils.hh"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-#include "nova/types.h"
-#include "nova/utils.h"
 
 #include <array>
 #include <chrono>
@@ -61,9 +61,9 @@ TEST(Utils, Now) {
     static_assert(std::is_same_v<T, std::chrono::nanoseconds>);
 }
 
-TEST(Utils, ToMicrosec) {
-    constexpr auto microsec = nova::to_us(9s);
-    EXPECT_EQ(microsec, 9'000'000.0);
+TEST(Utils, ToSec) {
+    constexpr auto sec = nova::to_sec(1566ms);
+    EXPECT_DOUBLE_EQ(sec, 1.566);
 }
 
 TEST(Utils, Concat) {
@@ -167,8 +167,8 @@ TEST(Utils, Stopwatch_Elapsed) {
 
 TEST(Utils, Stopwatch_Lap) {
     auto stopwatch = nova::stopwatch();
-    EXPECT_GE(stopwatch.lap(), 0ns);
+    EXPECT_GE(stopwatch.reset(), 0ns);
 
     std::this_thread::sleep_for(200ms);
-    EXPECT_GE(stopwatch.lap(), 200ms);
+    EXPECT_GE(stopwatch.reset(), 200ms);
 }
