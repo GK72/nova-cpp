@@ -18,6 +18,8 @@
 #include <nova/json.hh>
 #include <nova/log.hh>
 #include <nova/main.hh>
+#include <nova/not_null.hh>
+#include <nova/parse.hh>
 #include <nova/random.hh>
 #include <nova/static_string.hh>
 #include <nova/std_extensions.hh>
@@ -32,4 +34,4 @@
 
 constexpr auto NovaVersionMajor = 0;
 constexpr auto NovaVersionMinor = 7;
-constexpr auto NovaVersionPatch = 1;
+constexpr auto NovaVersionPatch = 2;
