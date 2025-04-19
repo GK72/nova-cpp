@@ -141,6 +141,14 @@ TEST(DataView, DataLiteral) {
     EXPECT_EQ("\x00\x01\x02"_data.as_hex_string(), "000102");
 }
 
+TEST(DataView, Formatter) {
+    static constexpr auto data = "Hello Nova"sv;
+    EXPECT_EQ(fmt::format("{}", data), "Hello Nova");
+
+    static const auto bin = "\x00\x01\x02"_data;
+    EXPECT_EQ(fmt::format("{}", bin), "x000102");
+}
+
 TEST(DataView, ErrorOutOfBounds) {
     static constexpr auto data = std::to_array<unsigned char>({ 0x01, 0x02 });
 

@@ -14,6 +14,8 @@
 #include "nova/intrinsics.hh"
 #include "nova/type_traits.hh"
 
+#include <fmt/format.h>
+
 #include <charconv>
 #include <cstdint>
 #include <limits>
@@ -286,3 +288,20 @@ template <typename R>
 }
 
 } // namespace nova
+
+template <>
+class fmt::formatter<nova::parse_error> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    constexpr auto format(nova::parse_error error, FmtContext& ctx) const {
+        switch (error) {
+            case nova::parse_error::invalid_argument:   return "Invalid argument";
+            case nova::parse_error::out_of_range:       return "Out of range";
+        }
+        nova::unreachable();
+    }
+};

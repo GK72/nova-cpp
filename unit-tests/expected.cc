@@ -43,7 +43,22 @@ TEST(Expected, TrivialTypes) {
 
 TEST(Expected, Value_SafeAccess) {
     constexpr auto x = nova::expected<int, int>(nova::unexpect, 8);
-    EXPECT_THROW(std::ignore = x.value(), std::runtime_error);
+    EXPECT_THROW(std::ignore = x.value(), nova::exception);
+
+    EXPECT_THROW(
+        ( std::ignore = nova::expected<int, int>(nova::unexpect, 8).value() ),
+        nova::exception
+    );
+}
+
+TEST(Expected, Error_SafeAccess) {
+    constexpr auto x = nova::expected<int, int>(8);
+    EXPECT_THROW(std::ignore = x.error(), nova::exception);
+
+    EXPECT_THROW(
+        ( std::ignore = nova::expected<int, int>(8).error() ),
+        nova::exception
+    );
 }
 
 TEST(Expected, NonTrivialTypes) {

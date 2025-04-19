@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <nova/error.hh>
+
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -134,40 +136,72 @@ public:
     [[nodiscard]] constexpr bool has_value() const noexcept         { return m_vex.value; }
     [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
-    [[nodiscard]] constexpr const T& value() const& {
-        if (not has_value()) {
-            // TODO(feat): throw the error type (feature depends on custom exception type)
-            throw std::runtime_error("Bad expected access");
-        }
-        return m_vex.impl.v;
-    }
-
-    [[nodiscard]] constexpr T& value() & {
-        if (not has_value()) {
-            // TODO(feat): throw the error type (feature depends on custom exception type)
-            throw std::runtime_error("Bad expected access");
-        }
-        return m_vex.impl.v;
-    }
-
     template <typename T2, typename E2>
     [[nodiscard]] friend constexpr bool operator==(const expected& lhs, const expected<T2, E2>& rhs) {
         return (
             lhs.has_value() and rhs.has_value()
-                and *lhs == * rhs
+                and *lhs == *rhs
             ) or (
             not lhs.has_value() and not rhs.has_value()
                 and lhs.error() == rhs.error()
         );
     }
 
-    [[nodiscard]] constexpr const T&& value() const&&               { return std::move(m_vex.impl.v); }
-    [[nodiscard]] constexpr       T&& value()      &&               { return std::move(m_vex.impl.v); }
+    [[nodiscard]] constexpr const T& value() const& {
+        if (not has_value()) {
+            throw exception("Bad expected access: it has no value");
+        }
+        return m_vex.impl.v;
+    }
 
-    [[nodiscard]] constexpr const E&  error() const&                { return m_vex.impl.e; }
-    [[nodiscard]] constexpr E&        error()      &                { return m_vex.impl.e; }
-    [[nodiscard]] constexpr const E&& error() const&&               { return std::move(m_vex.impl.e); }
-    [[nodiscard]] constexpr E&&       error()      &&               { return std::move(m_vex.impl.e); }
+    [[nodiscard]] constexpr T& value() & {
+        if (not has_value()) {
+            throw exception("Bad expected access: it has no value");
+        }
+        return m_vex.impl.v;
+    }
+
+    [[nodiscard]] constexpr const T&& value() const&& {
+        if (not has_value()) {
+            throw exception("Bad expected access: it has no value");
+        }
+        return std::move(m_vex.impl.v);
+    }
+
+    [[nodiscard]] constexpr T&& value() && {
+        if (not has_value()) {
+            throw exception("Bad expected access: it has no value");
+        }
+        return std::move(m_vex.impl.v);
+    }
+
+    [[nodiscard]] constexpr const E& error() const& {
+        if (has_value()) {
+            throw exception("Bad expected access: it has no error");
+        }
+        return m_vex.impl.e;
+    }
+
+    [[nodiscard]] constexpr E& error() & {
+        if (has_value()) {
+            throw exception("Bad expected access: it has no error");
+        }
+        return m_vex.impl.e;
+    }
+
+    [[nodiscard]] constexpr const E&& error() const&& {
+        if (has_value()) {
+            throw exception("Bad expected access: it has no error");
+        }
+        return std::move(m_vex.impl.e);
+    }
+
+    [[nodiscard]] constexpr E&& error() && {
+        if (has_value()) {
+            throw exception("Bad expected access: it has no error");
+        }
+        return std::move(m_vex.impl.e);
+    }
 
     template <typename U>
         requires std::is_copy_constructible_v<T>

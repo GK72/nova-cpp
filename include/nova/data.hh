@@ -30,8 +30,10 @@
 
 #include "nova/error.hh"
 #include "nova/type_traits.hh"
+#include "nova/utils.hh"
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cassert>
@@ -687,3 +689,25 @@ private:
 };
 
 } // namespace nova
+
+template <>
+class fmt::formatter<nova::data_view> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    auto format(nova::data_view data, FmtContext& ctx) const {
+        if (is_printable(data)) {
+            return fmt::format_to(ctx.out(), "{}", data.as_string());
+        }
+        return fmt::format_to(ctx.out(), "x{}", data.as_hex_string());
+    }
+
+private:
+    [[nodiscard]] static auto is_printable(nova::data_view data) -> bool {
+        return not std::ranges::any_of(data, [](auto b) { return not nova::is_printable(b); });
+    }
+
+};
