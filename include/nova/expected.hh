@@ -1,15 +1,20 @@
 /**
  * Part of Nova C++ Library.
  *
- * Reimplementatino of `std::expected` because not all compilers
- * support it yet.
+ * Reimplementation of `std::expected` because not all compilers support it
+ * yet.
  *
- * CAUTION: experimental and incomplete implementation!
+ * Error types must be formattable. In case of invalid access, an exception is
+ * thrown with a message provided by a formatter for the error type.
+ *
+ * `error()` access is checked, and it is not undefined behaviour (until C++26)
+ * to call it when there is no error.
  */
 
 #pragma once
 
 #include <nova/error.hh>
+#include <nova/type_traits.hh>
 
 #include <functional>
 #include <memory>
@@ -34,6 +39,7 @@ namespace detail {
 using detail::unexpect;
 
 template <typename T, typename E>
+    requires formattable<E>
 class expected;
 
 template <typename T>
@@ -54,6 +60,7 @@ struct unexpected {
 };
 
 template <typename T, typename E>
+    requires formattable<E>
 class expected {
 public:
     using value_type      = T;
@@ -149,28 +156,28 @@ public:
 
     [[nodiscard]] constexpr const T& value() const& {
         if (not has_value()) {
-            throw exception("Bad expected access: it has no value");
+            throw exception("Bad expected access: {}", error());
         }
         return m_vex.impl.v;
     }
 
     [[nodiscard]] constexpr T& value() & {
         if (not has_value()) {
-            throw exception("Bad expected access: it has no value");
+            throw exception("Bad expected access: {}", error());
         }
         return m_vex.impl.v;
     }
 
     [[nodiscard]] constexpr const T&& value() const&& {
         if (not has_value()) {
-            throw exception("Bad expected access: it has no value");
+            throw exception("Bad expected access: {}", error());
         }
         return std::move(m_vex.impl.v);
     }
 
     [[nodiscard]] constexpr T&& value() && {
         if (not has_value()) {
-            throw exception("Bad expected access: it has no value");
+            throw exception("Bad expected access: {}", error());
         }
         return std::move(m_vex.impl.v);
     }

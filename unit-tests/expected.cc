@@ -2,12 +2,30 @@
 
 #include "nova/expected.hh"
 
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
 #include <string_view>
 #include <tuple>
+
+struct custom_error {
+    int code;
+};
+
+template <>
+class fmt::formatter<custom_error> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    auto format(custom_error err, FmtContext& ctx) const {
+        return fmt::format_to(ctx.out(), "The number {}", err.code);
+    }
+};
 
 TEST(Expected, TypeTraits) {
     using E = nova::expected<int, std::string_view>;
@@ -45,20 +63,25 @@ TEST(Expected, Value_SafeAccess) {
     constexpr auto x = nova::expected<int, int>(nova::unexpect, 8);
     EXPECT_THROW(std::ignore = x.value(), nova::exception);
 
-    EXPECT_THROW(
+    EXPECT_THROWN_MESSAGE(
         ( std::ignore = nova::expected<int, int>(nova::unexpect, 8).value() ),
-        nova::exception
+        "8"
     );
 }
 
 TEST(Expected, Error_SafeAccess) {
     constexpr auto x = nova::expected<int, int>(8);
-    EXPECT_THROW(std::ignore = x.error(), nova::exception);
+    EXPECT_THROWN_MESSAGE(std::ignore = x.error(), "Bad expected access: it has no error");
 
-    EXPECT_THROW(
+    EXPECT_THROWN_MESSAGE(
         ( std::ignore = nova::expected<int, int>(8).error() ),
-        nova::exception
+        "Bad expected access: it has no error"
     );
+}
+
+TEST(Expected, CompoundErrorTypeMessage) {
+    constexpr auto x = nova::expected<int, custom_error>(nova::unexpect, 8);
+    EXPECT_THROWN_MESSAGE(std::ignore = x.value(), "Bad expected access: The number 8");
 }
 
 TEST(Expected, NonTrivialTypes) {

@@ -10,6 +10,24 @@
 #include <type_traits>
 #include <vector>
 
+#include <fmt/format.h>
+
+struct non_formattable {};
+struct custom_formattable {};
+
+template <>
+class fmt::formatter<custom_formattable> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    auto format(custom_formattable x, FmtContext& ctx) const {
+        return fmt::format_to(ctx.out(), "");
+    }
+};
+
 TEST(TypeTraits, ChronoDuration) {
     static_assert(nova::is_chrono_duration_v<std::chrono::nanoseconds>);
 }
@@ -31,4 +49,10 @@ TEST(TypeTraits, StringLike) {
     static_assert(nova::string_like<char*>);
     static_assert(nova::string_like<std::string>);
     static_assert(nova::string_like<std::string_view>);
+}
+
+TEST(TypeTraits_Concepts, Formattable) {
+    static_assert(nova::formattable<int>);
+    static_assert(not nova::formattable<non_formattable>);
+    static_assert(nova::formattable<custom_formattable>);
 }

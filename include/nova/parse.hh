@@ -300,12 +300,10 @@ public:
     constexpr auto format(nova::parse_error error, FmtContext& ctx) const {
         switch (error) {
             case nova::parse_error::invalid_argument:
-                fmt::format_to(ctx.out(), "Invalid argument");
-                break;
+                return fmt::format_to(ctx.out(), "Parse error (invalid argument)");
             case nova::parse_error::out_of_range:
-                fmt::format_to(ctx.out(), "Out of range");
-                break;
+                return fmt::format_to(ctx.out(), "Parse error (out of range)");
         }
-        return ctx.out();
+        nova::unreachable();
     }
 };

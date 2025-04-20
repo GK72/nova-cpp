@@ -14,6 +14,11 @@
         [&](){ expr; },                                                        \
         testing::ThrowsMessage<nova::exception>(testing::StartsWith("Assertion failed: ")))
 
+#define EXPECT_THROWN_MESSAGE(expr, msg)                                       \
+    EXPECT_THAT(                                                               \
+        [&](){ expr; },                                                        \
+        testing::ThrowsMessage<nova::exception>(testing::ContainsRegex(msg)))
+
 /**
  * @brief   Non-trivial type.
  */
