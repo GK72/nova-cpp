@@ -23,7 +23,7 @@ public:
     }
 
     template <typename FmtContext>
-    auto format(custom_formattable x, FmtContext& ctx) const {
+    auto format([[maybe_unused]] custom_formattable x, FmtContext& ctx) const {
         return fmt::format_to(ctx.out(), "");
     }
 };
