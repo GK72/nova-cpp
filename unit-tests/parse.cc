@@ -1,17 +1,24 @@
-#include <cstdint>
-#include <gtest/gtest.h>
-
 #include "nova/parse.hh"
 
+#include <gtest/gtest.h>
+
 #include <chrono>
+#include <cstdint>
+#include <limits>
 #include <string_view>
 
 using namespace std::chrono_literals;
 using namespace std::string_view_literals;
 
+TEST(Parse, ParseErrorFormatter) {
+    EXPECT_EQ(fmt::format("{}", nova::parse_error::invalid_argument), "Parse error (invalid argument)");
+    EXPECT_EQ(fmt::format("{}", nova::parse_error::out_of_range), "Parse error (out of range)");
+}
+
 TEST(Parse, Detail_SafeMultiply) {
-    EXPECT_EQ(nova::detail::safe_multiply<char>(1, 64).value(), 64);
-    EXPECT_EQ(nova::detail::safe_multiply<char>(2, 65).error(), nova::parse_error::out_of_range);
+    constexpr auto maxchar = std::numeric_limits<char>::max();
+    EXPECT_EQ(nova::detail::safe_multiply<char>(1, maxchar).value(), maxchar);
+    EXPECT_EQ(nova::detail::safe_multiply<char>(2, maxchar + 1).error(), nova::parse_error::out_of_range);
     EXPECT_EQ(nova::detail::safe_multiply<float>(3.40282347E+38F, 10).error(), nova::parse_error::out_of_range);
 }
 

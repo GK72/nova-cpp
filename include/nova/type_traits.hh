@@ -13,6 +13,8 @@
 #include <type_traits>
 #include <vector>
 
+#include <fmt/format.h>
+
 namespace nova {
 
 // Dependent false
@@ -51,5 +53,10 @@ template <typename T> concept chrono_duration = is_chrono_duration_v<T>;
 template <typename T> concept vector_like = is_std_vector_v<T>;
 template <typename T> concept map_like = is_std_map_v<T>;
 template <typename T> concept string_like = std::is_convertible_v<T, std::string_view>;
+
+template <typename T>
+concept formattable = requires {
+    fmt::formatter<T>();
+};
 
 } // namespace nova

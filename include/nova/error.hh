@@ -181,3 +181,16 @@ public:
     }
 };
 #endif // NOVA_EXPERIMENTAL_FEATURE_SET
+
+template <>
+class fmt::formatter<nova::error> {
+public:
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FmtContext>
+    auto format(nova::error err, FmtContext& ctx) const {
+        return fmt::format_to(ctx.out(), "{}", err.message);
+    }
+};

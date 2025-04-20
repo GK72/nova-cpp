@@ -63,6 +63,15 @@ constexpr auto NewLine = '\n';
 #endif
 
 /**
+ * @brief   Check if the byte is ASCII printable.
+ */
+[[nodiscard]] constexpr auto is_printable(std::byte b) -> bool {
+    constexpr auto r = ascii::PrintableRange;
+    const auto ch = std::to_integer<char>(b);
+    return r.low <= ch && ch <= r.high;
+}
+
+/**
  * @brief   Split a string by delimiter.
  *
  * @param str       Input string to split.
@@ -182,7 +191,7 @@ public:
     /**
      * @brief   Measure the elapsed time since construction.
      */
-    [[nodiscard]] auto elapsed() -> std::chrono::nanoseconds {
+    [[nodiscard]] auto elapsed() const -> std::chrono::nanoseconds {
         return now() - m_clock;
     }
 
