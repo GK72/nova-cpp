@@ -11,6 +11,11 @@
 #include <tuple>
 
 struct custom_error {
+    // P0960R3 is not implemented in Apple Clang
+    constexpr custom_error(int x)
+        : code(x)
+    {}
+
     int code;
 };
 
