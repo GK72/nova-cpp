@@ -299,9 +299,13 @@ public:
     template <typename FmtContext>
     constexpr auto format(nova::parse_error error, FmtContext& ctx) const {
         switch (error) {
-            case nova::parse_error::invalid_argument:   return "Invalid argument";
-            case nova::parse_error::out_of_range:       return "Out of range";
+            case nova::parse_error::invalid_argument:
+                fmt::format_to(ctx.out(), "Invalid argument");
+                break;
+            case nova::parse_error::out_of_range:
+                fmt::format_to(ctx.out(), "Out of range");
+                break;
         }
-        nova::unreachable();
+        return ctx.out();
     }
 };
