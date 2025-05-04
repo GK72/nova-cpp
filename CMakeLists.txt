@@ -8,6 +8,7 @@ option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_BENCH "Build benchmark tests" OFF)
 option(NOVA_EXPERIMENTAL_FEATURE_SET "Enable experimental features that requires compiler/lib support" OFF)
 
+include(cmake/githash.cmake)
 include(cmake/version.cmake)
 
 nova_extract_version()

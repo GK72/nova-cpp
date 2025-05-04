@@ -4,7 +4,14 @@
 
 auto entrypoint([[maybe_unused]] auto args) -> int {
     nova::log::init("Test");
-    nova::log::info("Nova version: v{}.{}.{}", NovaVersionMajor, NovaVersionMinor, NovaVersionPatch);
+
+    nova::log::info(
+        "Nova version: v{}.{}.{} ({})",
+        NovaVersionMajor,
+        NovaVersionMinor,
+        NovaVersionPatch,
+        NovaGitHash
+    );
 
     return EXIT_SUCCESS;
 }
