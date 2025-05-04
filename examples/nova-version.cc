@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-auto entrypoint([[maybe_unused]] auto args) -> int {
+int main() {
     nova::log::init("Test");
 
     nova::log::info(
@@ -15,5 +15,3 @@ auto entrypoint([[maybe_unused]] auto args) -> int {
 
     return EXIT_SUCCESS;
 }
-
-NOVA_MAIN(entrypoint);

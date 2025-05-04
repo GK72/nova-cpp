@@ -29,6 +29,7 @@ fi
 bumped_version="${v_major}.${v_minor}.${v_patch}"
 echo "Bumped version: ${bumped_version}"
 
+# TODO: No longer needed.
 sed --in-place \
     -e "s/\(.*NovaVersionMajor = \).*;/\1${v_major};/" \
     -e "s/\(.*NovaVersionMinor = \).*;/\1${v_minor};/" \

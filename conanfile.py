@@ -2,10 +2,11 @@ from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.build import check_min_cppstd
 
+import os
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.7.3"
+    version = "0.7.4"       # CMake project version relies on this.
     package_type = "library"
 
     license = "BSL"
@@ -51,6 +52,8 @@ class Nova(ConanFile):
         tc = CMakeToolchain(self)
         tc.generate()
 
+        self.write_version()
+
     def build(self):
         cmake = CMake(self)
         cmake.configure()
@@ -66,3 +69,10 @@ class Nova(ConanFile):
         # Header-only libraries do not have compiled artifacts
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
+
+    def write_version(self):
+        version_file = os.path.join(self.source_folder, "cmake", "version.cmake")
+        with open(version_file, "w") as outf:
+            outf.write(f"set(ENV{{NOVA_VERSION}} \"{self.version}\")")
+            # TODO: Inject git hash while the code is in the repository, then
+            #       create Conan package.
