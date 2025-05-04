@@ -32,7 +32,8 @@
 #include <nova/vec.hh>
 #include <nova/yaml.hh>
 
-constexpr auto NovaVersionMajor = 0;
-constexpr auto NovaVersionMinor = 7;
-constexpr auto NovaVersionPatch = 3;
+// TODO: Separate includes in a separate files from build information.
+constexpr auto NovaVersionMajor = $ENV{LIB_VERSION_MAJOR};
+constexpr auto NovaVersionMinor = $ENV{LIB_VERSION_MINOR};
+constexpr auto NovaVersionPatch = $ENV{LIB_VERSION_PATCH};
 constexpr auto NovaGitHash = "$ENV{GIT_HASH}";

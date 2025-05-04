@@ -8,12 +8,10 @@ option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_BENCH "Build benchmark tests" OFF)
 option(NOVA_EXPERIMENTAL_FEATURE_SET "Enable experimental features that requires compiler/lib support" OFF)
 
-include(cmake/githash.cmake)
-include(cmake/version.cmake)
+include(cmake/buildinfo.cmake)
 
-nova_extract_version()
-project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
-message(STATUS "Nova version ${NOVA_VERSION}")
+project("nova" VERSION $ENV{NOVA_VERSION} LANGUAGES CXX)
+message(STATUS "Nova version: $ENV{NOVA_VERSION}")
 
 add_library(project_warnings INTERFACE)
 include(cmake/compiler-warnings.cmake)

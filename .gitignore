@@ -9,3 +9,7 @@ compile_commands.json
 tags
 
 gdb.txt
+
+# Generated from `nova.hh.in` and `conanfile.py`
+include/nova/nova.hh
+cmake/version.cmake
