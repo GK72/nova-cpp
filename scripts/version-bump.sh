@@ -19,7 +19,7 @@ echo "Previous version: ${version}"
 
 commit_tag=$(git show --format="%s" --quiet |cut -d ':' -f 1)
 
-if [[ "${commit_tag}" =~ (F|feat) ]]; then
+if [[ "${commit_tag}" =~ (F|f)eat ]]; then
     v_minor=$((v_minor+1))
     v_patch=0
 else

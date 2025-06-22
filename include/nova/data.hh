@@ -42,6 +42,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iterator>
+#include <limits>
 #include <span>
 #include <streambuf>
 #include <string>
@@ -511,13 +512,23 @@ public:
      * @brief   Allocates a buffer.
      *
      * Initial size is at most `buffer_delta`.
+     *
+     * Due to `std::basic_streambuf` API the maximum size is what an `int` can
+     * represent.
+     *
+     * @throws  if the maximum size is above `int` limit.
      */
     stream_buffer(difference_type max_size, difference_type buffer_delta = DefaultBufferDelta)
         : m_max_size(max_size)
         , m_buffer_delta(buffer_delta)
     {
+        static constexpr auto int_max = std::numeric_limits<int>::max();
+        if (max_size > int_max) {
+            throw nova::exception("Maximum buffer size ({}) is over the limit {}", max_size, int_max);
+        }
+
         auto pend = std::min(max_size, m_buffer_delta);
-        m_data.reserve(static_cast<std::size_t>(pend));
+        m_data.resize(static_cast<std::size_t>(pend));
         base::setg(m_data.data(), m_data.data(), m_data.data());
         base::setp(m_data.data(), std::next(m_data.data(), pend));
     }
@@ -568,19 +579,19 @@ public:
      * It will not resize the underlying buffer.
      */
     void consume() {
-        consume(static_cast<difference_type>(size()));
+        consume(size());
     }
 
     /**
      * @brief   Consume some number of bytes from the buffer.
      */
-    void consume(difference_type n) {
+    void consume(std::size_t n) {
         if (base::egptr() < base::pptr()) {
             setg(m_data.data(), base::gptr(), base::pptr());
         }
 
-        if (std::next(base::gptr(), n) > base::pptr()) {
-            n = std::distance(base::gptr(), base::pptr());
+        if (std::next(base::gptr(), static_cast<int>(n)) > base::pptr()) {
+            n = static_cast<std::size_t>(std::distance(base::gptr(), base::pptr()));
         }
 
         base::gbump(static_cast<int>(n));
