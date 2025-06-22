@@ -240,7 +240,7 @@ TEST(Data, Identity_DataView_Serialization_BigEndian) {
 
 TEST(Data, StreamBuffer_LimitedSize) {
     EXPECT_THROWN_MESSAGE(
-        nova::stream_buffer{ static_cast<long>(std::numeric_limits<int>::max()) + 1 },
+        nova::stream_buffer{ static_cast<nova::stream_buffer<>::difference_type>(std::numeric_limits<int>::max()) + 1 },
         "Maximum buffer size.*is over the limit"
     );
 }
