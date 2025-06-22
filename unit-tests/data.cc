@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <string_view>
 
@@ -237,6 +238,13 @@ TEST(Data, Identity_DataView_Serialization_BigEndian) {
     EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);
 }
 
+TEST(Data, StreamBuffer_LimitedSize) {
+    EXPECT_THROWN_MESSAGE(
+        nova::stream_buffer{ static_cast<long>(std::numeric_limits<int>::max()) + 1 },
+        "Maximum buffer size.*is over the limit"
+    );
+}
+
 TEST(Data, StreamBuffer_Write) {
     auto buf = nova::stream_buffer{ 10 };
     EXPECT_EQ(buf.write("Hello"_data), 5);
@@ -261,7 +269,7 @@ TEST(Data, StreamBuffer_WriteConsumeLoop) {
     EXPECT_EQ(n, 4);
     EXPECT_EQ(buf.view().as_string(), "Hello over");
 
-    buf.consume(4);
+    buf.consume(n);
     EXPECT_EQ(buf.view().as_string(),     "o over");
 
     EXPECT_EQ(buf.write(data.subview(n)), 4);
@@ -289,7 +297,6 @@ TEST(Data, StreamBuffer_ResizingBuffer) {
     const auto data = std::string(256, 'a');
     auto buf = nova::stream_buffer{ 512 };
     EXPECT_EQ(buf.write(nova::data_view(data)), 256);
-
-    EXPECT_EQ(buf.size(), 256);
-    EXPECT_EQ(buf.view().size(), 256);
+    EXPECT_EQ(buf.size(), buf.view().size());
+    EXPECT_EQ(buf.view().as_string(), data);
 }
