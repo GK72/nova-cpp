@@ -89,10 +89,28 @@ constexpr auto NewLine = '\n';
 
 /**
  * @brief   Return the current time in UNIX epoch.
+ *
+ * It is usually not monotonic, i.e., system time can be changed (backwards).
  */
+template <typename T = std::chrono::nanoseconds>
 [[nodiscard]] inline
-std::chrono::nanoseconds now() {
-    return std::chrono::steady_clock::now().time_since_epoch();
+auto now() -> std::chrono::nanoseconds {
+    return std::chrono::duration_cast<T>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+}
+
+/**
+ * @brief   Return the current time using a constant monotonic clock.
+ *
+ * Note: it is not necessarily UNIX epoch.
+ */
+template <typename T = std::chrono::nanoseconds>
+[[nodiscard]] inline
+auto steady_now() -> std::chrono::nanoseconds {
+    return std::chrono::duration_cast<T>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    );
 }
 
 /**
@@ -181,25 +199,27 @@ template <std::floating_point R = float, typename T>
 
 /**
  * @brief   A simple stopwatch measuring in nanosecond resolution.
+ *
+ * Uses a constant monotonic clock.
  */
 class stopwatch {
 public:
     [[nodiscard]] stopwatch()
-        : m_clock(now())
+        : m_clock(steady_now())
     {}
 
     /**
      * @brief   Measure the elapsed time since construction.
      */
     [[nodiscard]] auto elapsed() const -> std::chrono::nanoseconds {
-        return now() - m_clock;
+        return steady_now() - m_clock;
     }
 
     /**
      * @brief   Measure the elapsed time since last call this function.
      */
     auto reset() -> std::chrono::nanoseconds {
-        const auto time = now();
+        const auto time = steady_now();
         const auto ret = time - m_clock;
         m_clock = time;
         return ret;

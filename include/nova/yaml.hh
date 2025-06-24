@@ -2,10 +2,14 @@
  * Part of Nova C++ Library.
  *
  * YAML API.
+ *
+ * Beta version, not fully designed API.
+ * Error handling might be incomplete/inconsistent.
  */
 #pragma once
 
 #include "nova/error.hh"
+#include "nova/expected.hh"
 #include "nova/type_traits.hh"
 #include "nova/utils.hh"
 
@@ -13,7 +17,6 @@
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -54,16 +57,25 @@ public:
     template <typename T>
     [[nodiscard]] T lookup(std::string_view path) const {
         try {
-            return lookup_impl(path).as<T>();
+            return lookup_impl(path).value().as<T>();
         } catch (const YAML::BadConversion& ex) {
             throw exception("Parsing error: {}", ex.what());
         }
     }
 
+    template <typename T>
+    [[nodiscard]] T lookup(std::string_view path, T def) const {
+        const auto result = lookup_impl(path);
+        if (not result.has_value()) {
+            return def;
+        }
+        return result->as<T>();
+    }
+
     template <template <typename...> typename Container>
         requires vector_like<Container<yaml>>
     [[nodiscard]] Container<yaml> lookup(std::string_view path) const {
-        const auto node = lookup_impl(path);
+        const auto node = lookup_impl(path).value();
         return Container<yaml>(node.begin(), node.end());
     }
 
@@ -71,7 +83,7 @@ public:
         requires map_like<Container<std::string, yaml>>
     [[nodiscard]] Container<std::string, yaml> lookup(std::string_view path) const {
         Container<std::string, yaml> ret;
-        const auto node = lookup_impl(path);
+        const auto node = lookup_impl(path).value();
 
         for (const auto& elem : node) {
             ret.insert({ elem.first.as<std::string>(), yaml{ elem.second } });
@@ -85,7 +97,7 @@ public:
      */
     [[nodiscard]] auto at(const std::string& path) const {
         auto doc = yaml();
-        doc.set(lookup_impl(path));
+        doc.set(lookup_impl(path).value());
         return doc;
     }
 
@@ -104,25 +116,31 @@ private:
         m_doc = yaml_object;
     }
 
-    YAML::Node lookup_impl(std::string_view path) const {
-        try {
-            auto temp = split(path, ".")
-                      | std::views::filter([](const auto& elem) { return std::size(elem) > 0; });
-            const auto keys = std::vector<std::string>(std::begin(temp), std::end(temp));
-            YAML::Node node = YAML::Clone(m_doc);
+    auto lookup_impl(std::string_view path) const
+            -> expected<YAML::Node, std::string>
+    {
+        auto temp = split(path, ".")
+                  | std::views::filter([](const auto& elem) { return std::size(elem) > 0; });
+        const auto keys = std::vector<std::string>(std::begin(temp), std::end(temp));
+        YAML::Node node = YAML::Clone(m_doc);
 
-            for (const std::string& key : keys) {
-                if (node.IsMap()) {
-                    node = node[key];
-                } else if (node.IsSequence()) {
+        for (const std::string& key : keys) {
+            if (node.IsMap()) {
+                node = node[key];
+            } else if (node.IsSequence()) {
+                try {
                     node = node[std::stoi(key)];
+                } catch (const std::exception&) {
+                    return { unexpect, fmt::format("Invalid `{}` in YAML document", path) };
                 }
             }
-
-            return node;
-        } catch (const std::exception& ex) {
-            throw exception("Parsing error: {}", ex.what());
         }
+
+        if (not node.IsDefined()) {
+            return { unexpect, fmt::format("Invalid `{}` in YAML document", path) };
+        }
+
+        return node;
     }
 
 };

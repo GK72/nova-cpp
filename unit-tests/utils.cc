@@ -59,6 +59,9 @@ TEST(Utils, Split_StdString) {
 TEST(Utils, Now) {
     using T = decltype(nova::now());
     static_assert(std::is_same_v<T, std::chrono::nanoseconds>);
+
+    EXPECT_GT(nova::now<std::chrono::seconds>().count(), 1750784367);   // Tue Jun 24 18:59:27 CEST 2025
+    EXPECT_GT(nova::steady_now<std::chrono::seconds>().count(), 0);
 }
 
 TEST(Utils, ToSec) {
