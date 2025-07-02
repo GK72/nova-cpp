@@ -599,7 +599,7 @@ operator%(const measure<Unit1, Rep1, Ratio1>& lhs, const measure<Unit2, Rep2, Ra
 // ------------------------------------==[ Helper Types ]==-----------------------------------------
 
 namespace constants {
-    constexpr auto bit = 8;
+    constexpr auto bits_per_byte = 8;
     constexpr auto kByte = 1024;
     constexpr auto MByte = kByte * 1024;
     constexpr auto GByte = MByte * 1024;
@@ -615,7 +615,7 @@ namespace constants {
  */
 using DefaultRepT = std::chrono::seconds::rep;
 
-using bits   = measure<data_volume, long long, std::ratio<1, constants::bit>>;
+using bits   = measure<data_volume, long long, std::ratio<1, constants::bits_per_byte>>;
 using bytes  = measure<data_volume, long long>;
 using kBytes = measure<data_volume, long long, std::ratio<constants::kByte>>;
 using MBytes = measure<data_volume, long long, std::ratio<constants::MByte>>;
