@@ -145,16 +145,21 @@ TEST(DataView, InterpretAsBitPackedNumber_OneByte) {
     EXPECT_EQ(view.as_number_bit_packed(3, 5), 1);
 }
 
-TEST(DataView, InterpretAsBitPackedNumber_ph) {
+TEST(DataView, InterpretAsBitPackedNumber_Spillover) {
     static constexpr auto data = std::to_array<unsigned char>({
         0b1100'0001,
-        0b1010'0011
+        0b1010'0011,
+        0b0001'1011
     });
+
     const auto view = nova::data_view(data);
 
-    // FIXME: Current result is `10` instead of `26`.
-    // EXPECT_EQ(view.as_number_bit_packed<std::uint8_t>(4, 8), 26);
-    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(4, 8), 26);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint8_t>(4, 8), 0b0001'1010);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint8_t>(4, 7), 0b0000'1101);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(4, 8), 0b0001'1010);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(7, 9), 0b0000'0001'1010'0011);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(7, 16), 0b0000'1101'0001'1000'1101);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(4, 16), 0b0000'0001'1010'0011'0001);
 }
 
 TEST(DataView, InterpretAsBitPackedNumber_MultipleBytes) {

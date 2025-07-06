@@ -280,16 +280,20 @@ public:
     /**
      * @brief   Interpret bit-packed data as number specified by `length` from `pos`.
      *
-     * Both `pos` and `length` represent bits.
+     * Both `pos` and `length` specified as number of bits.
      * The overload `as_number(extent<units::measure<...>>)` offers specifying
      * them in either bytes or bits.
      *
      * Note: Bit-packed deserialization is ONLY supported in big endian mode!
      *
      * Algorithm:
-     * - Extracts the byte-array (given by `pos` and `length`) into a single value.
-     * - Trailing rightmost) bits are shifted off.
-     * - ... TODO: Finish reviewing and fixing GPT's code.
+     * - The byte-array (given by `pos` and `length`) is extracted into a single value.
+     *   - If the range goes through more bytes than the type is able to represent,
+     *     a carry byte is used. For example 8 bits from the 5th bit requires two
+     *     bytes to be used.
+     * - Trailing (rightmost) bits are shifted off.
+     * - Leading bits are masked off.
+     * - Carry bits are shifted left by the amount of spillover bits.
      */
     template <typename T = std::size_t>
         requires std::is_integral_v<T>
@@ -299,11 +303,17 @@ public:
         nova_assert(length <= sizeof(T) * Byte);
         boundary_check_bit(pos, length);
 
-        const std::size_t start_byte = pos / Byte;
+        std::size_t start_byte = pos / Byte;
         const std::size_t end_bit = pos + length;
         const std::size_t end_byte = (end_bit + 7) / Byte;
 
-        auto ret = T {};
+        auto ret = T{};
+        auto carry = T{};
+
+        if (end_byte - start_byte > sizeof(T)) {
+            carry = std::to_integer<std::uint8_t>(m_data[start_byte]);
+            ++start_byte;
+        }
 
         for (std::size_t i = start_byte; i < end_byte; ++i) {
             ret = static_cast<T>(ret << Byte);
@@ -313,12 +323,15 @@ public:
         const std::size_t trailing_bits = end_byte * Byte - end_bit;
         ret = static_cast<T>(ret >> trailing_bits);
 
-        // TODO: Finish reviewing and fixing GPT's code.
-
-        // Mask out excess bits beyond length
         if (length < sizeof(T) * Byte) {
             T mask = static_cast<T>(1 << length) - 1;
             ret &= mask;
+        }
+
+        if (carry) {
+            const auto spillover_bits = Byte - trailing_bits + (sizeof(T) - 1) * Byte;
+            carry = static_cast<T>(carry << spillover_bits);
+            ret |= carry;
         }
 
         return ret;
