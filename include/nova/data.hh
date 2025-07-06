@@ -30,6 +30,8 @@
 
 #include "nova/error.hh"
 #include "nova/type_traits.hh"
+#include "nova/types.hh"
+#include "nova/units.hh"
 #include "nova/utils.hh"
 
 #include <fmt/core.h>
@@ -213,6 +215,9 @@ template <endian Endianness = endian::big, bool RuntimeBoundCheck = true>
 class data_view {
     static constexpr auto Byte = 8;
 
+    template <typename R>
+    using Measure = units::measure<units::data_volume, long long, R>;
+
 public:
 
     template <typename Range>
@@ -228,7 +233,7 @@ public:
 
     [[nodiscard]]
     data_view(const void* ptr, std::size_t size)
-        : m_data(reinterpret_cast<const std::byte*>(ptr), size)
+        : m_data(reinterpret_cast<const std::byte*>(ptr), size)                                     // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) | Low-level code; it is safe to cast between `const char` and `std::byte`.
     {}
 
     [[nodiscard]] data_view subview(std::size_t offset) const {
@@ -249,14 +254,15 @@ public:
     [[nodiscard]] auto size()  const -> std::size_t                { return m_data.size(); }
 
     [[nodiscard]] auto ptr()      const -> const std::byte* { return m_data.data(); }
-    [[nodiscard]] auto char_ptr() const -> const char*      { return reinterpret_cast<const char*>(m_data.data()); }
+    [[nodiscard]] auto char_ptr() const -> const char*      { return reinterpret_cast<const char*>(m_data.data()); }    // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) | Low-level code; it is safe to cast between `const char` and `std::byte`.
 
     /**
-     * @brief   Interpret data as number according to the type `T`.
+     * @brief   Interpret data as number specified by `length`.
      */
     template <typename T = std::size_t>
         requires std::is_integral_v<T>
     [[nodiscard]] auto as_number(std::size_t pos, std::size_t length) const -> T {
+        nova_assert(length <= sizeof(T));
         boundary_check(pos, length);
 
         auto ret = T {};
@@ -272,7 +278,69 @@ public:
     }
 
     /**
+     * @brief   Interpret bit-packed data as number specified by `length` from `pos`.
+     *
+     * Both `pos` and `length` specified as number of bits.
+     * The overload `as_number(extent<units::measure<...>>)` offers specifying
+     * them in either bytes or bits.
+     *
+     * Note: Bit-packed deserialization is ONLY supported in big endian mode!
+     *
+     * Algorithm:
+     * - The byte-array (given by `pos` and `length`) is extracted into a single value.
+     *   - If the range goes through more bytes than the type is able to represent,
+     *     a carry byte is used. For example 8 bits from the 5th bit requires two
+     *     bytes to be used.
+     * - Trailing (rightmost) bits are shifted off.
+     * - Leading bits are masked off.
+     * - Carry bits are shifted left by the amount of spillover bits.
+     */
+    template <typename T = std::size_t>
+        requires std::is_integral_v<T>
+             and std::is_unsigned_v<T>
+    [[nodiscard]] auto as_number_bit_packed(std::size_t pos, std::size_t length) const -> T {
+        static_assert(Endianness == endian::big);
+        nova_assert(length <= sizeof(T) * Byte);
+        boundary_check_bit(pos, length);
+
+        std::size_t start_byte = pos / Byte;
+        const std::size_t end_bit = pos + length;
+        const std::size_t end_byte = (end_bit + 7) / Byte;
+
+        auto ret = T{};
+        auto carry = T{};
+
+        if (end_byte - start_byte > sizeof(T)) {
+            carry = std::to_integer<std::uint8_t>(m_data[start_byte]);
+            ++start_byte;
+        }
+
+        for (std::size_t i = start_byte; i < end_byte; ++i) {
+            ret = static_cast<T>(ret << Byte);
+            ret |= std::to_integer<std::uint8_t>(m_data[i]);
+        }
+
+        const std::size_t trailing_bits = end_byte * Byte - end_bit;
+        ret = static_cast<T>(ret >> trailing_bits);
+
+        if (length < sizeof(T) * Byte) {
+            T mask = static_cast<T>(1ULL << length) - 1;
+            ret &= mask;
+        }
+
+        if (carry) {
+            const auto spillover_bits = Byte - trailing_bits + (sizeof(T) - 1) * Byte;
+            carry = static_cast<T>(carry << spillover_bits);
+            ret |= carry;
+        }
+
+        return ret;
+    }
+
+    /**
      * @brief   Interpret data as number according to the type `T`.
+     *
+     * This is wrapper around `as_number(pos, len)`.
      */
     template <typename T>
         requires std::is_integral_v<T>
@@ -281,12 +349,55 @@ public:
     }
 
     /**
-     * @brief   Interpret data for the given `length` as a string
+     * @brief   Interpret data as number according to the type `T`.
+     */
+    template <typename T = std::size_t>
+        requires std::is_integral_v<T>
+    [[nodiscard]] auto as_number(extent<std::size_t> ex) const -> T {
+        return as_number(ex.pos, ex.len);
+    }
+
+    /**
+     * @brief   Interpret bit-packed data as number specified by
+     *          `extent<units::measure<...>>`.
+     *
+     * Position and length in `extent` does not need to have the same ratio.
+     *
+     * @param ex    The extent specifing the position and length. Both must
+     *              be a measure representing bits or bytes as an integral
+     *              type.
+     *
+     * @tparam T    Return type which must be an unsigned integer and
+     *              must be able to represent the requrested length.
+     * @tparam R1   Ratio for position in `extent`.
+     * @tparam R2   Ratio for length in `extent`.
+     *
+     * @example
+     *
+     * ```cpp
+     * const auto view = nova::data_view(...);
+     * view.as_number<std::size_t>(nova::extent{ 1_byte, 2_bit });
+     * ```
+     *
+     * Note: Bit-packed deserialization is ONLY supported in big endian mode!
+     */
+    template <typename T = std::size_t, typename R1, typename R2 = R1>
+        requires std::is_integral_v<T>
+             and std::is_unsigned_v<T>
+    [[nodiscard]] auto as_number(extent<Measure<R1>, Measure<R2>> ex) const -> T {
+        return as_number_bit_packed(
+            static_cast<std::size_t>(units::measure_cast<units::bits>(ex.pos).count()),
+            static_cast<std::size_t>(units::measure_cast<units::bits>(ex.len).count())
+        );
+    }
+
+    /**
+     * @brief   Interpret data for the given `length` as a string.
      */
     [[nodiscard]]
     auto as_string(std::size_t pos, std::size_t length) const -> std::string_view {
         boundary_check(pos, length);
-        return { reinterpret_cast<const char*>(m_data.data() + pos), length };
+        return { reinterpret_cast<const char*>(m_data.data() + pos), length };                      // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) | Low-level code; it is safe to cast between `const char` and `std::byte`.
     }
 
     [[nodiscard]]
@@ -341,11 +452,28 @@ private:
     void boundary_check(std::size_t pos, std::size_t length) const {
         if constexpr (RuntimeBoundCheck) {
             if (size() < pos + length) {
-                throw exception("Out of bounds access: {}", detail::data_cursor{ pos, length, size() });
+                throw exception(
+                    "Out of bounds access: {}",
+                    detail::data_cursor{ pos, length, size() }
+                );
             }
         }
         else {
             nova_assert(pos + length <= size());
+        }
+    }
+
+    void boundary_check_bit(std::size_t pos, std::size_t length) const {
+        if constexpr (RuntimeBoundCheck) {
+            if (size() * Byte < pos + length) {
+                throw exception(
+                    "Out of bounds access: {} (bits)",
+                    detail::data_cursor{ pos, length, size() * Byte }
+                );
+            }
+        }
+        else {
+            nova_assert(pos + length <= size() * Byte);
         }
     }
 };

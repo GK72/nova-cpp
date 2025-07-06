@@ -1,5 +1,9 @@
-#include "nova/data.hh"
+#define NOVA_RUNTIME_ASSERTIONS
+
 #include "test_utils.hh"
+
+#include "nova/data.hh"
+#include "nova/units.hh"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -10,8 +14,10 @@
 #include <limits>
 #include <string>
 #include <string_view>
+#include <tuple>
 
 using namespace nova::literals;
+using namespace nova::units::literals;
 using namespace std::literals;
 
 TEST(CharTraitsByte, Compare) {
@@ -86,7 +92,10 @@ TEST(DataView, InterpretAsNumber_NonStdLength) {
     const auto view_be = nova::data_view(data);
     const auto view_le = nova::data_view_le(data);
     EXPECT_EQ(view_be.as_number(0, 3), 258);
+    EXPECT_EQ(view_be.as_number(nova::extent<std::size_t>{ 0, 3 }), 258);
     EXPECT_EQ(view_le.as_number(0, 3), (2 << 16) + (1 << 8));
+
+    EXPECT_ASSERTION_FAIL(std::ignore = view_be.as_number<std::uint8_t>(0, 2));
 }
 
 TEST(DataView, InterpretAsNumber_Indexed) {
@@ -95,6 +104,17 @@ TEST(DataView, InterpretAsNumber_Indexed) {
     const auto view_le = nova::data_view_le(data);
     EXPECT_EQ(view_be.as_number<std::uint16_t>(1), 258);
     EXPECT_EQ(view_le.as_number<std::uint16_t>(1), 513);
+}
+
+TEST(DataView, SignedNumbers) {
+    EXPECT_EQ(nova::data_view("\x01"sv).as_number<std::int8_t>(0), 1);
+    EXPECT_EQ(nova::data_view("\xFF"sv).as_number<std::int8_t>(0), -1);
+    EXPECT_EQ(nova::data_view("\x80"sv).as_number<std::int8_t>(0), -128);
+    EXPECT_EQ(nova::data_view("\x81"sv).as_number<std::int8_t>(0), -127);
+    EXPECT_EQ(nova::data_view("\x82"sv).as_number<std::int8_t>(0), -126);
+
+    EXPECT_EQ(nova::data_view("\x80\x00"sv).as_number<std::int16_t>(0), -32768);
+    EXPECT_EQ(nova::data_view("\x80\x01"sv).as_number<std::int16_t>(0), -32767);
 }
 
 TEST(DataView, InterpretAsString) {
@@ -106,6 +126,84 @@ TEST(DataView, InterpretAsString) {
 TEST(DataView, InterpretAsDynamicString) {
     static constexpr auto data = "\x04\x61\x62\x63\x64\x65"sv;
     EXPECT_EQ(nova::data_view(data).as_dyn_string(0), "abcd");
+}
+
+TEST(DataView, InterpretAsBitPackedNumber_OneByte) {
+    static constexpr auto data = std::to_array<unsigned char>({
+        0b1100'0001
+    });
+
+    const auto view = nova::data_view(data);
+
+    EXPECT_EQ(view.as_number_bit_packed(0, 1), 1);
+    EXPECT_EQ(view.as_number_bit_packed(0, 2), 3);
+
+    EXPECT_EQ(view.as_number_bit_packed(1, 1), 1);
+    EXPECT_EQ(view.as_number_bit_packed(1, 2), 2);
+
+    EXPECT_EQ(view.as_number_bit_packed(7, 1), 1);
+    EXPECT_EQ(view.as_number_bit_packed(3, 5), 1);
+}
+
+TEST(DataView, InterpretAsBitPackedNumber_Spillover) {
+    static constexpr auto data = std::to_array<unsigned char>({
+        0b1100'0001,
+        0b1010'0011,
+        0b0001'1011
+    });
+
+    const auto view = nova::data_view(data);
+
+    EXPECT_EQ(view.as_number_bit_packed<std::uint8_t>(4, 8), 0b0001'1010);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint8_t>(4, 7), 0b0000'1101);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(4, 8), 0b0001'1010);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(7, 9), 0b0000'0001'1010'0011);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(7, 16), 0b0000'1101'0001'1000'1101);
+    EXPECT_EQ(view.as_number_bit_packed<std::uint16_t>(4, 16), 0b0000'0001'1010'0011'0001);
+}
+
+TEST(DataView, InterpretAsBitPackedNumber_MultipleBytes) {
+    static constexpr auto data = std::to_array<unsigned char>({
+        0b1100'0001,
+        0b1010'0011
+    });
+
+    const auto view = nova::data_view(data);
+
+    EXPECT_EQ(view.as_number_bit_packed(8, 1), 1);
+    EXPECT_EQ(view.as_number_bit_packed(8, 3), 5);
+    EXPECT_EQ(view.as_number_bit_packed(8, 8), 163);
+
+    EXPECT_EQ(view.as_number_bit_packed(4, 4), 1);
+    EXPECT_EQ(view.as_number_bit_packed(4, 5), 3);
+    EXPECT_EQ(view.as_number_bit_packed(4, 12), 419);
+}
+
+TEST(DataView, InterpretAsBitPackedNumber_ExtentOverload) {
+    static constexpr auto data = std::to_array<unsigned char>({
+        0b1100'0001,
+        0b1010'0011,
+        0x02,
+        0x03,
+        0x04,
+        0x05,
+        0x06,
+        0x07
+    });
+
+    const auto view = nova::data_view(data);
+    constexpr auto byte_pos = nova::units::bytes{ 1 };
+    constexpr auto bit_pos = nova::units::bits{ 8 };
+    constexpr auto len = nova::units::bits { 3 };
+    const auto byte_extent = nova::extent{ byte_pos, len };
+    const auto bit_extent = nova::extent{ bit_pos, len };
+
+    EXPECT_EQ(view.as_number<std::size_t>(byte_extent), 5);
+    EXPECT_EQ(view.as_number<std::size_t>(bit_extent), 5);
+    EXPECT_EQ(view.as_number<std::size_t>(nova::extent{ 1_byte, 3_bit }), 5);
+
+    EXPECT_EQ(view.as_number<std::size_t>(nova::extent{ 6_byte, 2_byte }), 1543);
+    EXPECT_EQ(view.as_number<std::uint16_t>(6), 1543);
 }
 
 TEST(DataView, SubView) {
@@ -157,6 +255,26 @@ TEST(DataView, ErrorOutOfBounds) {
         []{ std::ignore = nova::data_view(data).as_number(1, 2); },
         testing::ThrowsMessage<nova::exception>(
             testing::HasSubstr("Out of bounds access: Pos=1 Len=2 End=3 (Size=2)")
+        )
+    );
+}
+
+TEST(DataView, ErrorOutOfBounds_Bit) {
+    static constexpr auto data = std::to_array<unsigned char>({
+        0b1100'0001
+    });
+
+    EXPECT_THAT(
+        []{ std::ignore = nova::data_view(data).as_number_bit_packed(0, 9); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("Out of bounds access: Pos=0 Len=9 End=9 (Size=8) (bits)")
+        )
+    );
+
+    EXPECT_THAT(
+        []{ std::ignore = nova::data_view(data).as_number_bit_packed(1, 8); },
+        testing::ThrowsMessage<nova::exception>(
+            testing::HasSubstr("Out of bounds access: Pos=1 Len=8 End=9 (Size=8) (bits)")
         )
     );
 }

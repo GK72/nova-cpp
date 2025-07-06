@@ -100,7 +100,7 @@ struct error {
 #ifdef NOVA_RUNTIME_ASSERTIONS
     // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) | Must be a macro; `expr` needs to be converted to text
     #define nova_assert(expr)                                                   \
-        if (not static_cast<bool>(expr)) {                                      \
+        if (not (expr)) {                                                       \
             nova_breakpoint();                                                  \
             throw nova::exception("Assertion failed: " #expr);                  \
         }
