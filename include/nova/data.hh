@@ -324,7 +324,7 @@ public:
         ret = static_cast<T>(ret >> trailing_bits);
 
         if (length < sizeof(T) * Byte) {
-            T mask = static_cast<T>(1 << length) - 1;
+            T mask = static_cast<T>(1ULL << length) - 1;
             ret &= mask;
         }
 
