@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "type_traits.hh"
+#include <libnova/type_traits.hpp>
 
 #include <algorithm>
 #include <array>

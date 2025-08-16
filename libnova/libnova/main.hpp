@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "nova/log.hh"
+#include <libnova/log.hpp>
 
 #include <spdlog/spdlog.h>
 

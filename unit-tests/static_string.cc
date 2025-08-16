@@ -1,8 +1,8 @@
-#include "nova/intrinsics.hh"
+#include <libnova/intrinsics.hpp>
 
 #ifndef NOVA_WIN
 
-#include "nova/static_string.hh"
+#include <libnova/static_string.hpp>
 
 #include <gtest/gtest.h>
 

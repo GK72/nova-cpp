@@ -5,7 +5,7 @@ from conan.tools.build import check_min_cppstd
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.7.6"
+    version = "0.7.7"
     package_type = "library"
 
     license = "BSL"
@@ -18,8 +18,7 @@ class Nova(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    # Sources are located in the same place as this recipe, copy them to the recipe
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "cmake/*", "examples/*", "unit-tests/*"
+    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "examples/*", "unit-tests/*"
 
     def config_options(self):
         if self.settings.os == "Windows":

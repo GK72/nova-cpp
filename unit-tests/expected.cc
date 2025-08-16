@@ -1,6 +1,6 @@
 #include "test_utils.hh"
 
-#include "nova/expected.hh"
+#include <libnova/expected.hpp>
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>

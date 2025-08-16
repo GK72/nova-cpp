@@ -1,4 +1,4 @@
-#include "nova/std_extensions.hh"
+#include <libnova/std_extensions.hpp>
 
 #include <gtest/gtest.h>
 

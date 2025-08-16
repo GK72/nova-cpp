@@ -2,8 +2,8 @@
 
 #include "test_utils.hh"
 
-#include "nova/data.hh"
-#include "nova/units.hh"
+#include <libnova/data.hpp>
+#include <libnova/units.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

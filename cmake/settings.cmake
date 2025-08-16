@@ -29,6 +29,11 @@ if(SANITIZERS)
 endif()
 
 function(code_analysis TARGET VISIBILITY)
+    if(NOT TARGET project_warnings)
+        add_library(project_warnings INTERFACE)
+        set_project_warnings(project_warnings)
+    endif()
+
     target_link_libraries(${TARGET} ${VISIBILITY} project_warnings)
 
     if(${SANITIZERS} MATCHES "[at]san")

@@ -2,7 +2,7 @@
  * Nova test utilities.
  */
 
-#include "nova/error.hh"
+#include <libnova/error.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

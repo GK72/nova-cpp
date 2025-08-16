@@ -1,4 +1,4 @@
-#include "nova/vec.hh"
+#include <libnova/vec.hpp>
 
 #include <gtest/gtest.h>
 

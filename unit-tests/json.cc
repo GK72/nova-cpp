@@ -1,5 +1,5 @@
-#include "nova/error.hh"
-#include "nova/json.hh"
+#include <libnova/error.hpp>
+#include <libnova/json.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

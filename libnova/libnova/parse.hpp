@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "nova/expected.hh"
-#include "nova/intrinsics.hh"
-#include "nova/type_traits.hh"
+#include <libnova/expected.hpp>
+#include <libnova/intrinsics.hpp>
+#include <libnova/type_traits.hpp>
 
 #include <fmt/format.h>
 

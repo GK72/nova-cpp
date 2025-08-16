@@ -1,8 +1,8 @@
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/types.hh"
-#include "nova/utils.hh"
+#include <libnova/error.hpp>
+#include <libnova/types.hpp>
+#include <libnova/utils.hpp>
 
 #include <concepts>
 #include <numeric>

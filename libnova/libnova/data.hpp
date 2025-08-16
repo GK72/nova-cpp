@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/type_traits.hh"
-#include "nova/types.hh"
-#include "nova/units.hh"
-#include "nova/utils.hh"
+#include <libnova/error.hpp>
+#include <libnova/type_traits.hpp>
+#include <libnova/types.hpp>
+#include <libnova/units.hpp>
+#include <libnova/utils.hpp>
 
 #include <fmt/core.h>
 #include <fmt/format.h>

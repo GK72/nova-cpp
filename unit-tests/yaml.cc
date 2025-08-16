@@ -1,5 +1,5 @@
-#include "nova/error.hh"
-#include "nova/yaml.hh"
+#include <libnova/error.hpp>
+#include <libnova/yaml.hpp>
 
 #include "test_utils.hh"
 

@@ -1,4 +1,4 @@
-#include "nova/flat_map.hh"
+#include <libnova/flat_map.hpp>
 
 #include <gmock/gmock.h>
 

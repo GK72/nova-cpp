@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/expected.hh"
-#include "nova/types.hh"
-#include "nova/type_traits.hh"
+#include <libnova/error.hpp>
+#include <libnova/expected.hpp>
+#include <libnova/types.hpp>
+#include <libnova/type_traits.hpp>
 
 #include <fmt/format.h>
 

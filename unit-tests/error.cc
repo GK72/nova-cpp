@@ -1,4 +1,4 @@
-#include "nova/error.hh"
+#include <libnova/error.hpp>
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>

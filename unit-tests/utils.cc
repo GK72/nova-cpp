@@ -1,5 +1,5 @@
-#include "nova/types.hh"
-#include "nova/utils.hh"
+#include <libnova/types.hpp>
+#include <libnova/utils.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

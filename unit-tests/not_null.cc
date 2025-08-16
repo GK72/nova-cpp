@@ -2,7 +2,7 @@
 
 #include "test_utils.hh"
 
-#include "nova/not_null.hh"
+#include <libnova/not_null.hpp>
 
 #include <gtest/gtest.h>
 

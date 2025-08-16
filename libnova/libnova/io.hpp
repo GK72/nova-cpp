@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/expected.hh"
+#include <libnova/error.hpp>
+#include <libnova/expected.hpp>
 
 #include <fmt/format.h>                                                                             // NOLINT(misc-include-cleaner) | Clang why are you like this?
 

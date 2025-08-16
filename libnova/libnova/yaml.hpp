@@ -8,10 +8,10 @@
  */
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/expected.hh"
-#include "nova/type_traits.hh"
-#include "nova/utils.hh"
+#include <libnova/error.hpp>
+#include <libnova/expected.hpp>
+#include <libnova/type_traits.hpp>
+#include <libnova/utils.hpp>
 
 #include <yaml-cpp/node/emit.h>
 #include <yaml-cpp/yaml.h>

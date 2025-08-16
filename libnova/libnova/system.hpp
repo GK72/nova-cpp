@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include "nova/error.hh"
-#include "nova/expected.hh"
-#include "nova/intrinsics.hh"
-#include "nova/std_extensions.hh"
+#include <libnova/error.hpp>
+#include <libnova/expected.hpp>
+#include <libnova/intrinsics.hpp>
+#include <libnova/std_extensions.hpp>
 
 #ifdef NOVA_LINUX
 #include <sched.h>

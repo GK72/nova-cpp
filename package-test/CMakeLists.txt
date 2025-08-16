@@ -3,9 +3,8 @@ project(PackageTest CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(nova CONFIG REQUIRED)
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+find_package(nova REQUIRED)
 
-add_executable(package-test main.cc)
-target_link_libraries(package-test
-    nova::nova
-)
+add_executable(package-test main.cpp)
+target_link_libraries(package-test nova::nova nova::nova-deps)

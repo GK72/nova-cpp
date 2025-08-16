@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "nova/intrinsics.hh"
-#include "nova/utils.hh"
+#include <libnova/intrinsics.hpp>
+#include <libnova/utils.hpp>
 
 #include <chrono>
 

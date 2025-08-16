@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "nova/intrinsics.hh"
+#include <libnova/intrinsics.hpp>
 
 #include <fmt/core.h>
 #include <fmt/format.h>

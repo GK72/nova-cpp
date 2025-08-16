@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include <nova/error.hh>
-#include <nova/type_traits.hh>
+#include <libnova/error.hpp>
+#include <libnova/type_traits.hpp>
 
 #include <functional>
 #include <memory>

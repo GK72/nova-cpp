@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nova/error.hh"
+#include <libnova/error.hpp>
 
 #include <cstddef>
 #include <type_traits>

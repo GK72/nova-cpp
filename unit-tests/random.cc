@@ -2,7 +2,7 @@
 
 #include "test_utils.hh"
 
-#include "nova/random.hh"
+#include <libnova/random.hpp>
 
 #include <array>
 #include <ranges>

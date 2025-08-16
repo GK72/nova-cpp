@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nova/intrinsics.hh"
+#include <libnova/intrinsics.hpp>
 
 // FIXME(x-platform): gigahack (does not compile on MSVC unless C++23)
 //

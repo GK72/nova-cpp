@@ -1,4 +1,4 @@
-#include "nova/io.hh"
+#include <libnova/io.hpp>
 
 #include <gtest/gtest.h>
 

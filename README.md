@@ -19,10 +19,15 @@ aim is to be cross-platform working on any major compiler vendor.
 
 # Project structure
 
+The project follows the [Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
+
 ```
 ├── cmake
 ├── doc
-├── include                 Public headers
+├── src
+│   ├── CMakeLists.txt
+│   └── libnova
+├── functional-tests
 ├── unit-tests
 └── functional-tests
 ```

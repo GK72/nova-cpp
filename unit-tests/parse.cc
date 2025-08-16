@@ -1,4 +1,4 @@
-#include "nova/parse.hh"
+#include <libnova/parse.hpp>
 
 #include <gtest/gtest.h>
 

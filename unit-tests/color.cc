@@ -1,4 +1,4 @@
-#include "nova/color.hh"
+#include <libnova/color.hpp>
 
 #include <gtest/gtest.h>
 
