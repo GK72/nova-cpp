@@ -1,6 +1,6 @@
-#include <nova/io.hh>
-#include <nova/log.hh>
-#include <nova/main.hh>
+#include <libnova/io.hpp>
+#include <libnova/log.hpp>
+#include <libnova/main.hpp>
 
 #include <spdlog/sinks/basic_file_sink.h>
 

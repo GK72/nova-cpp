@@ -19,15 +19,14 @@ include(cmake/compiler-warnings.cmake)
 include(cmake/dependencies.cmake)
 include(cmake/settings.cmake)
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 add_subdirectory(libnova)
 
-# if(BUILD_TESTS)
-    # enable_testing()
-    # add_subdirectory(unit-tests)
-    # add_subdirectory(functional-tests)
-# endif()
+if(BUILD_TESTS)
+    enable_testing()
+    include(CTest)
+
+    add_subdirectory(tests)
+endif()
 
 # if(BUILD_BENCH)
     # add_subdirectory(bench)

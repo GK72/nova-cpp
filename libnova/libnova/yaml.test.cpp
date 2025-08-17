@@ -1,7 +1,6 @@
 #include <libnova/error.hpp>
+#include <libnova/test_utils.hpp>
 #include <libnova/yaml.hpp>
-
-#include "test_utils.hh"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

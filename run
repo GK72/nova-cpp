@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(realpath "${0%%/*}")"
+PROJECT_DIR=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
+ARTIFACT_DIR="${PROJECT_DIR}/.tmp"
+BUILD_DIR="${ARTIFACT_DIR}/build"
+INSTALL_DIR="${ARTIFACT_DIR}/install"
+JOBS=$(($(nproc) / 2))
+
+COLOR_PURPLE='\033[1;35m'
+COLOR_DEF='\033[0m'
+
+function usage() {
+    >&2 cat << EOF
+Usage: $0 [-c|--clean]
+
+Compiles all targets with sanitizers and runs unit and function tests.
+
+Dependencies:
+- cmake
+- baldr (cargo install baldr)
+EOF
+}
+
+f_clean=false
+
+declare -A stages
+stages[build-libnova]=true
+stages[install-libnova]=true
+stages[test-libnova]=true
+stages[integration-tests]=true
+
+function configure_stages() {
+    local cstages=("$*")
+    for stage in "${cstages[@]}"; do
+        echo "${stages[$stage]}"
+    done
+
+    exit 0
+}
+
+function log() {
+    >&2 echo -e "${COLOR_PURPLE}$*${COLOR_DEF}"
+}
+
+function parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -c|--clean)     f_clean=true;;
+            # -s|--stage)     configure_stages "$2";              shift;;
+            -h|--help)      usage;                              exit 0;;
+            *)              log "Invalid option: $1"; usage;    exit 1;;
+        esac
+        shift
+    done
+}
+
+# function build-and-test() {
+    # baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" --config "${PROJECT_DIR}/.baldr-clang.yaml"
+    # ctest --output-on-failure --test-dir "${BUILD_DIR}/debug-clang++"
+
+    # baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" -DNOVA_EXPERIMENTAL_FEATURE_SET=ON
+    # ctest --output-on-failure --test-dir "${BUILD_DIR}/debug"
+# }
+
+function build-libnova() {
+    if [[ ${stages[build-libnova]} != true ]]; then
+        return
+    fi
+
+    cmake -S "${PROJECT_DIR}/libnova" -B "${BUILD_DIR}/libnova" \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DSANITIZERS=asan \
+        -DBUILD_TESTS=1 \
+        -DCOVERAGE=1 \
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
+
+    cmake --build "${BUILD_DIR}/libnova" --config Debug
+}
+
+function install-libnova() {
+    if [[ ${stages[install-libnova]} != true ]]; then
+        return
+    fi
+
+    cmake --install "${BUILD_DIR}/libnova" --prefix "${INSTALL_DIR}"
+}
+
+function test-libnova() {
+    if [[ ${stages[test-libnova]} != true ]]; then
+        return
+    fi
+
+    ctest --test-dir "${BUILD_DIR}/libnova" \
+        --build-config Debug \
+        --output-on-failure
+}
+
+function integration-tests() {
+    if [[ ${stages[integration-tests]} != true ]]; then
+        return
+    fi
+
+    cmake -S "${PROJECT_DIR}/tests" -B "${BUILD_DIR}/tests" \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DSANITIZERS=asan \
+        -DCMAKE_PREFIX_PATH="${INSTALL_DIR}" \
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
+
+        # -DCMAKE_MODULE_PATH="${INSTALL_DIR}/lib/cmake/nova" \
+
+    cmake --build "${BUILD_DIR}/tests" --config Debug
+
+    ctest --test-dir "${BUILD_DIR}/tests" \
+        --build-config Debug \
+        --output-on-failure
+}
+
+function main() {
+    if [[ $f_clean == true ]]; then
+        log "Cleaning build directory: ${BUILD_DIR}"
+        rm -rf "${BUILD_DIR}"
+    fi
+
+    # build-and-test
+
+    # build-libnova
+    # test-libnova
+    # install-libnova
+
+    log "Running integration tests"
+    integration-tests
+}
+
+parse_args "$@"
+main

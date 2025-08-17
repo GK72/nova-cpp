@@ -1,8 +1,7 @@
 #define NOVA_RUNTIME_ASSERTIONS
 
-#include "test_utils.hh"
-
 #include <libnova/random.hpp>
+#include <libnova/test_utils.hpp>
 
 #include <array>
 #include <ranges>

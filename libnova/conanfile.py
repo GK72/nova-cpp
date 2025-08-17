@@ -60,8 +60,4 @@ class Nova(ConanFile):
         cmake.install()
 
     def package_info(self):
-        #  self.cpp_info.libs = ["nova"]        # TODO: When there will be compiled artifacts
-
-        # Header-only libraries do not have compiled artifacts
-        self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = []
+        self.cpp_info.libs = ["nova"]

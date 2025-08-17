@@ -33,7 +33,7 @@ jobs:
       run: ctest -C Release --output-on-failure
 
     - name: Package
-      run: conan create ${{github.workspace}} --test-folder package-test --build=missing --settings compiler.cppstd=20
+      run: conan create ${{github.workspace}} --test-folder tests/package --build=missing --settings compiler.cppstd=20
 
   debug-coverage:
     runs-on: ubuntu-24.04
@@ -65,7 +65,7 @@ jobs:
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
     - name: Package
-      run: conan create ${{github.workspace}} --test-folder package-test --build=missing --settings compiler.cppstd=20
+      run: conan create ${{github.workspace}} --test-folder tests/package --build=missing --settings compiler.cppstd=20
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4

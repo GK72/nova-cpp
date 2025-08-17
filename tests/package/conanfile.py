@@ -9,14 +9,8 @@ class novaTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
 
-    def configure(self):
-        self.options["fmt"].header_only = True
-        self.options["spdlog"].header_only = True
-
     def requirements(self):
-        #  self.requires(self.tested_reference_str)
-        for req in self.conan_data:
-            self.requires(req)
+        self.requires(self.tested_reference_str)
 
     def build(self):
         cmake = CMake(self)

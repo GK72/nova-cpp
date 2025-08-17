@@ -1,8 +1,7 @@
 #define NOVA_RUNTIME_ASSERTIONS
 
-#include "test_utils.hh"
-
 #include <libnova/data.hpp>
+#include <libnova/test_utils.hpp>
 #include <libnova/units.hpp>
 
 #include <gtest/gtest.h>

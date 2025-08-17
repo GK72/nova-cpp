@@ -1,9 +1,9 @@
 find_program(CCACHE ccache)
 if(CCACHE)
-    message("Using ccache")
+    message(STATUS "Using ccache")
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 else()
-    message("Ccache cannot be found")
+    message(STATUS "Ccache cannot be found")
 endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -19,6 +19,9 @@ if(COVERAGE)
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
 endif()
 
+# Address sanitizer is used as the primary one containing leak and undefined
+# sanitizers also. Thread sanitizer is not compatible with address and leak
+# sanitizer.
 if(SANITIZERS)
     if(SANITIZERS STREQUAL asan)
         set(SANITIZER_LIST -fsanitize=address -fsanitize=leak -fsanitize=undefined)
@@ -28,20 +31,17 @@ if(SANITIZERS)
     endif()
 endif()
 
+# Enable code analysis for the given target, i.e., enabling compiler warnings
+# and sanitizers.
 function(code_analysis TARGET VISIBILITY)
-    if(NOT TARGET project_warnings)
-        add_library(project_warnings INTERFACE)
-        set_project_warnings(project_warnings)
-    endif()
-
-    target_link_libraries(${TARGET} ${VISIBILITY} project_warnings)
+    enable_compiler_warnings(${TARGET})
 
     if(${SANITIZERS} MATCHES "[at]san")
         target_compile_options(${TARGET} ${VISIBILITY} ${SANITIZER_LIST})
         target_link_options(${TARGET} ${VISIBILITY} ${SANITIZER_LIST})
-        message("Code analysis is turned on for ${TARGET} with ${SANITIZER_LIST}")
+        message(STATUS "Code analysis is turned on for ${TARGET} with ${SANITIZER_LIST}")
     else()
-        message("Code analysis is turned on for ${TARGET}")
+        message(STATUS "Code analysis is turned on for ${TARGET}")
     endif()
 endfunction()
 

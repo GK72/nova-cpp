@@ -1,4 +1,4 @@
-function(set_project_warnings project_name)
+function(enable_compiler_warnings TARGET)
     set(MSVC_WARNINGS
         /W4     # Baseline reasonable warnings
         /w14242 # 'identfier': conversion from 'type1' to 'type1', possible loss
@@ -74,6 +74,6 @@ function(set_project_warnings project_name)
         set(PROJECT_WARNINGS ${GCC_WARNINGS})
     endif()
 
-    target_compile_options(${project_name} INTERFACE ${PROJECT_WARNINGS})
+    target_compile_options(${TARGET} INTERFACE ${PROJECT_WARNINGS})
 
 endfunction()

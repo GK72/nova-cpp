@@ -1,6 +1,6 @@
-#include <nova/data.hh>
-#include <nova/io.hh>
-#include <nova/main.hh>
+#include <libnova/data.hpp>
+#include <libnova/io.hpp>
+#include <libnova/main.hpp>
 
 #include <fmt/core.h>
 
