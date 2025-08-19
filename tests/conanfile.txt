@@ -7,3 +7,7 @@ yaml-cpp/0.8.0
 [options]
 fmt/*:header_only=True
 spdlog/*:header_only=True
+
+[generators]
+CMakeDeps
+CMakeToolchain

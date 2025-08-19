@@ -11,23 +11,29 @@ The commits are following the [Conventional Commits](https://www.conventionalcom
 
 # Dependencies
 
-# Building the library
+See `libnova/conandata.yml` for more details.
 
-The library is developed by the latest and greatest tools on Arch Linux.
-Currently, there are no guarantees in which environment it works. The general
-aim is to be cross-platform working on any major compiler vendor.
+# Quick-start
+
+A runner script is provided at the root of the project for verification as a
+CI-like workflow. It runs all stages for `Debug` and `Release` build by
+default.
+
+```sh
+CMAKE_BUILD_PARALLEL_LEVEL=4 ./run [--help]
+```
 
 # Project structure
 
 The project follows the [Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
 
 ```
-├── cmake
 ├── doc
 ├── src
 │   ├── CMakeLists.txt
 │   └── libnova
-├── functional-tests
-├── unit-tests
-└── functional-tests
+│       ├── cmake                               Public CMake modules
+│       └── libnova                             C++ source code
+└── tests                                       Integration/functional tests
+    └── package                                 Package testing for Conan workflow
 ```

@@ -18,7 +18,7 @@ class Nova(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "examples/*", "unit-tests/*"
+    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "*.cmake", "Config.cmake.in"
 
     def config_options(self):
         if self.settings.os == "Windows":

@@ -33,4 +33,4 @@ jobs:
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
 
     - name: Package
-      run: conan create ${{github.workspace}} --test-folder tests/package --build=missing --settings compiler.cppstd=20
+      run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20

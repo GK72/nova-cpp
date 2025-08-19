@@ -13,26 +13,22 @@ install(EXPORT NovaTargets
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova"
 )
 
+set_property(TARGET nova PROPERTY VERSION ${NOVA_VERSION})
+set_property(TARGET nova PROPERTY SOVERSION ${NOVA_VERSION_MAJOR})
+set_property(TARGET nova PROPERTY INTERFACE_Nova_MAJOR_VERSION ${NOVA_VERSION_MAJOR})
+set_property(TARGET nova APPEND PROPERTY COMPATIBLE_INTERFACE_STRING Nova_MAJOR_VERSION)
+
 configure_package_config_file(
     "${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/novaConfig.cmake"
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova"
 )
 
-set_property(TARGET nova PROPERTY VERSION ${NOVA_VERSION})
-set_property(TARGET nova PROPERTY SOVERSION ${NOVA_VERSION_MAJOR})
-set_property(TARGET nova PROPERTY INTERFACE_Nova_MAJOR_VERSION ${NOVA_VERSION_MAJOR})
-set_property(TARGET nova APPEND PROPERTY COMPATIBLE_INTERFACE_STRING Nova_MAJOR_VERSION)
-
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/novaConfigVersion.cmake"
-    VERSION "${NOVA_VERSION}"
-    COMPATIBILITY AnyNewerVersion
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/novaConfig.cmake" DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova")
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/cmake/" DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova")
 
 install(
     FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/novaConfig.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/novaConfigVersion.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova"
+        "${CMAKE_CURRENT_SOURCE_DIR}/dependencies.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova/details"
 )

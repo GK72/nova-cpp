@@ -1,9 +1,0 @@
-{
-    "version": 4,
-    "vendor": {
-        "conan": {}
-    },
-    "include": [
-        "../.tmp/build/libnova/conan/build/Debug/generators/CMakePresets.json"
-    ]
-}

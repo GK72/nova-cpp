@@ -6,6 +6,7 @@ build*/
 .cache/
 .clangd/
 
+CMakeUserPresets.json
 compile_commands.json
 tags
 

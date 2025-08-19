@@ -1,8 +1,8 @@
-#include <benchmark/benchmark.h>
+#include <libnova/data.hpp>
+#include <libnova/random.hpp>
+#include <libnova/types.hpp>
 
-#include <nova/data.hh>
-#include <nova/random.hh>
-#include <nova/types.hh>
+#include <benchmark/benchmark.h>
 
 #include <cstdint>
 #include <limits>

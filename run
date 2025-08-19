@@ -5,133 +5,186 @@ set -euo pipefail
 SCRIPT_DIR="$(realpath "${0%%/*}")"
 PROJECT_DIR=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
 ARTIFACT_DIR="${PROJECT_DIR}/.tmp"
-BUILD_DIR="${ARTIFACT_DIR}/build"
+BUILD_DIR_PREFIX="${ARTIFACT_DIR}/build"
 INSTALL_DIR="${ARTIFACT_DIR}/install"
-JOBS=$(($(nproc) / 2))
 
-COLOR_PURPLE='\033[1;35m'
 COLOR_DEF='\033[0m'
+COLOR_BLUE='\033[0;34m'
 
 function usage() {
     >&2 cat << EOF
-Usage: $0 [-c|--clean]
+Usage: $0 [-c|--clean] [-b|--build-type=Debug|Release] [-s|--stages]
 
 Compiles all targets with sanitizers and runs unit and function tests.
 
 Dependencies:
 - cmake
-- baldr (cargo install baldr)
 EOF
 }
 
-f_clean=false
+ALL_STAGES=(
+    "build-libnova"
+    "test-libnova"
+    "bench-libnova"
+    "install-libnova"
+    "integration-tests"
+    "package-libnova"
+    "conan-package-test"
+)
 
-declare -A stages
-stages[build-libnova]=true
-stages[install-libnova]=true
-stages[test-libnova]=true
-stages[integration-tests]=true
+ENABLED_STAGES=("${ALL_STAGES[@]}")
+
+ALLOWED_BUILD_TYPES=(
+    "Debug"
+    "Release"
+)
+
+f_clean=false
+build_type=all
+
+function contains() {
+    local what="$1"
+    shift
+    [[ $* =~ (^|[[:space:]])${what}($|[[:space:]]) ]] || return 1
+}
 
 function configure_stages() {
-    local cstages=("$*")
-    for stage in "${cstages[@]}"; do
-        echo "${stages[$stage]}"
-    done
+    IFS=',' read -r -a ENABLED_STAGES <<< "$1"
+}
 
-    exit 0
+function configure_build_type() {
+    if ! contains "$1" "${ALLOWED_BUILD_TYPES[@]}"; then
+        log "Error: build type must be either Debug or Release"
+        exit 1
+    fi
+    build_type=$1
 }
 
 function log() {
-    >&2 echo -e "${COLOR_PURPLE}$*${COLOR_DEF}"
+    >&2 echo -e "[$(date '+%F %T.%6N %:z')] [run @$$] $*"
+}
+
+function log-stage-entry() {
+    log "${COLOR_BLUE}$*${COLOR_DEF}"
 }
 
 function parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -c|--clean)     f_clean=true;;
-            # -s|--stage)     configure_stages "$2";              shift;;
-            -h|--help)      usage;                              exit 0;;
-            *)              log "Invalid option: $1"; usage;    exit 1;;
+            -b|--build-type)    configure_build_type "$2";          shift;;
+            -c|--clean)         f_clean=true;;
+            -s|--stages)        configure_stages "$2";              shift;;
+            -h|--help)          usage;                              exit 0;;
+            *)                  log "Invalid option: $1"; usage;    exit 1;;
         esac
         shift
     done
 }
 
-# function build-and-test() {
-    # baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" --config "${PROJECT_DIR}/.baldr-clang.yaml"
-    # ctest --output-on-failure --test-dir "${BUILD_DIR}/debug-clang++"
-
-    # baldr --project "${PROJECT_DIR}" -b Debug -t all -j "${JOBS}" -DNOVA_EXPERIMENTAL_FEATURE_SET=ON
-    # ctest --output-on-failure --test-dir "${BUILD_DIR}/debug"
-# }
-
 function build-libnova() {
-    if [[ ${stages[build-libnova]} != true ]]; then
-        return
-    fi
+    log-stage-entry "Running stage: build-libnova"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
 
-    cmake -S "${PROJECT_DIR}/libnova" -B "${BUILD_DIR}/libnova" \
-        -DCMAKE_BUILD_TYPE=Debug \
+    cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}/libnova" \
+        -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
-        -DBUILD_TESTS=1 \
+        -DBUILD_TESTING=ON \
         -DCOVERAGE=1 \
-        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
+        -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake"
 
-    cmake --build "${BUILD_DIR}/libnova" --config Debug
-}
-
-function install-libnova() {
-    if [[ ${stages[install-libnova]} != true ]]; then
-        return
-    fi
-
-    cmake --install "${BUILD_DIR}/libnova" --prefix "${INSTALL_DIR}"
+    cmake --build "${build_dir}/libnova"
 }
 
 function test-libnova() {
-    if [[ ${stages[test-libnova]} != true ]]; then
-        return
-    fi
+    log-stage-entry "Unit-testing Nova"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
 
-    ctest --test-dir "${BUILD_DIR}/libnova" \
-        --build-config Debug \
-        --output-on-failure
+    ctest --test-dir "${build_dir}/libnova" \
+        --output-on-failure \
+        --label-exclude bench
+}
+
+function bench-libnova() {
+    log-stage-entry "Running stage: bench-libnova"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
+
+    ctest --test-dir "${build_dir}/libnova" \
+        --output-on-failure \
+        --label-regex bench \
+        --verbose
+}
+
+function install-libnova() {
+    log-stage-entry "Running stage: install-libnova"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
+    cmake --install "${build_dir}/libnova" --prefix "${INSTALL_DIR}"
 }
 
 function integration-tests() {
-    if [[ ${stages[integration-tests]} != true ]]; then
-        return
-    fi
+    log-stage-entry "Running stage: integration-tests"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
 
-    cmake -S "${PROJECT_DIR}/tests" -B "${BUILD_DIR}/tests" \
-        -DCMAKE_BUILD_TYPE=Debug \
+    cmake -S "${PROJECT_DIR}/tests" -B "${build_dir}/tests" \
+        -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
         -DCMAKE_PREFIX_PATH="${INSTALL_DIR}" \
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
 
-        # -DCMAKE_MODULE_PATH="${INSTALL_DIR}/lib/cmake/nova" \
+    cmake --build "${build_dir}/tests"
 
-    cmake --build "${BUILD_DIR}/tests" --config Debug
-
-    ctest --test-dir "${BUILD_DIR}/tests" \
-        --build-config Debug \
+    ctest --test-dir "${build_dir}/tests" \
         --output-on-failure
+}
+
+function package-libnova() {
+    log-stage-entry "Running stage: package-libnova"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
+    cmake --build "${build_dir}/libnova" --target package
+
+    docker build \
+        --tag local/nova:suse \
+        --build-context package="${build_dir}/libnova" \
+        --file "${PROJECT_DIR}/env/suse.Dockerfile" \
+        "${PROJECT_DIR}/env"
+}
+
+function conan-package-test() {
+    log-stage-entry "Running stage: conan-package-test"
+    conan create libnova \
+        --test-folder "${PROJECT_DIR}/tests/package" \
+        --build=missing \
+        --settings compiler.cppstd=20
+}
+
+function run-stages() {
+    for stage in "${ENABLED_STAGES[@]}"; do
+        "${stage}" "${1}"
+    done
 }
 
 function main() {
     if [[ $f_clean == true ]]; then
-        log "Cleaning build directory: ${BUILD_DIR}"
-        rm -rf "${BUILD_DIR}"
+        log "Cleaning build directory: ${BUILD_DIR_PREFIX}"
+        log "Cleaning install directory: ${INSTALL_DIR}"
+        rm -rf "${BUILD_DIR_PREFIX}" "${INSTALL_DIR}"
     fi
 
-    # build-and-test
+    # TODO: Clang build.
 
-    # build-libnova
-    # test-libnova
-    # install-libnova
-
-    log "Running integration tests"
-    integration-tests
+    if [[ "${build_type}" == "all" ]]; then
+        for build_type in "${ALLOWED_BUILD_TYPES[@]}"; do
+            run-stages "${build_type}"
+        done
+    else
+        run-stages "${build_type}"
+    fi
 }
 
 parse_args "$@"

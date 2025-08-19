@@ -22,9 +22,7 @@ include(cmake/settings.cmake)
 add_subdirectory(libnova)
 
 if(BUILD_TESTS)
-    enable_testing()
     include(CTest)
-
     add_subdirectory(tests)
 endif()
 
