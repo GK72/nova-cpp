@@ -25,8 +25,8 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build --config Release
+        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build
@@ -53,8 +53,8 @@ jobs:
 
     - name: Build
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1 -DBUILD_TESTS=1 -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build --config Debug
+        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build
