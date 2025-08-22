@@ -20,8 +20,6 @@ jobs:
       with:
         python-version: "3.12"
     - uses: turtlebrowser/get-conan@main
-      with:
-        version: "2.6.0"
 
     - name: Build
       run: |
