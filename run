@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 SCRIPT_DIR="$(realpath "${0%%/*}")"
 PROJECT_DIR=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
 ARTIFACT_DIR="${PROJECT_DIR}/.tmp"
 BUILD_DIR_PREFIX="${ARTIFACT_DIR}/build"
 INSTALL_DIR="${ARTIFACT_DIR}/install"
 
-COLOR_DEF='\033[0m'
-COLOR_BLUE='\033[0;34m'
+source "${PROJECT_DIR}/scripts/log.lib.sh"
+source "${PROJECT_DIR}/scripts/live-tail.lib.sh"
 
 function usage() {
     >&2 cat << EOF
@@ -58,10 +56,6 @@ function configure_build_type() {
         exit 1
     fi
     build_type=$1
-}
-
-function log() {
-    >&2 echo -e "[$(date '+%F %T.%6N %:z')] [run @$$] $*"
 }
 
 function log-stage-entry() {
@@ -165,7 +159,7 @@ function conan-package-test() {
 
 function run-stages() {
     for stage in "${ENABLED_STAGES[@]}"; do
-        "${stage}" "${1}"
+        live-tail "${stage}" "${1}"
     done
 }
 
@@ -189,3 +183,8 @@ function main() {
 
 parse_args "$@"
 main
+
+# TODO: Integrate this.
+# if [[ ! -t 1 ]]; then
+    # echo "Not a TTY, disabling live tail"
+# fi

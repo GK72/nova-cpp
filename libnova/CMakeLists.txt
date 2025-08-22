@@ -13,10 +13,9 @@ nova_extract_version("${NOVA_VERSION_FILE}")
 project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
 message(STATUS "Nova version ${NOVA_VERSION}")
 
-include(dependencies.cmake)
-
 include(cmake/novaCompilerWarnings.cmake)
 include(cmake/novaCompilerSettings.cmake)
+include(dependencies.cmake)
 
 include(CTest)
 
