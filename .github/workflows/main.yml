@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/libnova
 
     - name: Unit Test
@@ -32,7 +32,7 @@ jobs:
 
     - name: Functional Test
       run: |
-        cmake -S ${{gibhub.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
@@ -40,7 +40,7 @@ jobs:
 
     - name: Examples
       run: |
-        cmake -S ${{gibhub.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/examples
 
   debug-coverage:
@@ -59,7 +59,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/libnova
 
     - name: Unit Test
@@ -72,7 +72,7 @@ jobs:
 
     - name: Functional Test
       run: |
-        cmake -S ${{gibhub.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
@@ -80,7 +80,7 @@ jobs:
 
     - name: Examples
       run: |
-        cmake -S ${{gibhub.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
         cmake --build ${{github.workspace}}/build/examples
 
     - name: Archive code coverage results
