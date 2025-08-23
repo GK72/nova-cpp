@@ -27,12 +27,15 @@ jobs:
         cmake --build ${{github.workspace}}/build/libnova
 
     - name: Unit Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/libnova
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
 
     - name: Functional Test
       run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
@@ -40,5 +43,5 @@ jobs:
 
     - name: Examples
       run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/examples

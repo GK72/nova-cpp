@@ -30,9 +30,12 @@ jobs:
       working-directory: ${{github.workspace}}/build/libnova
       run: ctest -C Release --output-on-failure
 
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
+
     - name: Functional Test
       run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
@@ -40,7 +43,7 @@ jobs:
 
     - name: Examples
       run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/examples
 
   debug-coverage:
@@ -70,9 +73,12 @@ jobs:
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
+
     - name: Functional Test
       run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
@@ -80,7 +86,7 @@ jobs:
 
     - name: Examples
       run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
         cmake --build ${{github.workspace}}/build/examples
 
     - name: Archive code coverage results
