@@ -5,12 +5,19 @@
 #include "nova/random.hh"
 
 #include <array>
-#include <ranges>
 #include <cmath>
+#include <ranges>
+#include <vector>
 
 TEST(Random, OneNumber) {
     static constexpr int Number = 1;
     const auto number = nova::random().number(nova::range<int>{ Number, Number });
+    EXPECT_EQ(number, Number);
+}
+
+TEST(Random, OneNumber_Char) {
+    static constexpr int Number = 1;
+    const auto number = nova::random().number(nova::range<char>{ Number, Number });
     EXPECT_EQ(number, Number);
 }
 
@@ -50,6 +57,8 @@ TEST(Random, Choice) {
 
     const auto result = random.choice(xs);
     EXPECT_TRUE(std::ranges::find(xs, result) != std::ranges::end(xs));
+
+    EXPECT_ASSERTION_FAIL(random.choice(std::vector<int>()));
 }
 
 TEST(Random, RandomString) {

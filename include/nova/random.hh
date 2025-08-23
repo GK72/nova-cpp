@@ -4,8 +4,7 @@
 #include "nova/types.hh"
 #include "nova/utils.hh"
 
-#include <concepts>
-#include <numeric>
+#include <iterator>
 #include <random>
 #include <ranges>
 #include <type_traits>
@@ -14,10 +13,28 @@ namespace nova {
 
 namespace detail {
 
+    namespace meta {
+        template <typename T> struct convert      { using type = T; };
+        template <> struct convert<unsigned char> { using type = unsigned short; };
+        template <> struct convert<char>          { using type = short; };
+
+        template <typename T> using convert_t = typename convert<T>::type;
+    } // namespace meta
+
     /**
-     * @brief   Generate a number in the given `range`
+     * @brief   Generate a number in the given `range`.
      *
-     * @precondition    `range`'s `low` value cannot be greater than `high`
+     * @precondition    `range`'s `low` value must not be greater than `high`.
+     *
+     * Accepted integral types by cpp standard are the followings:
+     * - short
+     * - int
+     * - long
+     * - long long
+     * - and their signed pairs.
+     *
+     * `char` and `unsigned char` are automatically casted up, and back while
+     * returning the result.
      */
     template <typename T>
         requires std::conjunction_v<
@@ -28,7 +45,7 @@ namespace detail {
         nova_assert(r.low <= r.high);                                                                   // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay) | False positive
 
         if constexpr (std::is_integral_v<T>) {
-            return std::uniform_int_distribution<T>(r.low, r.high)(gen);
+            return static_cast<T>(std::uniform_int_distribution<meta::convert_t<T>>(r.low, r.high)(gen));
         }
         else if constexpr (std::is_floating_point_v<T>) {
             return std::uniform_real_distribution<T>(r.low, r.high)(gen);
@@ -36,12 +53,15 @@ namespace detail {
     }
 
     /**
-     * @brief   Pick a random element from a `range`
+     * @brief   Pick a random element from a `range`.
+     *
+     * @precondition    `elements` must not be empty.
      */
     template <std::ranges::range Range>
     auto pick_from(const Range& elements, std::uniform_random_bit_generator auto& gen)
             -> typename Range::value_type
     {
+        nova_assert(not std::empty(elements));
         using difference_type = typename Range::difference_type;
 
         const auto idx = generate_number(range<std::size_t>{ 0, std::size(elements) - 1 }, gen);
@@ -87,7 +107,7 @@ struct alphabetic_distribution {
 };
 
 /**
- * @brief   A convenience class to generate random things
+ * @brief   A convenience class to generate random things.
  *
  * Contains the engine and seed with some wrapper member functions.
  *
@@ -96,7 +116,7 @@ struct alphabetic_distribution {
 class rng {
 public:
     /**
-     * @brief   Initialize engine with a random seed
+     * @brief   Initialize engine with a random seed.
      */
     rng()                                                                                           // NOLINT(cert-msc32-c,cert-msc51-cpp) | Uses `std::random_device` for seeding the engine
         : m_seed(m_rd())
@@ -105,9 +125,9 @@ public:
     }
 
     /**
-     * @brief   Initialize engine with a given seed
+     * @brief   Initialize engine with a given seed.
      *
-     * CAUTION: Use only when reproducible results are needed, e.g. testing / simulation
+     * CAUTION: Use only when reproducible results are needed, e.g. testing / simulation.
      */
     rng(std::random_device::result_type seed)                                                       // NOLINT(cert-msc32-c,cert-msc51-cpp) | Documented
         : m_seed(seed)
@@ -116,12 +136,12 @@ public:
     }
 
     /**
-     * @brief   For saving the seed to be able to reproduce the results
+     * @brief   For saving the seed to be able to reproduce the results.
      */
     [[nodiscard]] auto seed() const noexcept { return m_seed; }
 
     /**
-     * @brief   Pick a random element from a `range`
+     * @brief   Pick a random element from a `range`.
      */
     template <std::ranges::range Range>
     auto choice(const Range& r) -> typename Range::value_type {
@@ -129,7 +149,7 @@ public:
     }
 
     /**
-     * @brief   Generate a number in the given `range`
+     * @brief   Generate a number in the given `range`.
      */
     template <typename T>
         requires std::conjunction_v<
@@ -141,17 +161,17 @@ public:
     }
 
     /**
-     * @brief   Generate a number in the range [0, 1)
+     * @brief   Generate a number in the range [0, 1).
      */
     auto number() -> double {
         return detail::generate_number(range<double>{ 0.0, 1.0 }, m_mt);
     }
 
     /**
-     * @brief   Generate a given `length` string according to `Distribution`
+     * @brief   Generate a given `length` string according to `Distribution`.
      *
      * `Distribution` must be a callable with a type that is valid for
-     * `std::uniform_random_bit_generator` concept
+     * `std::uniform_random_bit_generator` concept.
      */
     template <typename Distribution>
     auto string(std::size_t length) -> std::string {
@@ -171,7 +191,7 @@ private:
 };
 
 /**
- * @brief   Convenience accessor to the global `rng` instance
+ * @brief   Convenience accessor to the global `rng` instance.
  *
  * Each thread will get its own instance.
  */
