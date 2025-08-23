@@ -6,9 +6,6 @@ ARTIFACT_DIR="${PROJECT_DIR}/.tmp"
 BUILD_DIR_PREFIX="${ARTIFACT_DIR}/build"
 INSTALL_DIR="${ARTIFACT_DIR}/install"
 
-source "${PROJECT_DIR}/scripts/log.lib.sh"
-source "${PROJECT_DIR}/scripts/live-tail.lib.sh"
-
 function usage() {
     >&2 cat << EOF
 Usage: $0 [-c|--clean] [-b|--build-type=Debug|Release] [-s|--stages]
@@ -28,6 +25,7 @@ ALL_STAGES=(
     "integration-tests"
     "package-libnova"
     "conan-package-test"
+    "build-examples"
 )
 
 ENABLED_STAGES=("${ALL_STAGES[@]}")
@@ -39,6 +37,10 @@ ALLOWED_BUILD_TYPES=(
 
 f_clean=false
 build_type=all
+
+function log() {
+    >&2 echo -e "[$(date '+%F %T.%6N %:z')] [run @$$] $*"
+}
 
 function contains() {
     local what="$1"
@@ -78,9 +80,9 @@ function parse_args() {
 function build-libnova() {
     log-stage-entry "Running stage: build-libnova"
     local build_type=$1
-    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}/libnova"
 
-    cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}/libnova" \
+    cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
         -DBUILD_TESTING=ON \
@@ -88,7 +90,7 @@ function build-libnova() {
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
         -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake"
 
-    cmake --build "${build_dir}/libnova"
+    cmake --build "${build_dir}"
 }
 
 function test-libnova() {
@@ -122,18 +124,31 @@ function install-libnova() {
 function integration-tests() {
     log-stage-entry "Running stage: integration-tests"
     local build_type=$1
-    local build_dir="${BUILD_DIR_PREFIX}/${build_type}"
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}/tests"
 
-    cmake -S "${PROJECT_DIR}/tests" -B "${build_dir}/tests" \
+    cmake -S "${PROJECT_DIR}/tests" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
         -DCMAKE_PREFIX_PATH="${INSTALL_DIR}" \
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
 
-    cmake --build "${build_dir}/tests"
+    cmake --build "${build_dir}"
 
-    ctest --test-dir "${build_dir}/tests" \
-        --output-on-failure
+    ctest --test-dir "${build_dir}" --output-on-failure
+}
+
+function build-examples() {
+    log-stage-entry "Running stage: build-examples"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}/examples"
+
+    cmake -S "${PROJECT_DIR}/examples" -B "${build_dir}" \
+        -DCMAKE_BUILD_TYPE="${build_type}" \
+        -DSANITIZERS=asan \
+        -DCMAKE_PREFIX_PATH="${INSTALL_DIR}" \
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
+
+    cmake --build "${build_dir}"
 }
 
 function package-libnova() {
@@ -159,7 +174,7 @@ function conan-package-test() {
 
 function run-stages() {
     for stage in "${ENABLED_STAGES[@]}"; do
-        live-tail "${stage}" "${1}"
+        "${stage}" "${1}"
     done
 }
 
@@ -183,8 +198,3 @@ function main() {
 
 parse_args "$@"
 main
-
-# TODO: Integrate this.
-# if [[ ! -t 1 ]]; then
-    # echo "Not a TTY, disabling live tail"
-# fi

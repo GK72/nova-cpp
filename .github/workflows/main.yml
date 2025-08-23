@@ -23,15 +23,25 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build
+        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/libnova
 
     - name: Unit Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/libnova
       run: ctest -C Release --output-on-failure
+
+    - name: Functional Test
+      run: |
+        cmake -S ${{gibhub.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/tests
 
     - name: Package
       run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20
+
+    - name: Examples
+      run: |
+        cmake -S ${{gibhub.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/examples
 
   debug-coverage:
     runs-on: ubuntu-24.04
@@ -49,19 +59,29 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build
+        cmake -S ${{gibhub.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/libnova
 
     - name: Unit Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/libnova
       run: |
         ctest -C Debug --output-on-failure
         mkdir --parent ${{github.workspace}}/build/coverage
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
+    - name: Functional Test
+      run: |
+        cmake -S ${{gibhub.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/tests
+
     - name: Package
       run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20
+
+    - name: Examples
+      run: |
+        cmake -S ${{gibhub.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
+        cmake --build ${{github.workspace}}/build/examples
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
