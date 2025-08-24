@@ -24,11 +24,11 @@ jobs:
     - name: Build
       run: |
         cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build/libnova
+        cmake --build ${{github.workspace}}/build/libnova --config Release
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build/libnova
-      run: ctest -C Release --output-on-failure --config Release
+      run: ctest -C Release --output-on-failure
 
     - name: Install
       run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config Release
@@ -63,12 +63,12 @@ jobs:
     - name: Build
       run: |
         cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build/libnova
+        cmake --build ${{github.workspace}}/build/libnova --config Debug
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build/libnova
       run: |
-        ctest -C Debug --output-on-failure --config Debug
+        ctest -C Debug --output-on-failure
         mkdir --parent ${{github.workspace}}/build/coverage
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
