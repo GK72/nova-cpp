@@ -7,5 +7,8 @@ message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 find_package(nova REQUIRED)
 
+include(novaCompilerWarnings)
+include(novaCompilerSettings)
+
 add_executable(shielded shielded.cc)
 target_link_libraries(shielded PRIVATE nova::nova)

@@ -28,12 +28,17 @@ CMAKE_BUILD_PARALLEL_LEVEL=4 ./run [--help]
 The project follows the [Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
 
 ```
-├── doc
-├── src
-│   ├── CMakeLists.txt
-│   └── libnova
-│       ├── cmake                               Public CMake modules
-│       └── libnova                             C++ source code
+├── env                                         Provided environment for developing/testing
+│   └── suse.Dockerfile                         For testing RPM packaging
+├── examples
+├── libnova
+│   ├── cmake                                   Public CMake modules
+│   └── libnova                                 C++ source code
+│       ├── details                             Internal header files
+│       ├── *.test.cpp                          Unit tests
+│       └── *.bench.cpp                         Benchmarks
+├── scripts                                     Helpers for developing/testing the project
 └── tests                                       Integration/functional tests
+    ├── <test-suite>                            Functional test suite
     └── package                                 Package testing for Conan workflow
 ```

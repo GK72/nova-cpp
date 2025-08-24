@@ -36,7 +36,6 @@ if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     include(GoogleTest)
 
-    add_test_target(cast)
     add_test_target(color)
     add_test_target(data)
     add_test_target(error)

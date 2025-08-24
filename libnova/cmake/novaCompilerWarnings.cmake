@@ -52,7 +52,6 @@ function(enable_compiler_warnings TARGET)
         -Wformat=2                      # warn on security issues around functions that format output (ie printf)
     )
 
-    # TODO: Use CMake flag -DCOMPILE_WARNING_AS_ERROR, and create a custom CMake toolchain.
     if (NOT SUPPRESS_COMPILER_WERROR)
         set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
         set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)

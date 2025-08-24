@@ -3,7 +3,7 @@
 namespace nova {
 
 constexpr auto NovaVersionMajor = 0;
-constexpr auto NovaVersionMinor = 7;
-constexpr auto NovaVersionPatch = 8;
+constexpr auto NovaVersionMinor = 8;
+constexpr auto NovaVersionPatch = 0;
 
 } // namespace nova

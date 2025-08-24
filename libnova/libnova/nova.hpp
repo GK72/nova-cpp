@@ -2,8 +2,6 @@
  * Part of Nova C++ Library.
  *
  * Main wrapper header.
- *
- * Contains statically known information about the library.
  */
 
 #pragma once
