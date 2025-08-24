@@ -31,7 +31,7 @@ jobs:
       run: ctest -C Release --output-on-failure
 
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
 
     - name: Functional Test
       run: |
@@ -74,7 +74,7 @@ jobs:
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
 
     - name: Functional Test
       run: |

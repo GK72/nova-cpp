@@ -31,7 +31,7 @@ jobs:
       run: ctest -C ${{ matrix.build_type }} --output-on-failure
 
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
 
     - name: Functional Test
       run: |
