@@ -1,10 +1,12 @@
 build*/
+.tmp/
 .vscode/
 .vs/
 
 .cache/
 .clangd/
 
+CMakeUserPresets.json
 compile_commands.json
 tags
 
