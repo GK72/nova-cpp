@@ -28,10 +28,10 @@ jobs:
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build/libnova
-      run: ctest -C Release --output-on-failure
+      run: ctest -C Release --output-on-failure --config Release
 
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config Release
 
     - name: Functional Test
       run: |
@@ -68,13 +68,13 @@ jobs:
     - name: Unit Test
       working-directory: ${{github.workspace}}/build/libnova
       run: |
-        ctest -C Debug --output-on-failure
+        ctest -C Debug --output-on-failure --config Debug
         mkdir --parent ${{github.workspace}}/build/coverage
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
         gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
 
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
+      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config Debug
 
     - name: Functional Test
       run: |

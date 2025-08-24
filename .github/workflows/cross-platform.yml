@@ -28,7 +28,7 @@ jobs:
 
     - name: Unit Test
       working-directory: ${{github.workspace}}/build/libnova
-      run: ctest -C ${{ matrix.build_type }} --output-on-failure
+      run: ctest -C ${{ matrix.build_type }} --output-on-failure --config ${{ matrix.build_type }}
 
     - name: Install
       run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
