@@ -350,6 +350,15 @@ TEST(Serialization, Serialize_FreeFunction) {
     );
 }
 
+TEST(Serialization, Serialize_Vector) {
+    const auto data = std::vector<std::uint8_t>{ 0x01, 0x02 };
+
+    EXPECT_EQ(
+        nova::data_view(nova::serialize(data)).as_hex_string(),
+        "0102"
+    );
+}
+
 TEST(Data, Identity_DataView_Serialization_BigEndian) {
     constexpr auto x = std::uint16_t{ 333 };
     EXPECT_EQ(nova::data_view_be{ nova::serialize(x) }.as_number<std::uint16_t>(0), x);

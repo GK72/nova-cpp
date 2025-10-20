@@ -542,7 +542,9 @@ private:
     bytes m_data;
     std::size_t m_offset = 0;
 
-    template <std::unsigned_integral T>
+    template <typename T>
+        requires std::unsigned_integral<T>
+              || std::is_same_v<T, std::byte>
     void impl(const T& x) {
         resize_if_needed(sizeof(T));
 
@@ -555,12 +557,45 @@ private:
         }
     }
 
-    void impl(std::string_view x) {
-        copy_range(x);
+    void impl(std::string_view xs) {
+        copy_range(xs);
     }
 
-    void impl(const std::string& x) {
-        copy_range(x);
+    void impl(const std::string& xs) {
+        copy_range(xs);
+    }
+
+    /**
+     * @brief   Serialize any contiguous range.
+     *
+     * Each element is individually serialized.
+     */
+    template <template <typename> typename Range, typename T>
+        requires std::contiguous_iterator<typename Range<T>::iterator>
+    void impl(const Range<T>& xs) {
+        for (const auto& x : xs) {
+            impl(x);
+        }
+    }
+
+    /**
+     * @brief   Serialize any contiguous range with
+     *          (binary data copy-optimization).
+     *
+     * If the contained type is binary interpretable it is "range copied".
+     *
+     * Notable difference at and above 4096-byte data compared to the
+     * non-specialized version.
+     *
+     *  4k data: 338ns vs. 3815ns
+     * 16k data: 996ns vs. 11709ns
+     * 32k data: 2714ns vs. 22717ns
+     */
+    template <template <typename> typename Range, typename T>
+        requires std::contiguous_iterator<typename Range<T>::iterator>
+              && binary_interpretable<T>
+    void impl(const Range<T>& xs) {
+        copy_range(xs);
     }
 
     template <typename T>

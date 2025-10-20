@@ -1,0 +1,60 @@
+= Performance Report
+
+This chapter describes the performance test scenarios and the results.
+
+Benchmarks run on a laptop running Manjaro Linux natively.
+
+Output of `lscpu`:
+
+----
+Architecture:                x86_64
+  CPU op-mode(s):            32-bit, 64-bit
+  Address sizes:             39 bits physical, 48 bits virtual
+  Byte Order:                Little Endian
+CPU(s):                      8
+  On-line CPU(s) list:       0-7
+Vendor ID:                   GenuineIntel
+  Model name:                11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+    CPU family:              6
+    Model:                   140
+    Thread(s) per core:      2
+    Core(s) per socket:      4
+    Socket(s):               1
+    Stepping:                1
+    CPU max MHz:             4700.0000
+    CPU min MHz:             400.0000
+    BogoMIPS:                5606.40
+----
+
+== Serializer
+
+Benchmark is configured with the following environment variables:
+
+ BENCHMARK_MIN_TIME=10s
+ BENCHMARK_REPETITIONS=3
+ BENCHMARK_OUT=doc/bench-serializer.json
+ BENCHMARK_OUT_FORMAT=json
+
+Detailed results can be found in `doc/bench-serializer.json`.
+
+Notable scenarios are summarized below.
+
+|===
+|               Scenario            |  Time  |    Rate    |
+| 16x 8-bit integers                |  69 ns |  221 MiB/s |
+| 16x 16-bit integers               |  85 ns |  180 MiB/s |
+| 16x 32-bit integers               |  95 ns |  161 MiB/s |
+| 16x 64-bit integers               | 105 ns |  145 MiB/s |
+| 16-byte blocks                    |  70 ns |  218 MiB/s |
+| 16x single-byte array             | 115 ns |  133 MiB/s |
+| 1024-byte blocks                  | 150 ns | 6510 MiB/s |
+| 1024-byte blocks with custom type | 900 ns | 1085 MiB/s |
+|===
+
+Single-byte strings compared to arrays are approximately twice as fast. This is
+most likely due to SSO (short-string optimization).
+
+Arrays with custom types are much more costly due to optimizing copying
+byte-arrays. Byte-arrays are 8-bit wide fundamental types in any contiguous
+arrays. Therefore the performance is highly dependent on the layout of the data
+structures.
