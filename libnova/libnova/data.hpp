@@ -193,6 +193,11 @@ concept binary_interpretable =
     || std::is_same_v<T, std::uint8_t>
     || std::is_same_v<T, std::byte>;
 
+template <typename R>
+concept binary_range =
+    std::contiguous_iterator<typename R::iterator>
+    && binary_interpretable<typename R::value_type>;
+
 enum class endian : std::uint8_t {
     big,
     little,
@@ -530,7 +535,7 @@ public:
      * @brief   Return a copy of the serialized data in a byte array.
      *
      * If the underlying vector is bigger than the serialized bytes, it will be
-     * truncated.
+     * fit to size.
      */
     [[nodiscard]] auto data() const -> bytes {
         auto ret = m_data;
@@ -570,9 +575,9 @@ private:
      *
      * Each element is individually serialized.
      */
-    template <template <typename> typename Range, typename T>
-        requires std::contiguous_iterator<typename Range<T>::iterator>
-    void impl(const Range<T>& xs) {
+    template <typename Range>
+        requires std::contiguous_iterator<typename Range::iterator>
+    void impl(const Range& xs) {
         for (const auto& x : xs) {
             impl(x);
         }
@@ -591,10 +596,9 @@ private:
      * 16k data: 996ns vs. 11709ns
      * 32k data: 2714ns vs. 22717ns
      */
-    template <template <typename> typename Range, typename T>
-        requires std::contiguous_iterator<typename Range<T>::iterator>
-              && binary_interpretable<T>
-    void impl(const Range<T>& xs) {
+    template <typename Range>
+        requires binary_range<Range>
+    void impl(const Range& xs) {
         copy_range(xs);
     }
 
@@ -605,7 +609,6 @@ private:
 
     template <typename Range>
         requires std::contiguous_iterator<typename Range::iterator>
-            or std::is_array_v<Range>
     void copy_range(const Range& src) {
         resize_if_needed(src.size());
 
