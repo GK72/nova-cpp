@@ -2,7 +2,7 @@
 
 # Version bumper tool
 # Automatically bumps version based on git tag.
-# Both in `nova.hh` and in `conanfile.py` files.
+# Both in `version.hpp` and in `conanfile.py` files.
 #
 # Everything is patch bump unless "Feat".
 # The library is at major version 0, meaning breaking changes are not followed
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-version=$(sed --quiet 's/.*version = "\(.*\)"/\1/p' conanfile.py)
+version=$(sed --quiet 's/.*version = "\(.*\)"/\1/p' libnova/conanfile.py)
 v_major=$(cut -d '.' -f 1 <<< "${version}")
 v_minor=$(cut -d '.' -f 2 <<< "${version}")
 v_patch=$(cut -d '.' -f 3 <<< "${version}")
@@ -35,4 +35,4 @@ sed --in-place \
     -e "s/\(.*NovaVersionPatch = \).*;/\1${v_patch};/" \
     libnova/libnova/details/version.hpp
 
-sed --in-place -e "s/\(.*version = \).*/\1\"${bumped_version}\"/" conanfile.py
+sed --in-place -e "s/\(.*version = \).*/\1\"${bumped_version}\"/" libnova/conanfile.py

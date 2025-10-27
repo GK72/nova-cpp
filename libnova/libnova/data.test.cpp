@@ -8,16 +8,29 @@
 #include <gmock/gmock.h>
 
 #include <array>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 using namespace nova::literals;
 using namespace nova::units::literals;
 using namespace std::literals;
+
+TEST(Concepts, BinaryData) {
+    static_assert(nova::binary_interpretable<unsigned char>);
+    static_assert(nova::binary_interpretable<std::byte>);
+    static_assert(nova::binary_interpretable<char>);
+
+    static_assert(not nova::binary_interpretable<unsigned int>);
+
+    static_assert(nova::binary_range<std::vector<char>>);
+    static_assert(nova::binary_range<std::array<char, 1>>);
+    static_assert(not nova::binary_range<char[]>);                                                  // NOLINT(cppcoreguidelines-avoid-c-arrays) | Test code
+}
 
 TEST(CharTraitsByte, Compare) {
     using Trait = std::char_traits<std::byte>;
@@ -347,6 +360,15 @@ TEST(Serialization, Serialize_FreeFunction) {
         "00000001"
         "0001"
         "01"
+    );
+}
+
+TEST(Serialization, Serialize_Vector) {
+    const auto data = std::vector<std::uint8_t>{ 0x01, 0x02 };
+
+    EXPECT_EQ(
+        nova::data_view(nova::serialize(data)).as_hex_string(),
+        "0102"
     );
 }
 

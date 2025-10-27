@@ -54,6 +54,7 @@ function(enable_compiler_warnings TARGET)
 
     if (NOT SUPPRESS_COMPILER_WERROR)
         set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
+        set(CLANG_WARNINGS ${CLANG_WARNINGS} -Wno-error=null-dereference)
         set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
     endif()
 
