@@ -57,4 +57,9 @@ if(BUILD_TESTING)
     find_package(benchmark REQUIRED)
 
     add_bench_target(serializer)
+    add_bench_target(log)
 endif()
+
+add_executable(example-log log.ex.cpp)
+target_link_libraries(example-log PRIVATE nova)
+code_analysis(example-log PRIVATE)
