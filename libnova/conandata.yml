@@ -1,8 +1,8 @@
 public-deps:
-  - fmt/10.2.1
+  - fmt/12.1.0
   - nlohmann_json/3.11.3
-  - spdlog/1.13.0
-  - yaml-cpp/0.8.0
+  - spdlog/1.17.0
+  - yaml-cpp/0.9.0
 
 private-deps:
   - benchmark/1.8.3
