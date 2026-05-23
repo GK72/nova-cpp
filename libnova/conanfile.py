@@ -36,6 +36,9 @@ class Nova(ConanFile):
 
     def requirements(self):
         for req in self.conan_data.get("private-deps", []):
+            self.requires(req, visible=False)
+
+        for req in self.conan_data.get("test-deps", []):
             self.test_requires(req)
 
         for req in self.conan_data.get("public-deps", []):
