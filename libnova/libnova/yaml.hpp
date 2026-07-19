@@ -93,6 +93,15 @@ public:
     }
 
     /**
+     * @brief   Check whether `path` resolves to a defined, non-null node
+     *          in the document.
+     */
+    [[nodiscard]] bool contains(std::string_view path) const {
+        const auto result = lookup_impl(path);
+        return result.has_value() && not result->IsNull();
+    }
+
+    /**
      * @brief   Return a YAML object without leaking the underlying API.
      */
     [[nodiscard]] auto at(const std::string& path) const {
