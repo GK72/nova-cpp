@@ -26,29 +26,62 @@ Vendor ID:                   GenuineIntel
     BogoMIPS:                5606.40
 ----
 
-== Serializer
-
-Benchmark is configured with the following environment variables:
+All performance benchmarks are run with following configuration.
 
  BENCHMARK_MIN_TIME=10s
  BENCHMARK_REPETITIONS=3
- BENCHMARK_OUT=doc/bench-serializer.json
+ BENCHMARK_OUT=doc/bench-$MODULE_NAME.json
  BENCHMARK_OUT_FORMAT=json
+
+== Logging
+
+Detailed results can be found in `doc/bench-log.json`.
+
+|===
+|               Scenario            |  Time  |    Rate
+| Simple log                        |  40 ns |   25M ops
+| Simple log (2 threads)            |  40 ns |   25M ops
+| Simple log (filtered)             |   5 ns |  200M ops
+| Topic log                         |  55 ns |   18M ops
+| Topic log (2 threads)             | 300 ns | 3.33M ops
+| Topic log (4 threads)             | 550 ns | 1.81M ops
+| Topic log (filtered)              | 1.5 ns |    inf
+|===
+
+NOTE: The filtered topic log scenario is essentially a no-op. The measured time
+is very close to the overhead of the instrumentation.
+
+Topic logging is guarded by a mutex, therefore, as the mutex contention
+increases, it becomes costly to log from multiple threads. This is acceptable
+as the formatting of the message, the necessary memory allocations and the I/O
+operation is comparable (could be significantly higher) to the cost of locking
+a mutex.
+
+However, the cost of locking a mutex just to find out if a given log is not
+needed based on the level of topic is **very** costly.
+
+As an optimization, the topic logging checks the global log level setting, and
+discards the logging operation completely if the setting does not allow the
+log, making it essentially a no-op call. Technically there is a cost of one
+conditional statement, which should be optimized away by the branch prediction
+in the CPU in a hot-loop.
+
+== Serializer
 
 Detailed results can be found in `doc/bench-serializer.json`.
 
 Notable scenarios are summarized below.
 
 |===
-|               Scenario            |  Time  |    Rate    |
-| 16x 8-bit integers                |  69 ns |  221 MiB/s |
-| 16x 16-bit integers               |  85 ns |  180 MiB/s |
-| 16x 32-bit integers               |  95 ns |  161 MiB/s |
-| 16x 64-bit integers               | 105 ns |  145 MiB/s |
-| 16-byte blocks                    |  70 ns |  218 MiB/s |
-| 16x single-byte array             | 115 ns |  133 MiB/s |
-| 1024-byte blocks                  | 150 ns | 6510 MiB/s |
-| 1024-byte blocks with custom type | 900 ns | 1085 MiB/s |
+|               Scenario            |  Time  |    Rate
+| 16x 8-bit integers                |  69 ns |  221 MiB/s
+| 16x 16-bit integers               |  85 ns |  180 MiB/s
+| 16x 32-bit integers               |  95 ns |  161 MiB/s
+| 16x 64-bit integers               | 105 ns |  145 MiB/s
+| 16-byte blocks                    |  70 ns |  218 MiB/s
+| 16x single-byte array             | 115 ns |  133 MiB/s
+| 1024-byte blocks                  | 150 ns | 6510 MiB/s
+| 1024-byte blocks with custom type | 900 ns | 1085 MiB/s
 |===
 
 Single-byte strings compared to arrays are approximately twice as fast. This is

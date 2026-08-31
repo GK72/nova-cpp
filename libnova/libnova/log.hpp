@@ -33,6 +33,14 @@
 
 namespace nova {
 
+inline auto get(const std::string& name) -> spdlog::logger& {
+    auto logger = spdlog::get(name);
+    if (logger == nullptr) {
+        logger = spdlog::default_logger();
+    }
+    return *logger;
+}
+
 namespace detail {
 
 inline auto init(spdlog::logger& logger) -> spdlog::logger& {
@@ -40,8 +48,29 @@ inline auto init(spdlog::logger& logger) -> spdlog::logger& {
     return logger;
 }
 
-} // namespace detail
+/**
+ * @brief   Common implementation across the topic logging functions.
+ *
+ * It is checked whether the global logging level allows the actual level to
+ * avoid unnecessary mutex locking during accessing the logger object for
+ * the given topic.
+ *
+ * This has side-effect that the global logging level must be explicitly
+ * configured. For example if it is configured like `SPDLOG_LEVEL=<topic>=trace`,
+ * the logs will not be visible because the default global level does not allow
+ * debug and trace logs. The correct usage is `SPDLOG_LEVEL=trace,<topic>=trace`.
+ *
+ * The overall consequence is that if a given log level is needed for any topic,
+ * the cost of the mutex will be paid for all topics.
+ */
+template <typename ...Args>
+inline void topic_log(spdlog::level::level_enum level, const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
+    if (spdlog::should_log(level)) {
+        get(name).log(level, fmt, std::forward<Args>(args)...);
+    }
+}
 
+} // namespace detail
 
 namespace log {
 
@@ -166,42 +195,34 @@ inline void create_multi(const std::vector<std::string>& names, spdlog::sinks_in
     }
 }
 
-inline auto get(const std::string& name) -> spdlog::logger& {
-    auto logger = spdlog::get(name);
-    if (logger == nullptr) {
-        logger = spdlog::default_logger();
-    }
-    return *logger;
-}
-
 template <typename ...Args>
 inline void critical(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).critical(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::critical, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void error(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).error(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::err, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void warn(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).warn(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::warn, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void info(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).info(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::info, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void debug(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).debug(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::debug, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
 inline void trace(const std::string& name, fmt::format_string<Args...> fmt, Args&&...args) {
-    get(name).trace(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::trace, name, fmt, std::forward<Args>(args)...);
 }
 
 template <typename ...Args>
@@ -211,7 +232,7 @@ inline void devel(
         [[maybe_unused]] Args&&...args)
 {
     #ifndef NDEBUG
-    get(name).trace(fmt, std::forward<Args>(args)...);
+    detail::topic_log(spdlog::level::trace, name, fmt, std::forward<Args>(args)...);
     #endif
 }
 
