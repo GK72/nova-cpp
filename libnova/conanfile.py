@@ -1,3 +1,5 @@
+import os
+
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.build import check_min_cppstd
@@ -64,3 +66,7 @@ class Nova(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["nova"]
+
+        module_dir = os.path.join("lib", "cmake", "nova")
+        self.cpp_info.builddirs = [module_dir]
+        self.cpp_info.set_property("cmake_build_modules", [os.path.join(module_dir, "novaModulePath.cmake")])
