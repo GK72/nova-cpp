@@ -1,3 +1,5 @@
+import os
+
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.build import check_min_cppstd
@@ -5,7 +7,7 @@ from conan.tools.build import check_min_cppstd
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.8.2"
+    version = "0.9.2"
     package_type = "library"
 
     license = "BSL"
@@ -36,7 +38,10 @@ class Nova(ConanFile):
 
     def requirements(self):
         for req in self.conan_data.get("private-deps", []):
-            self.requires(req)
+            self.requires(req, visible=False)
+
+        for req in self.conan_data.get("test-deps", []):
+            self.test_requires(req)
 
         for req in self.conan_data.get("public-deps", []):
             self.requires(req, transitive_headers=True, transitive_libs=True)
@@ -61,3 +66,7 @@ class Nova(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["nova"]
+
+        module_dir = os.path.join("lib", "cmake", "nova")
+        self.cpp_info.builddirs = [module_dir]
+        self.cpp_info.set_property("cmake_build_modules", [os.path.join(module_dir, "novaModulePath.cmake")])

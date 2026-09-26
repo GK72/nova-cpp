@@ -106,3 +106,13 @@ array:
     inner2: 3)";
     EXPECT_EQ(doc.dump(), ref);
 }
+
+TEST(Yaml, Contains) {
+    const auto doc = nova::yaml(data);
+    EXPECT_TRUE(doc.contains("int"));
+    EXPECT_TRUE(doc.contains("root.key"));
+
+    EXPECT_FALSE(doc.contains("non-existent"));
+    EXPECT_FALSE(doc.contains("root.non-existent"));
+    EXPECT_FALSE(doc.contains("non-existent.key"));
+}
