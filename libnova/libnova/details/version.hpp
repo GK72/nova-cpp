@@ -4,6 +4,6 @@ namespace nova {
 
 constexpr auto NovaVersionMajor = 0;
 constexpr auto NovaVersionMinor = 9;
-constexpr auto NovaVersionPatch = 1;
+constexpr auto NovaVersionPatch = 2;
 
 } // namespace nova
