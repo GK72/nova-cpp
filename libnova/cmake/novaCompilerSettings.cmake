@@ -11,12 +11,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(NOVA_EXPERIMENTAL_FEATURE_SET)
     set(CMAKE_CXX_STANDARD 26)
     add_compile_definitions(NOVA_EXPERIMENTAL_FEATURE_SET)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -freflection")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcontracts")
 else()
     set(CMAKE_CXX_STANDARD 20)
 endif()
 
 if(COVERAGE)
-    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
 endif()
 
 # Address sanitizer is used as the primary one containing leak and undefined

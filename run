@@ -98,6 +98,23 @@ function build-libnova() {
     cmake --build "${build_dir}"
 }
 
+function build-libnova-exp() {
+    log-stage-entry "Running stage: build-libnova-exp"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}/libnova"
+
+    cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}" \
+        -DCMAKE_BUILD_TYPE="${build_type}" \
+        -DSANITIZERS=asan \
+        -DBUILD_TESTING=ON \
+        -DCOVERAGE=1 \
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
+        -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake" \
+        -DNOVA_EXPERIMENTAL_FEATURE_SET=ON
+
+    cmake --build "${build_dir}"
+}
+
 function test-libnova() {
     log-stage-entry "Unit-testing Nova"
     local build_type=$1

@@ -1,3 +1,4 @@
+#include "utils.hpp"
 #include <libnova/types.hpp>
 #include <libnova/utils.hpp>
 
@@ -8,10 +9,28 @@
 #include <chrono>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 using namespace std::chrono_literals;
+
+TEST(Utils, VariantCat) {
+    using Ext = std::tuple<char, std::string>;
+
+    static_assert(
+        std::is_same_v<
+            nova::variant_cat_t<Ext, int, bool>,
+            std::variant<
+                int,
+                bool,
+                char,
+                std::string
+            >
+        >
+    );
+}
 
 TEST(Utils, Split_EmptyString) {
     EXPECT_EQ(

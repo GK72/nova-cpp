@@ -2,6 +2,9 @@
  * Part of Nova C++ Library.
  *
  * Various utility functions, types and constants.
+ *
+ * @author  Gábor Krisztián Girhiny
+ * @date    2026-10-03
  */
 
 #pragma once
@@ -22,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 #include <stdlib.h>
@@ -61,6 +65,17 @@ constexpr auto NewLine = "\r\n";
 #else
 constexpr auto NewLine = '\n';
 #endif
+
+template <typename Tuple, typename... Base>
+struct variant_cat;
+
+template <typename... Extra, typename... Base>
+struct variant_cat<std::tuple<Extra...>, Base...> {
+    using type = std::variant<Base..., Extra...>;
+};
+
+template <typename Tuple, typename... Base>
+using variant_cat_t = typename variant_cat<Tuple, Base...>::type;
 
 /**
  * @brief   Check if the byte is ASCII printable.

@@ -51,8 +51,16 @@ if(BUILD_TESTING)
     add_test_target(type-traits)
     add_test_target(units)
     add_test_target(utils)
+    add_test_target(value)
+    add_test_target(value-json)
     add_test_target(vec)
     add_test_target(yaml)
+
+    if(NOVA_EXPERIMENTAL_FEATURE_SET)
+        add_test_target(refl)
+        add_test_target(value-refl)
+        add_test_target(value-json-refl)
+    endif()
 
     find_package(benchmark REQUIRED)
 
