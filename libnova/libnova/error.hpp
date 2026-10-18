@@ -19,12 +19,46 @@
 #include <exception>
 #include <source_location>
 #include <string>
+#include <type_traits>
 
 #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
 #include <stacktrace>
 #endif
 
 namespace nova {
+
+namespace detail {
+
+    /**
+     * @brief   A format string that records where it is written, i.e., the throw.
+     *
+     * A default argument is evaluated where the call is written, so the location must be taken
+     * here, not by the constructor the exception delegates to.
+     */
+    template <typename ...Args>
+    struct located_format_string {
+        /**
+         * @brief   Capture the location of the call.
+         *
+         * `std::string` is excluded: accepting it makes `exception(std::string, location)`,
+         * the delegation below included, ambiguous.
+         */
+        template <typename S>
+            requires std::is_convertible_v<const S&, fmt::string_view>
+                and (not std::is_same_v<S, std::string>)
+        consteval located_format_string(
+            const S& str,
+            const std::source_location& loc = std::source_location::current()
+        )
+            : fmt(str)
+            , location(loc)
+        {}
+
+        fmt::format_string<Args...> fmt;
+        std::source_location location;
+    };
+
+} // namespace detail
 
 /**
  * @brief   Exception class with source location.
@@ -47,21 +81,20 @@ public:
     #endif
     {}
 
+    /**
+     * @brief   Format string overload which records the location of the caller.
+     */
     template <typename ...Args>
-    exception(fmt::format_string<Args...> fmt, Args&& ...args)
-        : exception(fmt::format(fmt, std::forward<Args>(args)...))
+    exception(detail::located_format_string<std::type_identity_t<Args>...> fmt, Args&& ...args)
+        : exception(fmt::format(fmt.fmt, std::forward<Args>(args)...), fmt.location)
     {}
 
     [[nodiscard]] auto what() const noexcept -> const char* override {
         return m_message.c_str();
     }
 
-    [[nodiscard]] auto where() const noexcept {
-    #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+    [[nodiscard]] auto where() const noexcept -> const std::source_location& {
         return m_location;
-    #else
-        return "Source location: Not supported";
-    #endif
     }
 
     [[nodiscard]] auto backtrace() const noexcept {
