@@ -277,3 +277,16 @@ TEST(Expected_MondadicOps, OrElse) {
     constexpr auto t = [](const std::string_view& y) { return E2{ nova::unexpect, y.size() }; };
     EXPECT_EQ(x.or_else(t).error(), 5);
 }
+
+TEST(Expected, WrapError) {
+    const auto read = [](bool ok) -> nova::expected<int, nova::error> {
+        if (not ok) {
+            return nova::wrap_error("io", "Cannot read", "file.txt");
+        }
+        return 42;
+    };
+
+    EXPECT_EQ(*read(true), 42);
+    ASSERT_FALSE(read(false).has_value());
+    EXPECT_EQ(read(false).error(), nova::error("io", "Cannot read", "file.txt"));
+}

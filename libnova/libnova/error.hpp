@@ -19,6 +19,7 @@
 #include <exception>
 #include <source_location>
 #include <string>
+#include <utility>
 
 #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
 #include <stacktrace>
@@ -82,7 +83,11 @@ private:
 };
 
 /**
- * @brief   Error type for `expected`.
+ * @brief   Error type for `expected`: what went wrong, what it was about, in which area.
+ *
+ * Only the message is required. The detail names the subject (a path, a value), so the message
+ * stays the same for every subject and callers can compare it; the category is the area (`io`,
+ * `parse`, ...) a caller can react to without reading the message.
  */
 struct error {
     // P0960R3 is not implemented in Apple Clang
@@ -90,7 +95,15 @@ struct error {
         : message(msg)
     {}
 
+    constexpr error(std::string category_, std::string msg, std::string detail_ = {})
+        : message(std::move(msg))
+        , detail(std::move(detail_))
+        , category(std::move(category_))
+    {}
+
     std::string message;
+    std::string detail;             ///< What it is about, e.g., a path or a value; may be empty
+    std::string category;           ///< The area, e.g., `io` or `parse`; may be empty
 
     [[nodiscard]] auto operator<=>(const error&) const = default;
 };
@@ -189,8 +202,19 @@ public:
         return ctx.begin();
     }
 
+    /**
+     * @example  `[io] Cannot read the file (/etc/missing)`; only the parts that are set.
+     */
     template <typename FmtContext>
-    auto format(nova::error err, FmtContext& ctx) const {
-        return fmt::format_to(ctx.out(), "{}", err.message);
+    auto format(const nova::error& err, FmtContext& ctx) const {
+        auto out = ctx.out();
+        if (not err.category.empty()) {
+            out = fmt::format_to(out, "[{}] ", err.category);
+        }
+        out = fmt::format_to(out, "{}", err.message);
+        if (not err.detail.empty()) {
+            out = fmt::format_to(out, " ({})", err.detail);
+        }
+        return out;
     }
 };
