@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Feat
 
+- Executors: `nova::task` (a move-only callable), `nova::executor`, `nova::thread_pool`,
+  `nova::strand` (one task at a time, in order, on another executor's threads),
+  `nova::inline_executor` and `nova::background()`, the process's pool for background work.
+
 - `nova::error` is a `std::error_code` and a `detail`, formatted as `[category]
   message (detail)`; `nova::wrap_error(code, detail)` returns one for
   `expected`. Categories are per origin.

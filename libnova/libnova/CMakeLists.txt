@@ -4,6 +4,8 @@ add_library(nova)
 
 target_sources(nova PRIVATE
     nova.cpp
+    strand.cpp
+    thread_pool.cpp
 )
 
 target_sources(nova PUBLIC
@@ -17,7 +19,10 @@ target_include_directories(nova PUBLIC
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(nova PUBLIC
+    Threads::Threads
     fmt::fmt-header-only
     nlohmann_json::nlohmann_json
     spdlog::spdlog_header_only
@@ -40,6 +45,7 @@ if(BUILD_TESTING)
     add_test_target(data)
     add_test_target(error)
     add_test_target(exception)
+    add_test_target(exec)
     add_test_target(expected)
     add_test_target(flat-map)
     add_test_target(io)

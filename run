@@ -86,12 +86,17 @@ function build-libnova() {
     log-stage-entry "Running stage: build-libnova"
     local build_type=$1
     local build_dir="${BUILD_DIR_PREFIX}/${build_type}/libnova"
+    local coverage=OFF
+
+    if [[ "${build_type}" == "Debug" ]]; then
+        coverage=ON
+    fi
 
     cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
         -DBUILD_TESTING=ON \
-        -DCOVERAGE=1 \
+        -DCOVERAGE="${coverage}" \
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
         -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake"
 

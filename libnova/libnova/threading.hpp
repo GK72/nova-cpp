@@ -2,8 +2,7 @@
  * Part of Nova C++ Library.
  *
  * Everything that concerns the execution.
- * - Thread handling, thread pools (TODO)
- * - Task management (TODO)
+ * - Tasks and executors: `task.hpp`, `executor.hpp`, `thread_pool.hpp`, `strand.hpp`
  * - Timings, event loops
  */
 
