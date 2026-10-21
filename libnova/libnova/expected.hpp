@@ -64,7 +64,10 @@ struct unexpected {
  *
  * @example `return nova::wrap_error("io", "Cannot read the file", path.string());`
  */
-[[nodiscard]] inline auto wrap_error(std::string category, std::string message, std::string detail = {}) -> unexpected<error> {
+[[nodiscard]] inline
+auto wrap_error(std::string category, std::string message, std::string detail = {})
+        -> unexpected<error>
+{
     return { error(std::move(category), std::move(message), std::move(detail)) };
 }
 

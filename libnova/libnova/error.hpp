@@ -83,27 +83,17 @@ private:
 };
 
 /**
- * @brief   Error type for `expected`: what went wrong, what it was about, in which area.
+ * @brief   Error type for `expected`: what went wrong, what it was about, in
+ *          which area.
  *
- * Only the message is required. The detail names the subject (a path, a value), so the message
- * stays the same for every subject and callers can compare it; the category is the area (`io`,
- * `parse`, ...) a caller can react to without reading the message.
+ * Only the message is required. The detail names the subject (a path, a value).
+ * The category is the area (`io`, `parse`, ...) a caller can react to without
+ * reading the message.
  */
 struct error {
-    // P0960R3 is not implemented in Apple Clang
-    constexpr error(const std::string& msg)
-        : message(msg)
-    {}
-
-    constexpr error(std::string category_, std::string msg, std::string detail_ = {})
-        : message(std::move(msg))
-        , detail(std::move(detail_))
-        , category(std::move(category_))
-    {}
-
     std::string message;
-    std::string detail;             ///< What it is about, e.g., a path or a value; may be empty
-    std::string category;           ///< The area, e.g., `io` or `parse`; may be empty
+    std::string detail;
+    std::string category;       // TODO: an enum would be better for performance, but how to keep it open for users?
 
     [[nodiscard]] auto operator<=>(const error&) const = default;
 };
