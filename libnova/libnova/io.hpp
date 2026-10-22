@@ -9,8 +9,6 @@
 #include <libnova/error.hpp>
 #include <libnova/expected.hpp>
 
-#include <fmt/format.h>                                                                             // NOLINT(misc-include-cleaner) | Clang why are you like this?
-
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -21,6 +19,7 @@
 #include <istream>
 #include <sstream>
 #include <string>
+#include <system_error>
 #include <type_traits>
 #include <vector>
 
@@ -63,17 +62,17 @@ namespace detail {
     [[nodiscard]] inline
     auto fs_path(const std::string& path) -> expected<std::filesystem::path, error> {
         auto fs = std::filesystem::path(path);
-        if (not std::filesystem::is_regular_file(fs)) {
-            return {
-                unexpect,
-                fmt::format(                                                                        // NOLINT(misc-include-cleaner) | Clang why are you like this? `#include <fmt/format.h>`
-                    "{} is not a regular file!",
-                    std::filesystem::absolute(fs).string()
-                )
-            };
+        const auto status = std::filesystem::status(fs);
+        if (std::filesystem::is_regular_file(status)) {
+            return fs;
         }
 
-        return fs;
+        const auto reason =
+            not std::filesystem::exists(status) ? std::errc::no_such_file_or_directory
+            : std::filesystem::is_directory(status) ? std::errc::is_a_directory
+            : std::errc::invalid_argument;
+
+        return wrap_error(reason, std::filesystem::absolute(fs).string());
     }
 
 } // namespace detail

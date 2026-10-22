@@ -1,19 +1,26 @@
 /**
  * Part of Nova C++ Library.
  *
- * Reimplementation of `std::expected` because not all compilers support it
- * yet.
+ * @brief   Reimplementation of `std::expected` because not all compilers support
+ *          it yet.
  *
  * Error types must be formattable. In case of invalid access, an exception is
  * thrown with a message provided by a formatter for the error type.
  *
  * `error()` access is checked, and it is not undefined behaviour (until C++26)
  * to call it when there is no error.
+ *
+ * @author      Gábor Krisztián Girhiny
+ * @created     2024-10-27
+ * @updated     2026-10-22
+ * @status      Standard compliant API (not complete)
+ *
+ * @compliance  `nova::expected<void, E>` is not supported.
  */
 
 #pragma once
 
-#include <libnova/error.hpp>
+#include <libnova/exception.hpp>
 #include <libnova/type_traits.hpp>
 
 #include <functional>

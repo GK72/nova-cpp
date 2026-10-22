@@ -1,3 +1,4 @@
+#include <libnova/error.hpp>
 #include <libnova/expected.hpp>
 #include <libnova/test_utils.hpp>
 
@@ -7,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <tuple>
 
 struct custom_error {
@@ -276,4 +278,18 @@ TEST(Expected_MondadicOps, OrElse) {
     constexpr auto x = E(nova::unexpect, "error");
     constexpr auto t = [](const std::string_view& y) { return E2{ nova::unexpect, y.size() }; };
     EXPECT_EQ(x.or_else(t).error(), 5);
+}
+
+TEST(Expected, WrapError) {
+    const auto read = [](bool ok) -> nova::expected<int, nova::error> {
+        if (not ok) {
+            return nova::wrap_error(std::make_error_code(std::errc::is_a_directory), "dir");
+        }
+        return 42;
+    };
+
+    EXPECT_EQ(*read(true), 42);
+    ASSERT_FALSE(read(false).has_value());
+    EXPECT_EQ(read(false).error().code, std::errc::is_a_directory);
+    EXPECT_EQ(read(false).error().detail, "dir");
 }

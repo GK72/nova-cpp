@@ -22,7 +22,11 @@
 // TODO(x-platform): emit a non-error warning that every major compiler likes
 #endif
 
+#include <fmt/format.h>
+
+#include <cerrno>
 #include <string>
+#include <system_error>
 
 namespace nova {
 
@@ -49,7 +53,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     const auto result_affinity = sched_setaffinity(cfg.pid, sizeof(cpu_set), &cpu_set);
 
     if (result_affinity == -1) {
-        return { unexpect, "Cannot set CPU affinity!" };
+        return wrap_error(std::error_code(errno, std::system_category()), fmt::format("CPU affinity of PID {} to CPU {}", cfg.pid, cfg.cpu));
     }
 
     const auto result_priority = setpriority(
@@ -59,7 +63,7 @@ auto set_cpu_affinity(const process_scheduling& cfg) -> expected<empty, error> {
     );
 
     if (result_priority == -1) {
-        return { unexpect, "Cannot set process priority!" };
+        return wrap_error(std::error_code(errno, std::system_category()), fmt::format("priority of PID {}", cfg.pid));
     }
     return empty{};
 }
