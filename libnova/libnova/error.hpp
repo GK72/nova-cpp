@@ -22,6 +22,7 @@
 
 #include <fmt/format.h>
 
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <string>
