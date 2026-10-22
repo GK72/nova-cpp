@@ -1,8 +1,8 @@
 /**
  * Part of Nova C++ Library.
  *
- * Reimplementation of `std::expected` because not all compilers support it
- * yet.
+ * @brief   Reimplementation of `std::expected` because not all compilers support
+ *          it yet.
  *
  * Error types must be formattable. In case of invalid access, an exception is
  * thrown with a message provided by a formatter for the error type.

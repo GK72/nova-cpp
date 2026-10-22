@@ -14,13 +14,10 @@
 
 #pragma once
 
-#include <libnova/intrinsics.hpp>
-
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <fmt/std.h>
 
-#include <cassert>
 #include <exception>
 #include <source_location>
 #include <string>
@@ -28,6 +25,7 @@
 #include <utility>
 
 #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+#include <string_view>
 #include <stacktrace>
 #endif
 
@@ -103,13 +101,15 @@ public:
         return m_location;
     }
 
-    [[nodiscard]] auto backtrace() const noexcept {
     #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
+    [[nodiscard]] auto backtrace() const noexcept -> const std::stacktrace& {
         return m_backtrace;
-    #else
-        return "Backtrace: Not supported";
-    #endif
     }
+    #else
+    [[nodiscard]] auto backtrace() const noexcept -> std::string_view {
+        return "Backtrace: Not supported";
+    }
+    #endif
 
 private:
     std::string m_message;
@@ -121,28 +121,6 @@ private:
 };
 
 } // namespace nova
-
-template <>
-class fmt::formatter<std::source_location> {
-public:
-    constexpr auto parse(format_parse_context& ctx) {
-        return ctx.begin();
-    }
-
-    /**
-    * @example  nova/unit-tests/error.cc:7, from function `void func()`
-    */
-    template <typename FmtContext>
-    constexpr auto format(const std::source_location& loc, FmtContext& ctx) const {
-        return fmt::format_to(
-            ctx.out(),
-            "{}:{}, from function `{}`",
-            loc.file_name(),
-            loc.line(),
-            loc.function_name()
-        );
-    }
-};
 
 #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
 template <>
@@ -172,16 +150,16 @@ public:
     }
 
     /**
-    * @example  nova/unit-tests/error.cc:8 : func()
-    *           nova/unit-tests/error.cc:13 : Error_Exception_Test::TestBody()
-    *
-    */
+     * @example  nova/unit-tests/exception.cc:8 : func()
+     *           nova/unit-tests/exception.cc:13 : Error_Exception_Test::TestBody()
+     *
+     */
     template <typename FmtContext>
     constexpr auto format(const std::stacktrace& trace, FmtContext& ctx) const {
-        return std::format_to(
+        return fmt::format_to(
             ctx.out(),
             "{}",
-            fmt::format("{}", fmt::join(trace, "\n"))
+            fmt::join(trace, "\n")
         );
     }
 };

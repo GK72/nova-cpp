@@ -72,7 +72,7 @@ namespace detail {
             : std::filesystem::is_directory(status) ? std::errc::is_a_directory
             : std::errc::invalid_argument;
 
-        return wrap_error(std::make_error_code(reason), std::filesystem::absolute(fs).string());
+        return wrap_error(reason, std::filesystem::absolute(fs).string());
     }
 
 } // namespace detail

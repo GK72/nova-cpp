@@ -10,7 +10,7 @@
 const auto FuncThrowLine = std::source_location::current().line() + 3;
 
 void func() {
-    throw "error";
+    throw nova::exception("error");
 }
 
 TEST(Exception, Exception) {
@@ -18,7 +18,7 @@ TEST(Exception, Exception) {
         func();
         FAIL() << "Expected an exception to be thrown!";
     } catch (const std::exception& ex) {
-        EXPECT_STREQ(ex.what(), "ERROAR");
+        EXPECT_STREQ(ex.what(), "error");
 
         const auto& nex = dynamic_cast<const nova::exception&>(ex);
 
@@ -28,7 +28,7 @@ TEST(Exception, Exception) {
 #ifdef NOVA_EXPERIMENTAL_FEATURE_SET
         EXPECT_THAT(
             fmt::format("{}", nex.backtrace()),
-            testing::HasSubstr("error.test.cpp")
+            testing::HasSubstr("exception.test.cpp")
         );
 #else
         EXPECT_THAT(
@@ -46,5 +46,5 @@ TEST(Error, FmtString) {
 
     EXPECT_STREQ(ex.what(), "An error: some error");
     EXPECT_EQ(ex.where().line(), line);
-    EXPECT_THAT(ex.where().file_name(), testing::HasSubstr("error.test.cpp"));
+    EXPECT_THAT(ex.where().file_name(), testing::HasSubstr("exception.test.cpp"));
 }

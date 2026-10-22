@@ -26,7 +26,7 @@ namespace net {
 } // namespace net
 
 template <>
-struct nova::error_enum<net::error> {
+struct nova::error_code_traits<net::error> {
     static constexpr auto name = "net";
     static constexpr auto messages = std::to_array<std::string_view>({ "timed out", "connection refused" });
 

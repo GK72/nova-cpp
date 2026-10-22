@@ -35,7 +35,7 @@ enum class env_error {
 };
 
 template <>
-struct error_enum<env_error> {
+struct error_code_traits<env_error> {
     static constexpr auto name = "env";
     static constexpr auto messages = std::to_array<std::string_view>({ "not set" });
     static constexpr auto conditions = std::to_array({ std::errc::no_such_file_or_directory });

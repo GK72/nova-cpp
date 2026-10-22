@@ -11,13 +11,14 @@
  * @author      Gábor Krisztián Girhiny
  * @created     2024-10-27
  * @updated     2026-10-22
- * @status      Experimental API (unstable)
+ * @status      Experimental API
  */
 
 #pragma once
 
 #include <libnova/exception.hpp>
 #include <libnova/expected.hpp>
+#include <libnova/intrinsics.hpp>
 
 #include <fmt/format.h>
 
@@ -34,6 +35,8 @@ namespace nova {
 /**
  * @brief   Turns an enum into an error origin; specialize it next to the enum.
  *
+ * Describes the enum behind a `std::error_code`, not `nova::error` itself.
+ *
  * - `name`: the category.
  * - `messages`: one per value, from the value one (zero means success).
  * - `conditions` (optional): the `std::errc` per value, for checks that do not
@@ -47,25 +50,25 @@ namespace nova {
  *
  * ```
  * template <>
- * struct nova::error_enum<networking_error> {
+ * struct nova::error_code_traits<networking_error> {
  *     static constexpr auto name = "net";
  *     static constexpr auto messages = std::to_array<std::string_view>({ "timed out", "connection refused" });
  * };
  * ```
  */
 template <typename E>
-struct error_enum {};
+struct error_code_traits {};
 
 template <typename E>
 concept error_enum_c = std::is_enum_v<E> and requires {
-    { error_enum<E>::name } -> std::convertible_to<const char*>;
-    { error_enum<E>::messages[std::size_t{}] } -> std::convertible_to<std::string_view>;
+    { error_code_traits<E>::name } -> std::convertible_to<const char*>;
+    { error_code_traits<E>::messages[std::size_t{}] } -> std::convertible_to<std::string_view>;
 };
 
 namespace detail {
 
     /**
-     * @brief   The `std::error_category` of an `error_enum`, one per enum.
+     * @brief   The `std::error_category` of an enum with `error_code_traits`, one per enum.
      *
      * A boilerplate helper for hooking custom error types into
      * `std::error_category`.
@@ -79,20 +82,20 @@ namespace detail {
         }
 
         [[nodiscard]] auto name() const noexcept -> const char* override {
-            return error_enum<E>::name;
+            return error_code_traits<E>::name;
         }
 
         [[nodiscard]] auto message(int value) const -> std::string override {
-            if (not in_range(value, error_enum<E>::messages)) {
+            if (not in_range(value, error_code_traits<E>::messages)) {
                 return fmt::format("unknown {} error {}", name(), value);
             }
-            return std::string(error_enum<E>::messages[static_cast<std::size_t>(value - 1)]);
+            return std::string(error_code_traits<E>::messages[static_cast<std::size_t>(value - 1)]);
         }
 
         [[nodiscard]] auto default_error_condition(int value) const noexcept -> std::error_condition override {
-            if constexpr (requires { error_enum<E>::conditions; }) {
-                if (in_range(value, error_enum<E>::conditions)) {
-                    return error_enum<E>::conditions[static_cast<std::size_t>(value - 1)];
+            if constexpr (requires { error_code_traits<E>::conditions; }) {
+                if (in_range(value, error_code_traits<E>::conditions)) {
+                    return error_code_traits<E>::conditions[static_cast<std::size_t>(value - 1)];
                 }
             }
             return { value, *this };
@@ -126,8 +129,8 @@ namespace detail::adl_only {
 } // namespace nova
 
 /**
- * @brief   Implicit `std::error_code` conversion of an `error_enum`, if its
- *          namespace has `make_error_code`.
+ * @brief   Implicit `std::error_code` conversion of an enum with
+ *          `error_code_traits`, if its namespace has `make_error_code`.
  */
 template <typename E>
     requires nova::error_enum_c<E> and nova::detail::adl_only::has_make_error_code<E>
@@ -147,16 +150,10 @@ namespace nova {
 struct error {
     std::error_code code;
     std::string detail = {};
-
-    [[nodiscard]] auto operator<=>(const error&) const = default;
 };
 
 /**
  * @brief   The error to return from a function returning `expected<T, error>`.
- *
- * Created from `std::error_code`; `std::errc` needs `std::make_error_code()`.
- *
- * @example `return nova::wrap_error(std::make_error_code(std::errc::is_a_directory), path.string());`
  */
 [[nodiscard]] inline
 auto wrap_error(std::error_code code, std::string detail = {}) -> unexpected<error> {
@@ -169,11 +166,23 @@ auto wrap_error(std::error_code code, std::string detail = {}) -> unexpected<err
 }
 
 /**
- * @brief   The error of an `error_enum` value, even without `std::error_code` conversion.
+ * @brief   The error to return from a function returning `expected<T, error>`.
+ *
+ * Converts `std::errc` to `std::error_code`.
+ */
+[[nodiscard]] inline
+auto wrap_error(std::errc code, std::string detail = {}) -> unexpected<error> {
+    return wrap_error(make_error_code(code), std::move(detail));
+}
+
+/**
+ * @brief   The error to return from a function returning `expected<T, error>`.
+ *
+ * Converts an enum with `error_code_traits` to `std::error_code`.
  */
 template <error_enum_c E>
 [[nodiscard]] auto wrap_error(E value, std::string detail = {}) -> unexpected<error> {
-    return wrap_error(nova::make_error_code(value), std::move(detail));
+    return wrap_error(make_error_code(value), std::move(detail));
 }
 
 } // namespace nova
@@ -202,10 +211,12 @@ public:
 #ifdef NOVA_RUNTIME_ASSERTIONS
     // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) | Must be a macro; `expr` needs to be converted to text
     #define nova_assert(expr)                                                   \
-        if (not (expr)) {                                                       \
-            nova_breakpoint();                                                  \
-            throw nova::exception("Assertion failed: " #expr);                  \
-        }
+        do {                                                                    \
+            if (not (expr)) {                                                   \
+                nova_breakpoint();                                              \
+                throw nova::exception("Assertion failed: " #expr);              \
+            }                                                                   \
+        } while (false)
 #else
     // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) | Must be a macro; `expr` needs to be converted to text
     #define nova_assert(expr) \

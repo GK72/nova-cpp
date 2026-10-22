@@ -38,7 +38,7 @@ enum class parse_error {
 };
 
 template <>
-struct error_enum<parse_error> {
+struct error_code_traits<parse_error> {
     static constexpr auto name = "parse";
     static constexpr auto messages = std::to_array<std::string_view>({ "invalid argument", "out of range" });
     static constexpr auto conditions = std::to_array({ std::errc::invalid_argument, std::errc::result_out_of_range });
