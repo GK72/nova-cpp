@@ -1,3 +1,4 @@
+#include <libnova/error.hpp>
 #include <libnova/parse.hpp>
 
 #include <gtest/gtest.h>
@@ -6,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <string_view>
+#include <system_error>
 
 using namespace std::chrono_literals;
 using namespace std::string_view_literals;
@@ -13,6 +15,20 @@ using namespace std::string_view_literals;
 TEST(Parse, ParseErrorFormatter) {
     EXPECT_EQ(fmt::format("{}", nova::parse_error::invalid_argument), "Parse error (invalid argument)");
     EXPECT_EQ(fmt::format("{}", nova::parse_error::out_of_range), "Parse error (out of range)");
+}
+
+TEST(Parse, ParseErrorCode) {
+    const std::error_code code = nova::parse_error::out_of_range;
+    EXPECT_EQ(code, nova::parse_error::out_of_range);
+    EXPECT_STREQ(code.category().name(), "parse");
+
+    const auto err = nova::error{ .code = code, .detail = "1E" };
+    EXPECT_EQ(fmt::format("{}", err), "[parse] out of range (1E)");
+}
+
+TEST(Parse, ParseErrorCode_Condition) {
+    EXPECT_EQ(std::error_code(nova::parse_error::invalid_argument), std::errc::invalid_argument);
+    EXPECT_EQ(std::error_code(nova::parse_error::out_of_range), std::errc::result_out_of_range);
 }
 
 TEST(Parse, Detail_SafeMultiply) {

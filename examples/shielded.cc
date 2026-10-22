@@ -85,7 +85,7 @@ auto entrypoint([[maybe_unused]] auto args) -> int {
     };
 
     if (const auto result = nova::set_cpu_affinity(cfg); not result.has_value()) {
-        nova::log::warn("{}", result.error().message);
+        nova::log::warn("{}", result.error());
     }
 
     auto logic = event_loop_impl{};

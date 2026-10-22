@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <span>
 #include <string>
+#include <system_error>
 #include <vector>
 
 using namespace std::string_literals;
@@ -21,14 +22,15 @@ namespace {
             return EXIT_FAILURE;
         }
 
-        if (file.error().message.ends_with("nothing.txt is not a regular file!")) {
+        if (file.error().code == std::errc::no_such_file_or_directory
+                and file.error().detail.ends_with("nothing.txt")) {
             return EXIT_SUCCESS;
         }
 
         fmt::println(
             "Test failed!\n"
-            "Unexpected error message:\n{}",
-            file.error().message
+            "Unexpected error:\n{}",
+            file.error()
         );
 
         return EXIT_FAILURE;
@@ -38,7 +40,7 @@ namespace {
     [[nodiscard]] int test_read_text(const std::string& name) {
         const auto file = nova::read_file(name);
         if (not file.has_value()) {
-            fmt::println("Error: {}", file.error().message);
+            fmt::println("Error: {}", file.error());
             return EXIT_FAILURE;
         }
 
@@ -60,7 +62,7 @@ namespace {
     [[nodiscard]] int test_read_bin(const std::string& name) {
         const auto file = nova::read_bin(name);
         if (not file.has_value()) {
-            fmt::println("Error: {}", file.error().message);
+            fmt::println("Error: {}", file.error());
             return EXIT_FAILURE;
         }
 

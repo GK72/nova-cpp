@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <sstream>
+#include <system_error>
 
 TEST(Io, LineParser) {
     std::stringstream ss;
