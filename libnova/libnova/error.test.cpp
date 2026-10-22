@@ -49,12 +49,13 @@ TEST(Error, Error_FmtString) {
         .detail = "/etc/missing"
     };
 
-    EXPECT_EQ(fmt::format("{}", err), "[generic] No such file or directory (/etc/missing)");
+    // The message text is the standard library's, and differs by platform
+    EXPECT_EQ(fmt::format("{}", err), fmt::format("[generic] {} (/etc/missing)", err.code.message()));
 }
 
 TEST(Error, Error_FmtString_NoDetail) {
     const auto err = nova::error{ .code = std::make_error_code(std::errc::is_a_directory) };
-    EXPECT_EQ(fmt::format("{}", err), "[generic] Is a directory");
+    EXPECT_EQ(fmt::format("{}", err), fmt::format("[generic] {}", err.code.message()));
 }
 
 TEST(Error, Error_OtherLibraryCategory) {
