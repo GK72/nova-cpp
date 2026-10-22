@@ -9,6 +9,13 @@
  *
  * `error()` access is checked, and it is not undefined behaviour (until C++26)
  * to call it when there is no error.
+ *
+ * @author      Gábor Krisztián Girhiny
+ * @created     2024-10-27
+ * @updated     2026-10-22
+ * @status      Standard compliant API (not complete)
+ *
+ * @compliance  `nova::expected<void, E>` is not supported.
  */
 
 #pragma once
