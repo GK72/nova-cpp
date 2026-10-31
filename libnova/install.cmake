@@ -30,5 +30,5 @@ install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/cmake/" DESTINATION "${CMAKE_INSTAL
 install(
     FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/dependencies.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova/details"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/nova/detail"
 )

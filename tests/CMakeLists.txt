@@ -11,5 +11,6 @@ include(CTest)
 include(novaCompilerWarnings)
 include(novaCompilerSettings)
 
+add_subdirectory(dyn-value)
 add_subdirectory(io)
 add_subdirectory(log)

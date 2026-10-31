@@ -45,6 +45,9 @@ template <typename T>             struct is_std_map : std::false_type {};
 template <typename K, typename V> struct is_std_map<std::map<K, V>> : std::true_type {};
 template <typename T> inline constexpr bool is_std_map_v = is_std_map<T>::value;
 
+template <typename T> struct is_optional : std::false_type {};
+template <typename T> struct is_optional<std::optional<T>> : std::true_type {};
+template <typename T> inline constexpr bool is_optional_v = is_optional<T>::value;
 
 template <typename T> concept array_like = is_std_array_v<T>;
 template <typename T> concept arithmetic = std::is_arithmetic_v<T>;
@@ -53,6 +56,16 @@ template <typename T> concept chrono_duration = is_chrono_duration_v<T>;
 template <typename T> concept vector_like = is_std_vector_v<T>;
 template <typename T> concept map_like = is_std_map_v<T>;
 template <typename T> concept string_like = std::is_convertible_v<T, std::string_view>;
+
+template <typename T>
+concept sequence_like =
+    not std::same_as<T, std::string>
+    && requires (T t) {
+        typename T::value_type;
+        t.begin();
+        t.end();
+        t.push_back(std::declval<typename T::value_type>());
+    };
 
 template <typename T>
 concept formattable = requires {

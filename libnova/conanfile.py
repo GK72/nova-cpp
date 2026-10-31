@@ -7,7 +7,7 @@ from conan.tools.build import check_min_cppstd
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.10.0"
+    version = "0.11.0"
     package_type = "library"
 
     license = "BSL"
@@ -45,6 +45,8 @@ class Nova(ConanFile):
 
         for req in self.conan_data.get("public-deps", []):
             self.requires(req, transitive_headers=True, transitive_libs=True)
+        for req in self.conan_data.get("link-deps", []):
+            self.requires(req, transitive_headers=False, transitive_libs=True)
 
     def layout(self):
         cmake_layout(self)

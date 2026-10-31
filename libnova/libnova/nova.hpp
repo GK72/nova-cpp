@@ -6,16 +6,16 @@
 
 #pragma once
 
-#include <libnova/details/version.hpp>
+#include <libnova/detail/version.hpp>
 
 #include <libnova/color.hpp>
 #include <libnova/data.hpp>
+#include <libnova/dyn_value.hpp>
 #include <libnova/error.hpp>
 #include <libnova/expected.hpp>
 #include <libnova/flat_map.hpp>
 #include <libnova/intrinsics.hpp>
 #include <libnova/io.hpp>
-#include <libnova/json.hpp>
 #include <libnova/log.hpp>
 #include <libnova/main.hpp>
 #include <libnova/not_null.hpp>
@@ -30,7 +30,6 @@
 #include <libnova/units.hpp>
 #include <libnova/utils.hpp>
 #include <libnova/vec.hpp>
-#include <libnova/yaml.hpp>
 
 #include <string>
 

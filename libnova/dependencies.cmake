@@ -1,4 +1,4 @@
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(nlohmann_json)
-find_package(yaml-cpp)
+# Linking the static library only; its headers stay private
+find_package(yaml-cpp REQUIRED)

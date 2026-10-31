@@ -33,6 +33,6 @@ sed --in-place \
     -e "s/\(.*NovaVersionMajor = \).*;/\1${v_major};/" \
     -e "s/\(.*NovaVersionMinor = \).*;/\1${v_minor};/" \
     -e "s/\(.*NovaVersionPatch = \).*;/\1${v_patch};/" \
-    libnova/libnova/details/version.hpp
+    libnova/libnova/detail/version.hpp
 
 sed --in-place -e "s/\(.*version = \).*/\1\"${bumped_version}\"/" libnova/conanfile.py

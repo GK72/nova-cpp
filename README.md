@@ -23,6 +23,12 @@ default.
 CMAKE_BUILD_PARALLEL_LEVEL=4 ./run [--help]
 ```
 
+Use the following command to build with experimental features.
+
+```sh
+CMAKE_BUILD_PARALLEL_LEVEL=8 ./run -s build-libnova-exp
+```
+
 # Project structure
 
 The project follows the [Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
@@ -34,7 +40,7 @@ The project follows the [Canonical Project Structure](https://www.open-std.org/j
 ├── libnova
 │   ├── cmake                                   Public CMake modules
 │   └── libnova                                 C++ source code
-│       ├── details                             Internal header files
+│       ├── detail                              Internal header files
 │       ├── *.test.cpp                          Unit tests
 │       └── *.bench.cpp                         Benchmarks
 ├── scripts                                     Helpers for developing/testing the project

@@ -86,6 +86,27 @@ function build-libnova() {
     log-stage-entry "Running stage: build-libnova"
     local build_type=$1
     local build_dir="${BUILD_DIR_PREFIX}/${build_type}/libnova"
+    local coverage=OFF
+
+    if [[ "${build_type}" == "Debug" ]]; then
+        coverage=ON
+    fi
+
+    cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}" \
+        -DCMAKE_BUILD_TYPE="${build_type}" \
+        -DSANITIZERS=asan \
+        -DBUILD_TESTING=ON \
+        -DCOVERAGE="${coverage}" \
+        -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
+        -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake"
+
+    cmake --build "${build_dir}"
+}
+
+function build-libnova-exp() {
+    log-stage-entry "Running stage: build-libnova-exp"
+    local build_type=$1
+    local build_dir="${BUILD_DIR_PREFIX}/${build_type}/libnova"
 
     cmake -S "${PROJECT_DIR}/libnova" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE="${build_type}" \
@@ -93,7 +114,8 @@ function build-libnova() {
         -DBUILD_TESTING=ON \
         -DCOVERAGE=1 \
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake" \
-        -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake"
+        -DCMAKE_PROJECT_INCLUDE="${PROJECT_DIR}/config-package-suse.cmake" \
+        -DNOVA_EXPERIMENTAL_FEATURE_SET=ON
 
     cmake --build "${build_dir}"
 }
@@ -130,10 +152,17 @@ function integration-tests() {
     log-stage-entry "Running stage: integration-tests"
     local build_type=$1
     local build_dir="${BUILD_DIR_PREFIX}/${build_type}/tests"
+    local coverage=OFF
+
+    # The installed Debug library is instrumented, so its consumers must be too
+    if [[ "${build_type}" == "Debug" ]]; then
+        coverage=ON
+    fi
 
     cmake -S "${PROJECT_DIR}/tests" -B "${build_dir}" \
         -DCMAKE_BUILD_TYPE="${build_type}" \
         -DSANITIZERS=asan \
+        -DCOVERAGE="${coverage}" \
         -DCMAKE_PREFIX_PATH="${INSTALL_DIR}" \
         -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="${PROJECT_DIR}/conan_provider.cmake"
 

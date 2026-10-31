@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `set_cpu_affinity` reports `errno`.
 - `expected::transform` and `expected::transform_error` map the value or the
   error, as `std::expected` does.
+- `nova::dyn_value` is the one interface to YAML, JSON and TOML documents:
+  `parse`, `read_from` and `read_config` read them (the format by the file
+  extension), `dump` and `write_to` write them, `lookup`, `find`, `is` and
+  `at` query them by `dyn_path`, and `merge` layers them (a null deletes a
+  key). Lookups are strict: a wrong type throws, naming the path.
+- `nova::refl` (`refl.hpp`): enum names and annotations by reflection, with
+  `NOVA_EXPERIMENTAL_FEATURE_SET` (`-freflection`, `-fcontracts`).
 
 ### Breaking
 
@@ -30,3 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `nova::exception` moved to `exception.hpp` (`error.hpp` still includes it).
   `wrap_error` moved from `expected.hpp` to `error.hpp`, which now depends on
   `expected.hpp`.
+- `nova::json` and `nova::yaml` (`json.hpp`, `yaml.hpp`) are removed; use
+  `nova::dyn_value`. The formats are internal (`libnova/detail/`): nlohmann_json
+  and yaml-cpp are no longer public dependencies. Consumers need neither
+  header; the static library needs yaml-cpp (0.9.0) for linking.
+- `libnova/details/` is renamed to `libnova/detail/`, matching the
+  `nova::detail` namespace; so is `lib/cmake/nova/details/` of the installed
+  package.

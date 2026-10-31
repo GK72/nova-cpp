@@ -1,4 +1,4 @@
-#include <libnova/details/version.hpp>
+#include <libnova/detail/version.hpp>
 
 #include <fmt/format.h>
 

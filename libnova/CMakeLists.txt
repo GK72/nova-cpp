@@ -7,7 +7,7 @@ endif()
 option(NOVA_EXPERIMENTAL_FEATURE_SET "Enable experimental features that requires compiler/lib support" OFF)
 
 include(version.cmake)
-set(NOVA_VERSION_FILE "${CMAKE_CURRENT_LIST_DIR}/libnova/details/version.hpp")
+set(NOVA_VERSION_FILE "${CMAKE_CURRENT_LIST_DIR}/libnova/detail/version.hpp")
 nova_extract_version("${NOVA_VERSION_FILE}")
 
 project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
