@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one.
 - `read_file` and `read_bin` report why a path is not a regular file;
   `set_cpu_affinity` reports `errno`.
+- `expected::transform` and `expected::transform_error` map the value or the
+  error, as `std::expected` does.
 
 ### Breaking
 

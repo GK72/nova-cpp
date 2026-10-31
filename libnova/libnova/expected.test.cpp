@@ -280,6 +280,43 @@ TEST(Expected_MondadicOps, OrElse) {
     EXPECT_EQ(x.or_else(t).error(), 5);
 }
 
+TEST(Expected_MondadicOps, Transform) {
+    using E = nova::expected<int, std::string_view>;
+    constexpr auto x = E(9);
+    constexpr auto t = [](int y) { return std::to_string(y * 2); };
+    EXPECT_EQ(x.transform(t).value(), "18");
+    EXPECT_EQ(E(nova::unexpect, "error").transform(t).error(), "error");
+}
+
+TEST(Expected_MondadicOps, Transform_OnRValue) {
+    using E = nova::expected<moo, std::string_view>;
+    constexpr auto x2 = [](moo&& x) { return moo{ x.x * 2 }; };
+    EXPECT_EQ(E(9).transform(x2).value().x, 18);
+}
+
+TEST(Expected_MondadicOps, TransformError) {
+    using E = nova::expected<int, std::string_view>;
+    constexpr auto size = [](std::string_view y) { return y.size(); };
+    EXPECT_EQ(E(nova::unexpect, "error").transform_error(size).error(), 5);
+    EXPECT_EQ(E(9).transform_error(size).value(), 9);
+}
+
+TEST(Expected_MondadicOps, TransformError_OnRValue) {
+    using E = nova::expected<moo, std::string_view>;
+    constexpr auto size = [](std::string_view y) { return y.size(); };
+    EXPECT_EQ(E(9).transform_error(size).value().x, 9);
+}
+
+TEST(Expected_MondadicOps, TransformError_AddsDetail) {
+    const auto failing = nova::expected<int, nova::error>{ nova::wrap_error(std::errc::is_a_directory, "dir") };
+    const auto with_path = [](nova::error err) {
+        err.detail = "path/" + err.detail;
+        return err;
+    };
+    EXPECT_EQ(failing.transform_error(with_path).error().detail, "path/dir");
+    EXPECT_EQ(failing.transform_error(with_path).error().code, std::errc::is_a_directory);
+}
+
 TEST(Expected, WrapError) {
     const auto read = [](bool ok) -> nova::expected<int, nova::error> {
         if (not ok) {
