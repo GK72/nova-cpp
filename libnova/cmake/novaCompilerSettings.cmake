@@ -19,16 +19,10 @@ if(COVERAGE)
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
 endif()
 
-# Address sanitizer is used as the primary one containing leak and undefined
-# sanitizers also. Thread sanitizer is not compatible with address and leak
-# sanitizer.
 if(SANITIZERS)
     if(SANITIZERS STREQUAL asan)
         set(SANITIZER_LIST -fsanitize=address -fsanitize=undefined)
         if(NOT APPLE)
-            # Standalone LeakSanitizer is not supported by Apple Clang; on
-            # Apple platforms leak detection is only available bundled into
-            # AddressSanitizer itself (via ASAN_OPTIONS=detect_leaks=1).
             list(APPEND SANITIZER_LIST -fsanitize=leak)
         endif()
     endif()
