@@ -107,7 +107,12 @@ The build and test stages run twice, in e2e and on every platform:
 
 A coverage build instruments the library, so every consumer has to link with
 coverage too (`__gcov_*` symbols). The integration tests and the examples use
-the same `COVERAGE` setting as the library and count towards the coverage.
+the same `COVERAGE` setting as the library.
+
+The report covers the library only, from the unit and the integration tests.
+The integration tests compile against the installed copy of the headers;
+`-fprofile-prefix-map` (GCC) records their coverage as the sources', so both
+add up per file. Examples and benchmarks are built, but not run.
 
 [[ci-versioning]]
 === Versioning and releases
