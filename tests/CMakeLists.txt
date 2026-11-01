@@ -13,5 +13,12 @@ include(novaCompilerSettings)
 include(novaBuildInfo)
 
 add_subdirectory(build-info)
+
+# The tests compile against the installed headers, a copy of the sources: their
+# coverage is recorded as the sources' (`<install>/include=<source>`).
+if(COVERAGE AND COVERAGE_PREFIX_MAP)
+    add_compile_options("-fprofile-prefix-map=${COVERAGE_PREFIX_MAP}")
+endif()
+
 add_subdirectory(io)
 add_subdirectory(log)

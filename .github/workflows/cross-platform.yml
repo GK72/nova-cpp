@@ -14,34 +14,37 @@ jobs:
         build_type: [ Debug, Release ]
     runs-on: ${{ matrix.os }}
 
+    defaults:
+      run:
+        shell: bash
+
+    # Sanitizers and coverage are GCC/Clang flags, covered by the Linux Debug job.
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      SANITIZERS: ""
+      COVERAGE: "OFF"
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
     - uses: turtlebrowser/get-conan@main
 
     - name: Build
-      run: |
-        cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build/libnova --config ${{ matrix.build_type }}
-
+      run: ci/build.sh
     - name: Unit Test
-      working-directory: ${{github.workspace}}/build/libnova
-      run: ctest -C ${{ matrix.build_type }} --output-on-failure
-
+      run: ci/unit-test.sh
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config ${{ matrix.build_type }}
-
-    - name: Functional Test
-      run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/tests
-
-    - name: Package
-      run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20
-
+      run: ci/install.sh
+    - name: Function Test
+      run: ci/function-test.sh
     - name: Examples
-      run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/examples
+      run: ci/examples.sh
+    # `conan create` builds Release, regardless of the matrix.
+    - name: Package
+      if: matrix.build_type == 'Release'
+      run: ci/package.sh
+    - name: Package Test
+      if: matrix.build_type == 'Release'
+      run: ci/package-test.sh
