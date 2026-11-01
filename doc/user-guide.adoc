@@ -1,0 +1,49 @@
+= Nova User Guide
+
+== CMake modules
+
+Nova ships several CMake modules to avoid the boilerplate in each project.
+
+// TODO: Complete doc about all modules.
+
+[[compiler-settings]]
+=== Compiler settings and warnings
+
+// TODO: Other compiler settings.
+
+[[sanitizers]]
+==== Sanitizers
+
+`novaCompilerSettings` reads the `SANITIZERS` CMake variable and
+`code_analysis(<target> <visibility>)` applies the matching flags to the
+target, both compile and link options.
+
+[source,cmake]
+----
+include(novaCompilerSettings)
+
+add_executable(my-app main.cpp)
+code_analysis(my-app PRIVATE)
+----
+
+[cols="1,3"]
+|===
+| `SANITIZERS` | Enabled sanitizers
+
+| `asan`
+| Address, undefined behaviour and leak sanitizers combined. Leak sanitizer is
+not enabled on Apple platforms, Apple Clang does not support it as a standalone
+one (available via `ASAN_OPTIONS=detect_leaks=1`).
+
+| `tsan`
+| Thread. It cannot be combined with the address and leak sanitizers.
+
+| empty or unset
+| None.
+|===
+
+The flags are GCC/Clang ones; leave `SANITIZERS` empty with MSVC.
+
+The undefined behaviour sanitizer reports and continues by default, so a test
+can pass with a finding. To make it fail, run with
+`UBSAN_OPTIONS=halt_on_error=1`.
