@@ -1,0 +1,134 @@
+= Developer's Manual
+
+[[ci]]
+== Continuous integration
+
+The pipeline is a set of stage scripts in `ci/`. The GitHub workflows and the
+local run (`ci/e2e.sh`) call the same scripts, so a green local run means a
+green CI, apart from platform differences.
+
+=== Running locally
+
+`ci/e2e.sh` clones the committed `HEAD` into `/tmp/workspace/nova` and runs all
+stages there. Uncommitted changes are not part of the run.
+
+A single stage runs on the checkout itself, e.g. `ci/build.sh`. The
+configuration comes from the environment (`ci/common.sh`):
+
+[cols="1,1,3"]
+|===
+| Variable | Default | Meaning
+
+| `WORKSPACE`
+| the repository
+| Project checkout the stages work on.
+
+| `BUILD_TYPE`
+| `Debug`
+| `Debug` or `Release`.
+
+| `SANITIZERS`
+| `asan`
+| `asan` (address, leak, undefined), `tsan` or empty to disable.
+
+| `COVERAGE`
+| `ON` for Debug
+| Coverage instrumentation.
+|===
+
+=== Stages
+
+[cols="2,4,1,1"]
+|===
+| Script(s) | Purpose | e2e | GitHub
+
+| `pre-checks.sh`
+| Version bump check, see <<ci-versioning>>.
+| ✓
+| Linux
+
+| `build.sh`, `unit-test.sh`
+| Building library and unit tests.
+| ✓
+| all
+
+| `install.sh`, `function-test.sh`
+| Integration tests against the installed package.
+| ✓
+| all
+
+| `examples.sh`
+| Examples against the installed package.
+| ✓
+| all
+
+| `coverage.sh`
+| Coverage reports (`gcovr`).
+|
+| Linux
+
+| `package.sh`
+| All packages of the Release build: RPM (Linux only) and Conan.
+| ✓
+| Release
+
+| `rpm-test.sh`
+| Whether the RPM installs, in an openSUSE container.
+| ✓
+| Linux
+
+| `package-test.sh`
+| Consumes the Conan package (`tests/package`): CMake modules, linking.
+| ✓
+| Release
+
+| `tag-release.sh`
+| Release tag, see <<ci-versioning>>.
+| ✓
+|
+
+| `bench.sh`
+| Benchmarks, only meaningful on a Release build without sanitizers.
+|
+|
+|===
+
+=== Build configurations
+
+The build and test stages run twice, in e2e and on every platform:
+
+* *Debug*: sanitizers and coverage on Linux, the main correctness run. Without
+  them on macOS and Windows (GCC/Clang flags).
+* *Release*: the configuration that is shipped, also what gets packaged.
+  Sanitizers do not cover it: code behind `NDEBUG` differs, and some undefined
+  behaviour and warnings only surface with optimizations.
+
+=== Coverage
+
+A coverage build instruments the library, so every consumer has to link with
+coverage too (`__gcov_*` symbols). The integration tests and the examples use
+the same `COVERAGE` setting as the library.
+
+The report covers the library only, from the unit and the integration tests.
+The integration tests compile against the installed copy of the headers;
+`-fprofile-prefix-map` (GCC) records their coverage as the sources', so both
+add up per file. Examples and benchmarks are built, but not run.
+
+[[ci-versioning]]
+=== Versioning and releases
+
+Bumping the version is part of every release-relevant change, a release is an
+on-demand tag.
+
+* `scripts/release.sh` defines the release-relevant paths and where the version
+  lives (`version_at`).
+* `ci/check-version-bump.sh` fails if a release-relevant path changed since the
+  base branch without a version bump.
+* `ci/tag-release.sh` tags a commit as `v<version>`; `--push` pushes the tag.
+  In e2e it only tags the workspace clone.
+
+=== Adding a stage
+
+. A script in `ci/` sourcing `ci/common.sh`, printing `=== Stage: <name> ===`.
+. A call in `ci/e2e.sh`.
+. A step in the workflows (`.github/workflows/`).
