@@ -6,88 +6,39 @@ on:
   pull_request:
     branches: [ main ]
 
+# The steps are the stages of `ci/e2e.sh`, run on the checkout.
 jobs:
-  release:
+  # Sanitizers and coverage.
+  debug:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0      # Version bump check compares against the base branch
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
     - uses: turtlebrowser/get-conan@main
-    - name: Install GCC
+    - name: Install tools
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake
+        sudo apt install -y build-essential cmake gcovr rpm
 
+    - name: Version Bump Check
+      run: ci/pre-checks.sh
     - name: Build
-      run: |
-        cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build/libnova --config Release
-
+      run: ci/build.sh
     - name: Unit Test
-      working-directory: ${{github.workspace}}/build/libnova
-      run: ctest -C Release --output-on-failure
-
+      run: ci/unit-test.sh
     - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config Release
-
-    - name: Functional Test
-      run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/tests
-
-    - name: Package
-      run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20
-
+      run: ci/install.sh
+    - name: Function Test
+      run: ci/function-test.sh
     - name: Examples
-      run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/examples
-
-  debug-coverage:
-    runs-on: ubuntu-24.04
-
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - uses: turtlebrowser/get-conan@main
-    - name: Install GCC
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential cmake gcovr
-
-    - name: Build
-      run: |
-        cmake -S ${{github.workspace}}/libnova -B ${{github.workspace}}/build/libnova -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake
-        cmake --build ${{github.workspace}}/build/libnova --config Debug
-
-    - name: Unit Test
-      working-directory: ${{github.workspace}}/build/libnova
-      run: |
-        ctest -C Debug --output-on-failure
-        mkdir --parent ${{github.workspace}}/build/coverage
-        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --cobertura --output ${{github.workspace}}/build/coverage/cobertura.xml
-        gcovr ${{github.workspace}}/build --root ${{github.workspace}} --exclude '.*test.*' --exclude '.*_deps.*' --html-details --output ${{github.workspace}}/build/coverage/nova.html
-
-    - name: Install
-      run: cmake --install ${{github.workspace}}/build/libnova --prefix ${{github.workspace}}/install --config Debug
-
-    - name: Functional Test
-      run: |
-        cmake -S ${{github.workspace}}/tests -B ${{github.workspace}}/build/tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/tests
-
-    - name: Package
-      run: conan create ${{github.workspace}}/libnova --test-folder ${{github.workspace}}/tests/package --build=missing --settings compiler.cppstd=20
-
-    - name: Examples
-      run: |
-        cmake -S ${{github.workspace}}/examples -B ${{github.workspace}}/build/examples -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${{github.workspace}}/conan_provider.cmake -DCMAKE_PREFIX_PATH=${{github.workspace}}/install
-        cmake --build ${{github.workspace}}/build/examples
+      run: ci/examples.sh
+    - name: Coverage
+      run: ci/coverage.sh
 
     - name: Archive code coverage results
       uses: actions/upload-artifact@v4
@@ -114,3 +65,42 @@ jobs:
       with:
         recreate: true
         path: code-coverage-results.md
+
+  # What is shipped: tests on the release build, packages.
+  release:
+    runs-on: ubuntu-24.04
+
+    env:
+      BUILD_TYPE: Release
+      SANITIZERS: ""
+      COVERAGE: "OFF"
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: turtlebrowser/get-conan@main
+    - name: Install tools
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake gcovr rpm
+
+    - name: Build
+      run: ci/build.sh
+    - name: Unit Test
+      run: ci/unit-test.sh
+    - name: Install
+      run: ci/install.sh
+    - name: Function Test
+      run: ci/function-test.sh
+    - name: Examples
+      run: ci/examples.sh
+    - name: Package
+      run: ci/package.sh
+    - name: RPM Test
+      run: ci/rpm-test.sh
+    - name: Package Test
+      run: ci/package-test.sh
+    - name: Summary
+      run: ci/summary.sh

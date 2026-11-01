@@ -1,4 +1,6 @@
 build*/
+install/
+package/
 .tmp/
 .vscode/
 .vs/
