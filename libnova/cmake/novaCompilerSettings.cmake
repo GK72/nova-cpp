@@ -24,7 +24,13 @@ endif()
 # sanitizer.
 if(SANITIZERS)
     if(SANITIZERS STREQUAL asan)
-        set(SANITIZER_LIST -fsanitize=address -fsanitize=leak -fsanitize=undefined)
+        set(SANITIZER_LIST -fsanitize=address -fsanitize=undefined)
+        if(NOT APPLE)
+            # Standalone LeakSanitizer is not supported by Apple Clang; on
+            # Apple platforms leak detection is only available bundled into
+            # AddressSanitizer itself (via ASAN_OPTIONS=detect_leaks=1).
+            list(APPEND SANITIZER_LIST -fsanitize=leak)
+        endif()
     endif()
     if(SANITIZERS STREQUAL tsan)
         set(SANITIZER_LIST -fsanitize=thread)
