@@ -7,6 +7,7 @@
 #include <array>
 #include <chrono>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <type_traits>
 #include <vector>
@@ -85,7 +86,12 @@ TEST(Utils, Concat) {
 }
 
 TEST(Utils, GetEnv) {
-    EXPECT_FALSE(nova::getenv("NONEXISTENTENV").has_value());
+    const auto missing = nova::getenv("NONEXISTENTENV");
+    ASSERT_FALSE(missing.has_value());
+    EXPECT_EQ(missing.error().code, nova::env_error::not_set);
+    EXPECT_EQ(missing.error().code, std::errc::no_such_file_or_directory);
+    EXPECT_EQ(fmt::format("{}", missing.error()), "[env] not set (NONEXISTENTENV)");
+
     EXPECT_EQ(nova::getenv("NOVA_TEST_ENV").value(), "1");
     EXPECT_EQ(nova::getenv("NONEXISTENTENV", "default"), "default");
 }

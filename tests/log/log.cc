@@ -13,7 +13,7 @@ namespace {
 [[nodiscard]] auto check() -> bool {
     const auto content = nova::read_file(logfile);
     if (not content.has_value()) {
-        fmt::println("Error: {}", content.error().message);
+        fmt::println("Error: {}", content.error());
         return false;
     }
 

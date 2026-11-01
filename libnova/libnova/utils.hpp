@@ -11,8 +11,6 @@
 #include <libnova/types.hpp>
 #include <libnova/type_traits.hpp>
 
-#include <fmt/format.h>
-
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -21,12 +19,27 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <tuple>
 #include <vector>
 
 #include <stdlib.h>
 
 namespace nova {
+
+/**
+ * @brief   Environment variable failures, in the `env` error category.
+ */
+enum class env_error {
+    not_set = 1
+};
+
+template <>
+struct error_code_traits<env_error> {
+    static constexpr auto name = "env";
+    static constexpr auto messages = std::to_array<std::string_view>({ "not set" });
+    static constexpr auto conditions = std::to_array({ std::errc::no_such_file_or_directory });
+};
 
 namespace ascii {
     inline constexpr range<char> PrintableRange { 32, 126 };
@@ -149,11 +162,11 @@ template <typename First, typename Second, typename ...Tail>
     errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
 
     if (env == nullptr) {
-        return { unexpect,fmt::format("Environment variable is not set: {}", env_name) };
+        return wrap_error(env_error::not_set, env_name);
     }
 
     if (err) {
-        return { unexpect,fmt::format("Error querying environment variable: {}", env_name) };
+        return wrap_error(std::error_code(err, std::generic_category()), env_name);
     }
 
     const auto ret = std::string{ env };
@@ -163,7 +176,7 @@ template <typename First, typename Second, typename ...Tail>
 #else
     char* env = std::getenv(env_name.c_str());
     if (env == nullptr) {
-        return { unexpect, fmt::format("Environment variable is not set: {}", env_name) };
+        return wrap_error(env_error::not_set, env_name);
     }
     return { env };
 #endif

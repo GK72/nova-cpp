@@ -1,19 +1,26 @@
 /**
  * Part of Nova C++ Library.
  *
- * Reimplementation of `std::expected` because not all compilers support it
- * yet.
+ * @brief   Reimplementation of `std::expected` because not all compilers support
+ *          it yet.
  *
  * Error types must be formattable. In case of invalid access, an exception is
  * thrown with a message provided by a formatter for the error type.
  *
  * `error()` access is checked, and it is not undefined behaviour (until C++26)
  * to call it when there is no error.
+ *
+ * @author      Gábor Krisztián Girhiny
+ * @created     2024-10-27
+ * @updated     2026-10-31
+ * @status      Standard compliant API (not complete)
+ *
+ * @compliance  `nova::expected<void, E>` is not supported.
  */
 
 #pragma once
 
-#include <libnova/error.hpp>
+#include <libnova/exception.hpp>
 #include <libnova/type_traits.hpp>
 
 #include <functional>
@@ -354,7 +361,100 @@ public:
         return std::invoke(std::forward<Func>(func), std::move(error()));
     }
 
+    /**
+     * @brief   The value mapped by `func`; the error as is.
+     */
+    template <typename Func>
+        requires std::is_constructible_v<E, E&>
+    [[nodiscard]] constexpr
+    auto transform(Func&& func) & {
+        return transform_impl(*this, std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<E, const E&>
+    [[nodiscard]] constexpr
+    auto transform(Func&& func) const& {
+        return transform_impl(*this, std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<E, E&&>
+    [[nodiscard]] constexpr
+    auto transform(Func&& func) && {
+        return transform_impl(std::move(*this), std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<E, const E&&>
+    [[nodiscard]] constexpr
+    auto transform(Func&& func) const&& {
+        return transform_impl(std::move(*this), std::forward<Func>(func));
+    }
+
+    /**
+     * @brief   The error mapped by `func`; the value as is.
+     */
+    template <typename Func>
+        requires std::is_constructible_v<T, T&>
+    [[nodiscard]] constexpr
+    auto transform_error(Func&& func) & {
+        return transform_error_impl(*this, std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, const T&>
+    [[nodiscard]] constexpr
+    auto transform_error(Func&& func) const& {
+        return transform_error_impl(*this, std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, T&&>
+    [[nodiscard]] constexpr
+    auto transform_error(Func&& func) && {
+        return transform_error_impl(std::move(*this), std::forward<Func>(func));
+    }
+
+    template <typename Func>
+        requires std::is_constructible_v<T, const T&&>
+    [[nodiscard]] constexpr
+    auto transform_error(Func&& func) const&& {
+        return transform_error_impl(std::move(*this), std::forward<Func>(func));
+    }
+
 private:
+    /**
+     * @brief   `transform` for every value category of `self`.
+     */
+    template <typename Self, typename Func>
+    [[nodiscard]] static constexpr
+    auto transform_impl(Self&& self, Func&& func) {
+        using U = std::remove_cv_t<std::invoke_result_t<Func, decltype(*std::forward<Self>(self))>>;
+        static_assert(not std::is_void_v<U>, "`nova::expected<void, E>` is not supported");
+        using R = expected<U, E>;
+
+        if (self.has_value()) {
+            return R{ std::in_place, std::invoke(std::forward<Func>(func), *std::forward<Self>(self)) };
+        }
+        return R{ unexpect, std::forward<Self>(self).error() };
+    }
+
+    /**
+     * @brief   `transform_error` for every value category of `self`.
+     */
+    template <typename Self, typename Func>
+    [[nodiscard]] static constexpr
+    auto transform_error_impl(Self&& self, Func&& func) {
+        using G = std::remove_cv_t<std::invoke_result_t<Func, decltype(std::forward<Self>(self).error())>>;
+        using R = expected<T, G>;
+
+        if (self.has_value()) {
+            return R{ std::in_place, *std::forward<Self>(self) };
+        }
+        return R{ unexpect, std::invoke(std::forward<Func>(func), std::forward<Self>(self).error()) };
+    }
+
     union vex_impl {
         template <typename ...Args>
         constexpr vex_impl(detail::expect_t, Args&& ...args)                                        // NOLINT(readability-named-parameter) | It's a tag

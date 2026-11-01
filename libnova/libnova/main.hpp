@@ -24,7 +24,7 @@
             );                                                                  \
         } catch (nova::exception& ex) {                                         \
             nova::log::error(                                                   \
-                "Exception caught in main: {}\n{}\n",                           \
+                "Exception caught in main: {}\n{}\n{}\n",                       \
                 ex.what(),                                                      \
                 ex.where(),                                                     \
                 ex.backtrace()                                                  \

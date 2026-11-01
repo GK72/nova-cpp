@@ -10,28 +10,38 @@
 
 #pragma once
 
+#include <libnova/error.hpp>
 #include <libnova/expected.hpp>
 #include <libnova/intrinsics.hpp>
 #include <libnova/type_traits.hpp>
 
 #include <fmt/format.h>
 
+#include <array>
 #include <charconv>
 #include <cstdint>
 #include <limits>
 #include <ratio>
+#include <string>
 #include <string_view>
+#include <system_error>
 #include <type_traits>
-
-#ifdef _LIBCPP_VERSION
-#include <string>       // Fallback floating-point parsing
-#endif
 
 namespace nova {
 
+/**
+ * @brief   Parse failures, in the `parse` error category.
+ */
 enum class parse_error {
-    invalid_argument,
+    invalid_argument = 1,
     out_of_range
+};
+
+template <>
+struct error_code_traits<parse_error> {
+    static constexpr auto name = "parse";
+    static constexpr auto messages = std::to_array<std::string_view>({ "invalid argument", "out of range" });
+    static constexpr auto conditions = std::to_array({ std::errc::invalid_argument, std::errc::result_out_of_range });
 };
 
 namespace detail {
@@ -298,12 +308,6 @@ public:
 
     template <typename FmtContext>
     constexpr auto format(nova::parse_error error, FmtContext& ctx) const {
-        switch (error) {
-            case nova::parse_error::invalid_argument:
-                return fmt::format_to(ctx.out(), "Parse error (invalid argument)");
-            case nova::parse_error::out_of_range:
-                return fmt::format_to(ctx.out(), "Parse error (out of range)");
-        }
-        nova::unreachable();
+        return fmt::format_to(ctx.out(), "Parse error ({})", nova::make_error_code(error).message());
     }
 };
