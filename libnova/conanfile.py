@@ -3,11 +3,13 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.build import check_min_cppstd
+from conan.tools.files import load, update_conandata
+from conan.tools.scm import Git
+from conan.errors import ConanException
 
 
 class Nova(ConanFile):
     name = "nova"
-    version = "0.10.0"
     package_type = "library"
 
     license = "BSL"
@@ -20,7 +22,23 @@ class Nova(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "*.cmake", "Config.cmake.in"
+    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "*.cmake", "Config.cmake.in", "VERSION"
+
+    def set_version(self):
+        self.version = load(self, os.path.join(self.recipe_folder, "VERSION")).strip()
+
+    def export(self):
+        # The Conan cache has no repository, capturing git state while it is available.
+        git = Git(self, self.recipe_folder)
+        try:
+            git_info = {
+                "hash": git.run("rev-parse --short HEAD"),
+                "branch": git.run("rev-parse --abbrev-ref HEAD"),
+                "dirty": "dirty" if git.run("status --porcelain") else "clean",
+            }
+        except ConanException:
+            return
+        update_conandata(self, {"git": git_info})
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -53,6 +71,11 @@ class Nova(ConanFile):
         deps = CMakeDeps(self)
         deps.generate()
         tc = CMakeToolchain(self)
+        git_info = self.conan_data.get("git")
+        if git_info:
+            tc.cache_variables["NOVA_GIT_HASH"] = git_info["hash"]
+            tc.cache_variables["NOVA_GIT_BRANCH"] = git_info["branch"]
+            tc.cache_variables["NOVA_GIT_DIRTY"] = git_info["dirty"]
         tc.generate()
 
     def build(self):

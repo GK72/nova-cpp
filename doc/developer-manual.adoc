@@ -1,0 +1,27 @@
+= Developer's Manual
+
+== Versioning
+
+There is a single source of truth: `libnova/VERSION`.
+
+CMake and Conan recipe read it. `scripts/version-bump.sh` bumps it according
+to SemVer rules with the exception that during major version 0 breaking changes
+are not tracked in the version.
+
+[[build-info-internals]]
+== Build information
+
+The complete build information comes from generated source code via CMake. This
+avoids macros and gives a uniform interface. The values are functions defined
+in a separate translation unit: a compilation firewall that also reports the
+linked library. The actual values are provided by functions and their
+definition is in a separate translation unit providing information about the
+linked library.
+
+The Conan cache has no git repository, so the state is captured during
+`export()` and passed via `NOVA_GIT_*` CMake cache variables.
+
+=== Generated files
+
+The generated files live under the binary directory in a separate `gen`
+directory that is clearly visible on the caller side (`#include <TARGET/gen/...>`).

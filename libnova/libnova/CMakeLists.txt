@@ -3,7 +3,15 @@ file(GLOB_RECURSE NOVA_HEADER_FILES "*.hpp")
 add_library(nova)
 
 target_sources(nova PRIVATE
-    nova.cpp
+    version.cpp
+)
+
+# Conan builds have no repository, the recipe passes the values captured at export.
+nova_target_build_info(nova
+    NAMESPACE nova::detail
+    HASH "${NOVA_GIT_HASH}"
+    BRANCH "${NOVA_GIT_BRANCH}"
+    DIRTY "${NOVA_GIT_DIRTY}"
 )
 
 target_sources(nova PUBLIC

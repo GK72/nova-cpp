@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <libnova/details/version.hpp>
-
 #include <libnova/color.hpp>
 #include <libnova/data.hpp>
 #include <libnova/error.hpp>
@@ -30,12 +28,6 @@
 #include <libnova/units.hpp>
 #include <libnova/utils.hpp>
 #include <libnova/vec.hpp>
+#include <libnova/version.hpp>
 #include <libnova/yaml.hpp>
 
-#include <string>
-
-namespace nova {
-
-[[nodiscard]] auto library_version() -> std::string;
-
-} // namespace nova
