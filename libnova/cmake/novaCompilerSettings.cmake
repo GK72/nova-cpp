@@ -21,12 +21,12 @@ if(COVERAGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fno-inline -fprofile-arcs -ftest-coverage")
 endif()
 
-# Address sanitizer is used as the primary one containing leak and undefined
-# sanitizers also. Thread sanitizer is not compatible with address and leak
-# sanitizer.
 if(SANITIZERS)
     if(SANITIZERS STREQUAL asan)
-        set(SANITIZER_LIST -fsanitize=address -fsanitize=leak -fsanitize=undefined)
+        set(SANITIZER_LIST -fsanitize=address -fsanitize=undefined)
+        if(NOT APPLE)
+            list(APPEND SANITIZER_LIST -fsanitize=leak)
+        endif()
     endif()
     if(SANITIZERS STREQUAL tsan)
         set(SANITIZER_LIST -fsanitize=thread)

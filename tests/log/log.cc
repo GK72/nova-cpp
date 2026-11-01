@@ -41,7 +41,7 @@ namespace {
 } // namespace
 
 auto entrypoint([[maybe_unused]] auto args) -> int {
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logfile);
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logfile, true);
 
     nova::topic_log::create_multi(
         { "nova", "nova2" },

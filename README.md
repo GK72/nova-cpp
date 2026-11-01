@@ -15,25 +15,28 @@ See `libnova/conandata.yml` for more details.
 
 # Quick-start
 
-A runner script is provided at the root of the project for verification as a
-CI-like workflow. It runs all stages for `Debug` and `Release` build by
-default.
+The CI pipeline runs locally on a fresh clone of the committed `HEAD` (in
+`/tmp/workspace/nova`), the same stages as the GitHub workflows:
 
 ```sh
-CMAKE_BUILD_PARALLEL_LEVEL=4 ./run [--help]
+CMAKE_BUILD_PARALLEL_LEVEL=4 ci/e2e.sh
 ```
 
-Use the following command to build with experimental features.
+<!-- Use the following command to build with experimental features. -->
 
-```sh
-CMAKE_BUILD_PARALLEL_LEVEL=8 ./run -s build-libnova-exp
-```
+<!-- ```sh -->
+<!-- CMAKE_BUILD_PARALLEL_LEVEL=8 ./run -s build-libnova-exp -->
+<!-- ``` -->
+
+A single stage runs on the checkout itself, e.g. `ci/build.sh`. `BUILD_TYPE`,
+`SANITIZERS` and `COVERAGE` are configurable, see `ci/common.sh`.
 
 # Project structure
 
 The project follows the [Canonical Project Structure](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1204r0.html).
 
 ```
+├── ci                                          CI stages, `e2e.sh` runs all of them locally
 ├── env                                         Provided environment for developing/testing
 │   └── suse.Dockerfile                         For testing RPM packaging
 ├── examples

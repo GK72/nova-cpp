@@ -7,7 +7,15 @@ target_sources(nova PRIVATE
     detail/toml.cpp
     detail/yaml.cpp
     dyn_value.cpp
-    nova.cpp
+    version.cpp
+)
+
+# Conan builds have no repository, the recipe passes the values captured at export.
+nova_target_build_info(nova
+    NAMESPACE nova::detail
+    HASH "${NOVA_GIT_HASH}"
+    BRANCH "${NOVA_GIT_BRANCH}"
+    DIRTY "${NOVA_GIT_DIRTY}"
 )
 
 target_sources(nova PUBLIC
@@ -29,9 +37,6 @@ target_link_libraries(nova PUBLIC
 find_package(nlohmann_json REQUIRED)
 find_package(tomlplusplus REQUIRED)
 
-# The formats are behind compiled sources (`detail/*.cpp`): consumers need no
-# headers of them. The header-only ones are not needed at all; yaml-cpp is
-# needed for linking the static library only.
 target_link_libraries(nova PRIVATE
     $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
     $<BUILD_INTERFACE:tomlplusplus::tomlplusplus>
