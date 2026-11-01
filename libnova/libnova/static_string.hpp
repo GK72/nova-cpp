@@ -69,7 +69,7 @@ public:
         return std::string{ data.data(), data.size() };
     }
 
-    std::array<value_type, Size> data;                                                              // NOLINT(misc-non-private-member-variables-in-classes): NTTP
+    std::array<value_type, Size> data;                                                              // NOLINT(misc-non-private-member-variables-in-classes) | Must be public to be a structural type (NTTP)
 
 private:
     /**

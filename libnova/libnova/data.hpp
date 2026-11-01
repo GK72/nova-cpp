@@ -90,10 +90,10 @@ struct char_traits<std::byte> {
         }
 
         for (size_t i = 0; i < n; ++i) {
-            if (lt(lhs[i], rhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            if (lt(lhs[i], rhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic) | `char_traits::compare` interface takes raw pointers
                 return -1;
             }
-            if (lt(rhs[i], lhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            if (lt(rhs[i], lhs[i])) {                                                               // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic) | `char_traits::compare` interface takes raw pointers
                 return 1;
             }
         }

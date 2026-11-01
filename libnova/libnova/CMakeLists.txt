@@ -53,11 +53,13 @@ include(test.cmake)
 
 if(BUILD_TESTING)
     find_package(GTest REQUIRED)
+    find_package(scn REQUIRED)
     include(GoogleTest)
 
     add_test_target(color)
     add_test_target(data)
     add_test_target(dyn-value)
+    target_link_libraries(test-dyn-value PRIVATE scn::scn)
     add_test_target(dyn-value-formats)
     add_test_target(error)
     add_test_target(exception)

@@ -44,7 +44,7 @@ struct error_code_traits<env_error> {
 namespace ascii {
     inline constexpr range<char> PrintableRange { 32, 126 };
 
-    // NOLINTBEGIN(*magic-numbers*)
+    // NOLINTBEGIN(*magic-numbers*) | ASCII code tables
     constexpr auto lowercase_letters() {
         return std::to_array<char>({
              97,  98,  99, 100, 101, 102, 103, 104, 105, 106,
@@ -155,26 +155,38 @@ template <typename First, typename Second, typename ...Tail>
     return concat(result, tail...);
 }
 
+/**
+ * @brief   A safe wrapper around `std::getenv`.
+ *
+ * @error   `env_error::not_set` if the variable is not defined.
+ * @error   The `_dupenv_s` error code (Windows only).
+ *
+ * @safety  Safe to call concurrently, provided no thread modifies the
+ *          environment (`setenv`, `unsetenv`, `putenv`) at the same time.
+ *
+ * @see     https://en.cppreference.com/cpp/utility/program/getenv
+ *
+ * @note    On Windows the value is copied via `_dupenv_s`.
+ */
 [[nodiscard]] inline auto getenv(const std::string& env_name) -> expected<std::string, error> {
 #ifdef NOVA_WIN
     char* env;
-    // size_t len;
     errno_t err = _dupenv_s(&env, nullptr, env_name.c_str());
-
-    if (env == nullptr) {
-        return wrap_error(env_error::not_set, env_name);
-    }
 
     if (err) {
         return wrap_error(std::error_code(err, std::generic_category()), env_name);
     }
 
-    const auto ret = std::string{ env };
-    free(env);
+    if (env == nullptr) {
+        return wrap_error(env_error::not_set, env_name);
+    }
+
+    auto ret = std::string{ env };
+    std::free(env);
     return ret;
 
 #else
-    char* env = std::getenv(env_name.c_str());
+    char* env = std::getenv(env_name.c_str());                                                      // NOLINT(bugprone-unsafe-functions) | See function doc.
     if (env == nullptr) {
         return wrap_error(env_error::not_set, env_name);
     }

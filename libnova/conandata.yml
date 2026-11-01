@@ -14,3 +14,4 @@ link-deps:
 test-deps:
   - benchmark/1.9.5
   - gtest/1.14.0
+  - scnlib/4.0.1

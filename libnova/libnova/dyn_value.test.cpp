@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <scn/scan.h>
 
 #include <cstdint>
-#include <cstdio>
 #include <map>
 #include <string>
 #include <tuple>
@@ -220,18 +220,26 @@ struct nova::dyn_convert<version> {
     }
 
     [[nodiscard]] static auto convert(const dyn_value& node) -> expected<version, dyn_mismatch> {
-        const auto* text = std::get_if<std::string>(&node.data());
-
-        auto ret = version{ };
-        if (text == nullptr or std::sscanf(text->c_str(), "%d.%d", &ret.major, &ret.minor) != 2) {     // NOLINT
+        const auto mismatch = [&] {
             return unexpected<dyn_mismatch>{ {
                 .where = { },
                 .expected = name(),
                 .got = std::string(node.type_name()) }
             };
+        };
+
+        const auto* text = std::get_if<std::string>(&node.data());
+        if (text == nullptr) {
+            return mismatch();
         }
 
-        return ret;
+        const auto parsed = scn::scan<int, int>(*text, "{}.{}");
+        if (not parsed) {
+            return mismatch();
+        }
+
+        const auto [major, minor] = parsed->values();
+        return version{ major, minor };
     }
 };
 
