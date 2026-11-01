@@ -10,6 +10,9 @@ find_package(nova REQUIRED)
 include(CTest)
 include(novaCompilerWarnings)
 include(novaCompilerSettings)
+include(novaBuildInfo)
+
+add_subdirectory(build-info)
 
 # The tests compile against the installed headers, a copy of the sources: their
 # coverage is recorded as the sources' (`<install>/include=<source>`).

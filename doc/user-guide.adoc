@@ -1,5 +1,22 @@
 = Nova User Guide
 
+== Consuming Nova
+
+// TODO: Conan (`nova/<version>`) and the installed CMake package
+//       (`find_package(nova)`, `nova::nova`). Both put Nova's CMake modules
+//       on `CMAKE_MODULE_PATH`, so `include(nova<Module>)` works after
+//       `find_package`.
+
+Placeholder.
+
+== Library version
+
+The library version (of the linked library) can be accessed from code via the
+following functions:
+
+* `nova::library_version()` which gives `0.10.0` for example.
+* `nova::library_full_version()` which gives `0.10.0+a96c838.main.dirty` for example.
+
 == CMake modules
 
 Nova ships several CMake modules to avoid the boilerplate in each project.
@@ -47,3 +64,92 @@ The flags are GCC/Clang ones; leave `SANITIZERS` empty with MSVC.
 The undefined behaviour sanitizer reports and continues by default, so a test
 can pass with a finding. To make it fail, run with
 `UBSAN_OPTIONS=halt_on_error=1`.
+
+[[build-info]]
+=== Build information: `novaBuildInfo`
+
+Nova provides a CMake module for injecting build information into a library or
+application. There are two intended use cases, one building on the other:
+
+* `<ns>::detail::full_version()` function to call from code.
+* `<app> --version` CLI flag calling the above one.
+
+The full version is valid SemVer: characters of the branch outside the allowed
+ASCII alphanumerics and hyphens become hyphens (`-`).
+
+==== Generating build info for a target
+
+The following snippets provide minimal examples how to hook into the build info
+generation.
+
+[source,cmake]
+----
+# Short form
+nova_target_build_info(<target> NAMESPACE <ns>::detail)
+
+# Long form overriding Git information (empty strings are equivalent to short form)
+nova_target_build_info(<target>
+    NAMESPACE <ns>::detail
+    VERSION <x.y.z>
+    HASH "${MYPROJECT_GIT_HASH}"
+    BRANCH "${MYPROJECT_GIT_BRANCH}"
+    DIRTY "${MYPROJECT_GIT_DIRTY}"
+)
+----
+
+Version uses CMake's `PROJECT_VERSION` as a default. CMake configure fails if
+it is not `<major>.<minor>.<patch>`, e.g. when `project()` has no `VERSION`.
+
+The inner namespace `detail` is not enforced, but it is a good practice to use.
+
+Branch is exposed for override from CI where it is usually a detached head.
+For example: `-DMYPROJECT_GIT_BRANCH=main`.
+
+Wrap the generated code like:
+
+[source,cpp]
+----
+#include <TARGET/gen/build_info.hpp>
+
+namespace NS {
+
+auto library_full_version() -> std::string_view {
+    return detail::full_version();
+}
+
+}
+----
+
+This is also a customization point for formatting the version differently or
+enriching with additional information.
+
+==== Generated API
+
+[cols="2,2,3"]
+|===
+| Function | Returns | Example
+
+| `version()`
+| Version core
+| `0.10.0`
+
+| `version_major()`, `version_minor()`, `version_patch()`
+| The individual parts of the core version
+| -
+
+| `git_hash()`
+| Abbreviated git hash; `unknown` if not in git
+| `a96c838`
+
+| `git_branch()`
+| Name of the branch; `unknown` if not in git; HEAD if detached
+| `main`
+
+| `git_dirty()`
+| Whether the working tree was dirty or not; false if unknown
+| `true` or `false`
+
+| `full_version()`
+| Complete SemVer including build metadata
+| `0.10.0+a96c838.main.dirty`
+|===

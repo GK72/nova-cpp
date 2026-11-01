@@ -10,6 +10,10 @@ RELEASE_RELEVANT_PATHS=(
 # Version of the library at the given ref; the only place that knows where the
 # version lives.
 version_at() {
-    git -C "${WORKSPACE}" show "$1:libnova/conanfile.py" \
-        | sed -n 's/^ *version = "\([0-9.]*\)".*/\1/p'
+    if git -C "${WORKSPACE}" cat-file -e "$1:libnova/version.txt" 2>/dev/null; then
+        git -C "${WORKSPACE}" show "$1:libnova/version.txt" | tr -d '[:space:]'
+    else
+        git -C "${WORKSPACE}" show "$1:libnova/conanfile.py" \
+            | sed -n 's/^ *version = "\([0-9.]*\)".*/\1/p'
+    fi
 }
