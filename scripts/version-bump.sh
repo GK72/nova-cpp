@@ -2,7 +2,7 @@
 
 # Version bumper tool
 # Automatically bumps version based on git tag.
-# The version lives in `libnova/VERSION` only, CMake and Conan read it.
+# The version lives in `libnova/version.txt` only, CMake and Conan read it.
 #
 # Everything is patch bump unless "Feat".
 # The library is at major version 0, meaning breaking changes are not followed
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-version=$(< libnova/VERSION)
+version=$(< libnova/version.txt)
 v_major=$(cut -d '.' -f 1 <<< "${version}")
 v_minor=$(cut -d '.' -f 2 <<< "${version}")
 v_patch=$(cut -d '.' -f 3 <<< "${version}")
@@ -29,4 +29,4 @@ fi
 bumped_version="${v_major}.${v_minor}.${v_patch}"
 echo "Bumped version: ${bumped_version}"
 
-echo "${bumped_version}" > libnova/VERSION
+echo "${bumped_version}" > libnova/version.txt

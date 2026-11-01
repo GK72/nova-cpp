@@ -56,7 +56,7 @@ nova_target_build_info(<target>
 ----
 
 Version uses CMake's `PROJECT_VERSION` as a default. CMake configure fails if
-there is no `VERSION` in the project root.
+it is not `<major>.<minor>.<patch>`, e.g. when `project()` has no `VERSION`.
 
 The inner namespace `detail` is not enforced, but it is a good practice to use.
 

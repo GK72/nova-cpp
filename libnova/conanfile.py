@@ -22,10 +22,10 @@ class Nova(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "*.cmake", "Config.cmake.in", "VERSION"
+    exports_sources = "CMakeLists.txt", "libnova/*", "cmake/*", "*.cmake", "Config.cmake.in", "version.txt"
 
     def set_version(self):
-        self.version = load(self, os.path.join(self.recipe_folder, "VERSION")).strip()
+        self.version = load(self, os.path.join(self.recipe_folder, "version.txt")).strip()
 
     def export(self):
         # The Conan cache has no repository, capturing git state while it is available.

@@ -2,7 +2,7 @@
 
 == Versioning
 
-There is a single source of truth: `libnova/VERSION`.
+There is a single source of truth: `libnova/version.txt`.
 
 CMake and Conan recipe read it. `scripts/version-bump.sh` bumps it according
 to SemVer rules with the exception that during major version 0 breaking changes

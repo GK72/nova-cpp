@@ -25,7 +25,7 @@ Redesigned version information with added build information.
 
 ### Misc
 
-- The version lives in `libnova/VERSION` only, CMake, the Conan recipe and
+- The version lives in `libnova/version.txt` only, CMake, the Conan recipe and
   `version-bump.sh` read it.
 - Installed CMake helpers moved from `cmake/nova/details` to `cmake/nova/detail`.
 

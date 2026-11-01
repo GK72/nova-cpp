@@ -6,7 +6,7 @@ endif()
 
 option(NOVA_EXPERIMENTAL_FEATURE_SET "Enable experimental features that requires compiler/lib support" OFF)
 
-file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/VERSION" NOVA_VERSION LIMIT_COUNT 1)
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/version.txt" NOVA_VERSION LIMIT_COUNT 1)
 
 project("nova" VERSION ${NOVA_VERSION} LANGUAGES CXX)
 message(STATUS "Nova version ${PROJECT_VERSION}")
