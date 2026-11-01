@@ -6,8 +6,10 @@
  * Requires `NOVA_EXPERIMENTAL_FEATURE_SET` (reflection); this entire header
  * is a no-op without it.
  *
- * @author  Gábor Krisztián Girhiny
- * @date    2026-05-14
+ * @author      Gábor Krisztián Girhiny
+ * @created     2026-05-14
+ * @updated     2026-05-14
+ * @status      Experimental
  */
 
 #pragma once

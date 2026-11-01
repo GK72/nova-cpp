@@ -113,8 +113,9 @@ namespace {
             std::ignore = nova::dyn_value::read_config("missing.yaml").value();
         } catch (const nova::exception& ex) {
             const auto message = std::string_view{ ex.what() };
+            const auto expected = std::make_error_code(std::errc::no_such_file_or_directory).message();
             return result(
-                check(has(message, "No such file or directory"), "unexpected message: {}", message)
+                check(has(message, expected), "unexpected message: {}", message)
                 and check(has(message, "missing.yaml"), "the message does not name the file: {}", message)
             );
         }

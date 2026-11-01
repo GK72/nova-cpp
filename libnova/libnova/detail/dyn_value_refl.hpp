@@ -8,9 +8,9 @@
  * `NOVA_EXPERIMENTAL_FEATURE_SET` (reflection); the header is empty without it.
  *
  * @author      Gábor Krisztián Girhiny
- * @coauthor    Claude Opus 5.5
  * @created     2026-10-03
  * @updated     2026-10-31
+ * @status      Experimental
  */
 
 #pragma once
