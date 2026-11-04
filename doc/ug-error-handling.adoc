@@ -1,0 +1,4 @@
+= Error Handling
+
+Placeholder: a section to cover the general error handling throughout the
+library.
