@@ -3,6 +3,10 @@ file(GLOB_RECURSE NOVA_HEADER_FILES "*.hpp")
 add_library(nova)
 
 target_sources(nova PRIVATE
+    detail/json.cpp
+    detail/toml.cpp
+    detail/yaml.cpp
+    dyn_value.cpp
     version.cpp
 )
 
@@ -27,8 +31,15 @@ target_include_directories(nova PUBLIC
 
 target_link_libraries(nova PUBLIC
     fmt::fmt-header-only
-    nlohmann_json::nlohmann_json
     spdlog::spdlog_header_only
+)
+
+find_package(nlohmann_json REQUIRED)
+find_package(tomlplusplus REQUIRED)
+
+target_link_libraries(nova PRIVATE
+    $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
+    $<BUILD_INTERFACE:tomlplusplus::tomlplusplus>
     yaml-cpp::yaml-cpp
 )
 
@@ -42,16 +53,19 @@ include(test.cmake)
 
 if(BUILD_TESTING)
     find_package(GTest REQUIRED)
+    find_package(scn REQUIRED)
     include(GoogleTest)
 
     add_test_target(color)
     add_test_target(data)
+    add_test_target(dyn-value)
+    target_link_libraries(test-dyn-value PRIVATE scn::scn)
+    add_test_target(dyn-value-formats)
     add_test_target(error)
     add_test_target(exception)
     add_test_target(expected)
     add_test_target(flat-map)
     add_test_target(io)
-    add_test_target(json)
     add_test_target(not-null)
     add_test_target(parse)
     add_test_target(random)
@@ -61,7 +75,11 @@ if(BUILD_TESTING)
     add_test_target(units)
     add_test_target(utils)
     add_test_target(vec)
-    add_test_target(yaml)
+
+    if(NOVA_EXPERIMENTAL_FEATURE_SET)
+        add_test_target(refl)
+        add_test_target(dyn-value-refl)
+    endif()
 
     find_package(benchmark REQUIRED)
 

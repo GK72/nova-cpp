@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0]
+
+`nova::dyn_value` is the one interface to YAML, JSON and TOML documents.
+
+The formats are internal (`libnova/detail/`): nlohmann_json and yaml-cpp are no
+longer public dependencies. Consumers need neither header; the static library
+needs yaml-cpp (0.9.0) for linking.
+
+### Added
+
+- `libnova/dyn_value.hpp`
+- `nova::refl` (`refl.hpp`): enum names and annotations by reflection, with
+  `NOVA_EXPERIMENTAL_FEATURE_SET` (`-freflection`, `-fcontracts`).
+
+### Removed
+
+- `nova::json` and `nova::yaml` (`json.hpp`, `yaml.hpp`) are removed; use
+  `nova::dyn_value`.
+
 ## [0.11.0]
 
 Redesigned version information with added build information.

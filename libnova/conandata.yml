@@ -1,11 +1,17 @@
 public-deps:
   - fmt/12.1.0
-  - nlohmann_json/3.11.3
   - spdlog/1.17.0
-  - yaml-cpp/0.9.0
 
-private-deps: []
+private-deps:
+  - nlohmann_json/3.11.3
+  - tomlplusplus/3.4.0
+
+# Compiled into the static library: its headers stay private, its library is
+# needed for linking
+link-deps:
+  - yaml-cpp/0.9.0
 
 test-deps:
   - benchmark/1.9.5
   - gtest/1.14.0
+  - scnlib/4.0.1

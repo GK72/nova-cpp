@@ -5,5 +5,27 @@ Checks: 'clang-analyzer-*,
          portability-*,
          misc-*,
          cert-*,
+         bugprone-unsafe-functions,
          -readability-identifier-length
         '
+
+# Functions MSVC rejects with C4996 (deprecated/unsafe CRT). Banned here so they
+# are caught on Linux toolchains too. Format: `regex,replacement,reason;...`
+CheckOptions:
+  bugprone-unsafe-functions.CustomFunctions: >-
+    ^::(std::)?v?f?scanf$,scn::scan,MSVC C4996;
+    ^::(std::)?v?sscanf$,scn::scan,MSVC C4996;
+    ^::(std::)?v?sprintf$,fmt::format_to_n,MSVC C4996;
+    ^::(std::)?strn?cpy$,std::string,MSVC C4996;
+    ^::(std::)?strn?cat$,std::string,MSVC C4996;
+    ^::(std::)?strtok$,std::string_view,MSVC C4996;
+    ^::(std::)?fopen$,std::fstream,MSVC C4996;
+    ^::(std::)?freopen$,std::fstream,MSVC C4996;
+    ^::(std::)?getenv$,nova::getenv,MSVC C4996;
+    ^::(std::)?localtime$,std::chrono,MSVC C4996;
+    ^::(std::)?gmtime$,std::chrono,MSVC C4996;
+    ^::(std::)?ctime$,std::chrono,MSVC C4996;
+    ^::(std::)?strerror$,std::error_code::message,MSVC C4996;
+    ^::(std::)?tmpnam$,std::filesystem::temp_directory_path,MSVC C4996;
+    ^::(std::)?mbstowcs$,std::mbrtowc,MSVC C4996;
+    ^::(std::)?wcstombs$,std::wcrtomb,MSVC C4996

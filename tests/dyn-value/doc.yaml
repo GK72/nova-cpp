@@ -1,0 +1,4 @@
+name: x
+jobs: 8
+env:
+  CC: clang

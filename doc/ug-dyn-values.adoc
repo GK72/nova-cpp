@@ -1,0 +1,210 @@
+= Dynamic Values
+
+`libnova/dyn_value.hpp` provides a convenient and uniform way of working with
+configuration files. The underlying file format is abstracted away, user code
+does not need to worry about them in case of reading. See <<format-comparison>>
+for the nuances and for the supported formats.
+
+Accessing dynamically typed values is as simple as the following example.
+
+[source,cpp]
+----
+auto func(const nova::dyn_value& doc) {
+    const auto port = doc.lookup<int>("server.port", 80);
+
+    const auto& tls = doc.at("server.tls");
+    const auto ca = tls.lookup<std::string>("ca");
+
+    const auto opt = doc.find<std::string>("nonDefaultable");
+    if (opt.has_value()) {
+        // ...
+    }
+
+    const auto xs = doc.find<std::vector<int>>("listOfSomething");
+    const auto first = doc.find<int>("listOfSomething.0");
+
+    for (const auto& x : doc.at("heterogeneousList").as_seq()) {    // `.as_map()` for maps.
+        do_something_with(x);
+    }
+
+    fmt::println("Config dump: {}", doc.dump(nova::dyn_value::format_e::json).value());
+}
+----
+
+[NOTE]
+Fallback to default in `lookup` works only in case of missing values. Types
+must match.
+
+There are several options for reading into dynamic values.
+
+* Reading from a file that accepts anything that is valid according to the
+  format with restrictions. See <<format-comparison>>.
+* Reading from a file ensuring that the root node is a map.
+* Parsing from a string.
+
+[source,cpp]
+----
+const auto doc = nova::dyn_value::read_from("path/to/something.yaml").value();
+const auto cfg = nova::dyn_value::read_config("path/to/config.json").value();
+const auto json = nova::dyn_value::parse(R"json({"key": 1})json", nova::dyn_value::format_e::json).value();
+----
+
+Writing is an atomic operation (leaving the original file intact in case of a
+failure). Comments are discarded during read, so comments cannot be
+round-tripped. The ordering of the keys is not guaranteed.
+
+The format is chosen by the file extension.
+
+[source,cpp]
+----
+auto func(const nova::dyn_value& doc) {
+    if (const auto result = doc.write_to("path/to/file.json"); not result) {
+        handle_error(result.error());
+    }
+}
+----
+
+This abstraction provides a way to merge multiple trees (recursively), which is
+useful to handle multi-layered config files. Local overwrites global.
+
+[source,cpp]
+----
+auto func(nova::dyn_value global, const nova::dyn_value& local) {
+    const auto all = nova::dyn_value::merge(std::move(global), local);
+}
+----
+
+[NOTE]
+====
+* No support for merging lists, they are overwritten.
+* A `null` value deletes the key.
+====
+
+For example, merging these two layers:
+
+.global.yaml
+[source,yaml]
+----
+server:
+  host: example.com
+  port: 80
+  tags: [prod, eu]
+debug: true
+----
+
+.local.yaml
+[source,yaml]
+----
+server:
+  port: 8080
+  tags: [dev]
+debug: null
+----
+
+gives the following tree. The `host` is kept from the global layer, the `port`
+is overwritten, the `tags` list is replaced and `debug` is deleted.
+
+[source,yaml]
+----
+server:
+  host: example.com
+  port: 8080
+  tags:
+    - dev
+----
+
+A missing file is an error, so a layer that may not exist needs a check. Any
+other failure, a syntax error in `local.yaml` for example, still throws from
+`value()`.
+
+[source,cpp]
+----
+auto load_config() -> nova::dyn_value {
+    auto global = nova::dyn_value::read_config("global.yaml").value();
+    const auto local = nova::dyn_value::read_config("local.yaml");
+
+    if (not local and local.error().code == std::errc::no_such_file_or_directory) {
+        return global;
+    }
+
+    return nova::dyn_value::merge(std::move(global), local.value());
+}
+----
+
+[[format-comparison]]
+== Format Comparison
+
+JSON, YAML and TOML are supported with the respective extensions: `json`,
+`yaml`, `yml`, `toml`. The extensions are case-sensitive.
+
+The formats are not equally expressive, so reading and writing differ in the
+following. The errors are `syntax` and `unsupported` of
+`nova::dyn_value::error_e`.
+
+[cols="2,2,2,2"]
+|===
+| | JSON | YAML | TOML
+
+4+h| Reading
+
+| Comments
+| `syntax` error
+| Discarded
+| Discarded
+
+| Root node
+| Anything
+| Anything
+| Always a map
+
+| Infinity and NaN
+| `syntax` error
+| `.inf`, `.nan`
+| `inf`, `nan`
+
+| Integer beyond 64 bits
+| Read as a float
+| Read as a float
+| `syntax` error
+
+| Dates and times
+| Strings
+| Strings
+| `unsupported` error
+
+| Repeated keys
+| The last one wins
+| The last one wins
+| `syntax` error
+
+| Multiple documents
+| -
+| Only the first one is read
+| -
+
+4+h| Writing
+
+| `null`
+| Written
+| Written
+| `unsupported` error
+
+| Root node that is not a map
+| Written
+| Written
+| `unsupported` error
+
+| Infinity and NaN
+| `unsupported` error
+| Written
+| Written
+|===
+
+Further notes on YAML:
+
+* Scalars follow the YAML 1.2 core schema: `yes`, `no`, `on` and `off` are
+  strings, not booleans.
+* Anchors and aliases are resolved, but the merge key (`<<`) is an ordinary key.
+* A tagged scalar is a string, whatever the tag is.
+* Map keys must be scalars, otherwise it is an `unsupported` error. They are
+  read as strings: `1: a` has the key `"1"`.

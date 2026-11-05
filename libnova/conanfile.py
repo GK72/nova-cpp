@@ -63,6 +63,8 @@ class Nova(ConanFile):
 
         for req in self.conan_data.get("public-deps", []):
             self.requires(req, transitive_headers=True, transitive_libs=True)
+        for req in self.conan_data.get("link-deps", []):
+            self.requires(req, transitive_headers=False, transitive_libs=True)
 
     def layout(self):
         cmake_layout(self)

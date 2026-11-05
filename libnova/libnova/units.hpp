@@ -291,7 +291,7 @@ public:
             std::is_convertible_v<Rep2, Rep>
             && (std::is_floating_point_v<Rep>
             || !std::is_floating_point_v<Rep2>)
-        >* = 0      // NOLINT(readability-named-parameter)
+        >* = 0      // NOLINT(readability-named-parameter) | SFINAE parameter
     )
         : m_value(value)
     {}
@@ -302,7 +302,7 @@ public:
             std::is_floating_point_v<Rep>
             || (std::ratio_divide<Ratio2, Ratio>::den == 1
             && !std::is_floating_point_v<Rep2>)
-        >* = 0      // NOLINT(readability-named-parameter)
+        >* = 0      // NOLINT(readability-named-parameter) | SFINAE parameter
     )
         : m_value(measure_cast<measure>(value).count())
     {}

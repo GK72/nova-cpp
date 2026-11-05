@@ -22,6 +22,12 @@ The CI pipeline runs locally on a fresh clone of the committed `HEAD` (in
 CMAKE_BUILD_PARALLEL_LEVEL=4 ci/e2e.sh
 ```
 
+<!-- Use the following command to build with experimental features. -->
+
+<!-- ```sh -->
+<!-- CMAKE_BUILD_PARALLEL_LEVEL=8 ./run -s build-libnova-exp -->
+<!-- ``` -->
+
 A single stage runs on the checkout itself, e.g. `ci/build.sh`. `BUILD_TYPE`,
 `SANITIZERS` and `COVERAGE` are configurable, see `ci/common.sh`.
 

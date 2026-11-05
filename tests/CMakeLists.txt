@@ -20,5 +20,6 @@ if(COVERAGE AND COVERAGE_PREFIX_MAP)
     add_compile_options("-fprofile-prefix-map=${COVERAGE_PREFIX_MAP}")
 endif()
 
+add_subdirectory(dyn-value)
 add_subdirectory(io)
 add_subdirectory(log)
