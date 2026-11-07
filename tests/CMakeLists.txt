@@ -13,6 +13,7 @@ include(novaCompilerSettings)
 include(novaBuildInfo)
 
 add_subdirectory(build-info)
+add_subdirectory(code-analysis)
 
 # The tests compile against the installed headers, a copy of the sources: their
 # coverage is recorded as the sources' (`<install>/include=<source>`).
