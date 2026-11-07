@@ -3,9 +3,16 @@ file(GLOB_RECURSE NOVA_HEADER_FILES "*.hpp")
 add_library(nova)
 
 target_sources(nova PRIVATE
+    detail/cpu.cpp
+    detail/crc32.cpp
+    detail/crc32_arm.cpp
+    detail/crc32_pclmul.cpp
+    detail/crc32_table.cpp
+    detail/crc32_vpclmul.cpp
     detail/json.cpp
     detail/toml.cpp
     detail/yaml.cpp
+    checksum.cpp
     dyn_value.cpp
     version.cpp
 )
@@ -56,6 +63,7 @@ if(BUILD_TESTING)
     find_package(scn REQUIRED)
     include(GoogleTest)
 
+    add_test_target(checksum)
     add_test_target(color)
     add_test_target(data)
     add_test_target(dyn-value)
@@ -84,6 +92,7 @@ if(BUILD_TESTING)
 
     find_package(benchmark REQUIRED)
 
+    add_bench_target(checksum)
     add_bench_target(serializer)
     add_bench_target(log)
 endif()

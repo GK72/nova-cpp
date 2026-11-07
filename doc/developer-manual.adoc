@@ -1,4 +1,8 @@
-= Developer's Manual
+= Nova Developer's Manual
+:doctype: book
+:toc: left
+:toclevels: 2
+:sectnums:
 
 == Versioning
 
@@ -25,6 +29,14 @@ The Conan cache has no git repository, so the state is captured during
 
 The generated files live under the binary directory in a separate `gen`
 directory that is clearly visible on the caller side (`#include <TARGET/gen/...>`).
+
+[[simd]]
+== SIMD and runtime dispatch
+
+Implementations using instruction set extensions (CRC-32 with carry-less
+multiply, for example) are chosen at runtime by what the CPU supports. How
+that works, how to add one, and how the implementations work, is the subject
+of a separate document: the SIMD Guide (`doc/simd-guide.adoc`).
 
 [[ci]]
 == Continuous integration
@@ -114,7 +126,9 @@ configuration comes from the environment (`ci/common.sh`):
 |
 
 | `bench.sh`
-| Benchmarks, only meaningful on a Release build without sanitizers.
+| Benchmarks, only meaningful on a Release build without sanitizers. Writes
+  `doc/bench/bench-<module>.json` for the
+  xref:bench/perf.adoc[performance report].
 |
 |
 |===

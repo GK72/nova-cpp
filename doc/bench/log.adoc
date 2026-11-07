@@ -1,0 +1,55 @@
+= Nova Performance: Logging
+:toc: left
+:toclevels: 2
+
+Part of the xref:perf.adoc[Nova Performance Report], which describes the
+hardware and how to read the tables.
+
+== Scenarios
+
+`bench-log` logs a constant message to a null sink, so the numbers show the
+cost of Nova and spdlog without I/O. `ci/bench.sh` sets `SPDLOG_LEVEL=info`:
+the `info` calls are logged, the `debug` calls (`*_filtered`) are filtered out.
+
+[cols="2,1,1",options="header"]
+|===
+| Scenario | Benchmark | Time per call
+
+| Simple log                 | `log`                          | 28.5 ns
+| Simple log (2 threads)     | `log/threads:2`                | 28.5 ns
+| Simple log (filtered)      | `log_filtered`                 | 5.0 ns
+| Topic log                  | `topic_log`                    | 47 ns
+| Topic log (2 threads)      | `topic_log/threads:2`          | 98 ns
+| Topic log (4 threads)      | `topic_log/threads:4`          | 276 ns
+| Topic log (filtered)       | `topic_log_filtered`           | 0.58 ns
+|===
+
+NOTE: The filtered topic log scenario is essentially a no-op. The measured time
+is very close to the overhead of the instrumentation.
+
+== Contention
+
+The simple log does not slow down with a second thread. Topic logging is
+guarded by a mutex, therefore, as the mutex contention increases, it becomes
+costly to log from multiple threads: one call takes twice as long with two
+threads and six times as long with four. This is acceptable as the formatting
+of the message, the necessary memory allocations and the I/O operation is
+comparable (could be significantly higher) to the cost of locking a mutex.
+
+The two-thread topic log is also the least stable scenario (CV around 3%), as
+the outcome depends on how the threads meet at the mutex.
+
+== Filtering
+
+The cost of locking a mutex just to find out if a given log is not needed
+based on the level of the topic is **very** costly.
+
+As an optimization, the topic logging checks the global log level setting, and
+discards the logging operation completely if the setting does not allow the
+log, making it essentially a no-op call that does not depend on the number of
+threads. Technically there is a cost of one conditional statement, which
+should be optimized away by the branch prediction in the CPU in a hot-loop.
+
+== Results
+
+include::results-log.adoc[]

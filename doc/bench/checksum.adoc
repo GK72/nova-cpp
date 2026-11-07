@@ -1,0 +1,42 @@
+= Nova Performance: Checksum
+:toc: left
+:toclevels: 2
+
+Part of the xref:perf.adoc[Nova Performance Report], which describes the
+hardware and how to read the tables.
+
+== Scenarios
+
+`bench-checksum` computes the CRC-32 of a buffer from 16 B to 1 MiB, for every
+implementation the CPU supports (`nova::detail::crc32_backends()`), so the
+numbers come from the same code `nova::crc32` dispatches to. The
+xref:../simd-guide.adoc#crc32[SIMD guide] explains the implementations.
+
+== Summary
+
+[cols="2,1,1,1",options="header"]
+|===
+| Implementation | 256 B | 4 KiB | 1 MiB
+
+| Byte-wise (reference)         | 0.65 GiB/s | 0.61 GiB/s | 0.61 GiB/s
+| Slicing-by-8                  | 4.0 GiB/s  | 3.5 GiB/s  | 3.5 GiB/s
+| Folding, PCLMULQDQ            | 17.4 GiB/s | 19.3 GiB/s | 19.4 GiB/s
+| Folding, VPCLMULQDQ (AVX-512) | 41 GiB/s   | 74 GiB/s   | 76 GiB/s
+|===
+
+Every scenario is stable: the CV stays below 1%.
+
+At 16 B, every implementation but the byte-wise one takes about 2.7 ns: the
+folding ones hand short inputs on, PCLMULQDQ below 64 B to slicing-by-8 and
+VPCLMULQDQ below 256 B to PCLMULQDQ, so they all run slicing-by-8.
+
+The folding implementations reach their full speed from 4 KiB on. VPCLMULQDQ
+folds four times as much data per instruction as PCLMULQDQ, and gives about
+four times the throughput.
+
+The 1 MiB case still fits in the cache (L2 is 1 MiB per core, L3 96 MiB); on
+larger data, memory bandwidth is the limit.
+
+== Results
+
+include::results-checksum.adoc[]

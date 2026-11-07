@@ -1,0 +1,265 @@
+= Nova SIMD Guide
+:doctype: book
+:toc: left
+:toclevels: 2
+:sectnums:
+:stem: latexmath
+
+How Nova uses instruction set extensions (SIMD and other special
+instructions), and how its implementations work. The code holds the short
+version in its doc comments and refers here for the reasoning.
+
+[[runtime-dispatch]]
+== Choosing an implementation at runtime
+
+The library is built for the baseline of the architecture (x86-64, ARMv8-A),
+without `-march`, so the same binary runs on any CPU of the architecture. An
+implementation that needs an extension is one function compiled for that
+extension only, and it is called only after the CPU reported the extension.
+
+The pieces, in `libnova/detail/cpu.hpp`:
+
+`NOVA_TARGET("<features>")`::
+    Enables the extensions for one function (GCC and Clang `target` attribute,
+    nothing on MSVC, which allows every intrinsic everywhere). The compiler
+    never inlines such a function into a caller without the same extensions,
+    so no instruction of the extension leaks into code that runs before the
+    check.
+
+`nova::detail::cpu()`::
+    The extensions both the CPU and the OS support, detected once.
+
+A module lists its implementations from the slowest to the fastest, keeping
+the ones `cpu()` allows, and picks the last one on its first call (a
+function-local static: one check per call afterwards, no locking). The same
+list feeds the tests and the benchmarks:
+
+* The tests compare every listed implementation with the simplest one, the
+  reference, so each runs on the CPUs that have it.
+* The benchmark registers every listed implementation, so the numbers come
+  from the same code the library runs.
+
+Intrinsics, not assembly::
+    An intrinsic is one instruction, but the compiler allocates the registers,
+    schedules, and unrolls around it. Inline assembly is left for what has no
+    intrinsic without extra requirements (`xgetbv`, see <<x86-detection>>).
+
+[[adding-an-implementation]]
+=== Adding an implementation
+
+. Write the function with `NOVA_TARGET` naming every extension it uses,
+  including the ones its helpers use.
+. Add the extensions to `cpu_features` and to the detection, if missing (see
+  <<x86-detection>>).
+. List the implementation where its speed puts it, under the condition of all
+  its extensions.
+. Make sure the tests cover the lengths around its step size and every
+  alignment within it, and run them on a CPU that has the extension.
+. Run the benchmark in Release without sanitizers:
++
+----
+BUILD_TYPE=Release SANITIZERS= ci/build.sh
+BUILD_TYPE=Release ci/bench.sh <module>
+scripts/bench-report.py <module>
+----
+
+The cross-platform CI builds every architecture: Linux x86-64 (GCC), Windows
+x86-64 (MSVC), macOS ARM64 (Clang).
+
+[[x86-detection]]
+== Detecting extensions on x86-64
+
+The detection answers two questions: does the CPU have the instructions, and
+does the OS save their registers when it switches threads.
+
+=== The CPU: `cpuid`
+
+`cpuid` takes a leaf (and a subleaf) in `eax` (and `ecx`) and reports in `eax`,
+`ebx`, `ecx` and `edx`. Leaf 0 reports the highest leaf; a leaf above it must
+not be read. The flags Nova uses (Intel SDM, Vol. 2A; AMD reports the same
+bits):
+
+[cols="2,1,1,1"]
+|===
+| Extension | Leaf | Register | Bit
+
+| PCLMULQDQ (carry-less multiply)    | 1 | `ecx` | 1
+| SSE4.1                             | 1 | `ecx` | 19
+| OSXSAVE (the OS enabled `xgetbv`)  | 1 | `ecx` | 27
+| AVX-512 Foundation                 | 7 | `ebx` | 16
+| AVX-512 Vector Length (128/256-bit forms) | 7 | `ebx` | 31
+| VPCLMULQDQ (carry-less multiply on YMM/ZMM) | 7 | `ecx` | 10
+|===
+
+=== The OS: `xgetbv`
+
+A thread's registers survive a context switch only if the OS saves them, and
+an instruction using a register the OS does not save faults. `xgetbv` with
+`ecx = 0` reads XCR0, the set of saved state components (Intel SDM, Vol. 1,
+13.1). AVX-512 needs bits 1, 2, 5, 6 and 7: the XMM registers, the upper
+halves of the YMM registers, the mask registers, the upper halves of
+ZMM0–ZMM15, and ZMM16–ZMM31.
+
+`xgetbv` is usable only when OSXSAVE is set. GCC and Clang allow its intrinsic
+only in a function with the `xsave` target, so Nova uses one line of inline
+assembly instead.
+
+[[arm-detection]]
+== Detecting extensions on ARM64
+
+The CRC32 instructions are optional in ARMv8.0 and mandatory from ARMv8.1.
+Nova uses them when the compiler enables them for the whole build
+(`__ARM_FEATURE_CRC32`), as it does for Apple silicon. On Linux, runtime
+detection would read `getauxval(AT_HWCAP) & HWCAP_CRC32`; it is not
+implemented yet.
+
+[[crc32]]
+== CRC-32
+
+`nova::crc32` computes CRC-32 as IEEE 802.3, PNG and zlib define it. Measured
+on an AMD Ryzen 7 9800X3D (Zen 5), Release, median of 10 runs (details, with
+the variance, in the xref:bench/checksum.adoc[performance report]):
+
+[cols="2,1,1,1",options="header"]
+|===
+| Implementation | 256 B | 4 KiB | 1 MiB
+
+| Byte-wise (reference)         | 0.65 GiB/s | 0.61 GiB/s | 0.61 GiB/s
+| Slicing-by-8                  | 4.0 GiB/s  | 3.5 GiB/s  | 3.5 GiB/s
+| Folding, PCLMULQDQ            | 17.4 GiB/s | 19.3 GiB/s | 19.4 GiB/s
+| Folding, VPCLMULQDQ (AVX-512) | 41 GiB/s   | 74 GiB/s   | 76 GiB/s
+|===
+
+The 1 MiB case still fits in the cache; on larger data, memory bandwidth is
+the limit.
+
+[[crc-math]]
+=== The arithmetic
+
+The data is a polynomial over GF(2): each bit is a coefficient, addition and
+subtraction are both XOR, and multiplication has no carries. The CRC is the
+remainder
+
+[stem]
+++++
+\mathrm{CRC}(M) = M(x) \cdot x^{32} \bmod P(x), \quad
+P(x) = x^{32} + x^{26} + x^{23} + \dots + 1 \;(\texttt{0x104C11DB7})
+++++
+
+with two adjustments: the register starts as all ones (so leading zero bytes
+change the result), and the result is inverted. The implementations all work
+on the inverted register between those two steps.
+
+Everything below rests on two properties of the remainder:
+
+Linearity::
+    stem:[(A + B) \bmod P = (A \bmod P) + (B \bmod P)], so parts of the data
+    can be reduced separately and the results XOR-ed.
+
+Moving::
+    stem:[A \cdot x^n \bmod P = A \cdot (x^n \bmod P) \bmod P]: a part that
+    sits stem:[n] bits before the end can be replaced by its product with a
+    32-bit constant.
+
+Bit order::
+    CRC-32 takes the bits of a byte from the least significant, so the
+    register shifts right and every constant is bit-reversed ("reflected"):
+    the polynomial appears as `0xEDB88320`.
+
+[[crc-bytewise]]
+=== Byte-wise
+
+A 256-entry table holds the effect of a byte on an empty register (eight
+one-bit steps). Each byte costs one lookup, but the lookup needs the previous
+result: about 8 cycles per byte, the latency of a load and a few ALU
+operations.
+
+[[crc-slicing]]
+=== Slicing-by-8
+
+Eight tables, 8 KiB: table stem:[k] holds the effect of a byte followed by
+stem:[k] zero bytes. A step XORs the next four data bytes into the register,
+which makes eight independent inputs: the register's four bytes and the next
+four data bytes. Each is looked up in the table of as many zero bytes as follow
+it within the eight, and by linearity the eight results XOR-ed are the new
+register. The eight loads do not depend on each other, so the CPU runs them in
+parallel.
+
+[[crc-folding]]
+=== Folding with carry-less multiply
+
+PCLMULQDQ multiplies two 64-bit polynomials into a 128-bit one. That is the
+moving property applied to whole blocks:
+
+. The data is taken in 128-bit blocks. A block stem:[A = H \cdot x^{64} + L]
+  sitting stem:[D] bits before a later block is replaced by
+  stem:[H \cdot k_H + L \cdot k_L], where the constants are the residues of
+  the distances the two halves travel. The product is at most 96 bits, so it
+  fits in the later block and is XOR-ed into it.
+. Four blocks are folded independently, each 512 bits forward onto the next
+  64 bytes of data: 64 bytes per step, with four multiplies in flight.
+. At the end the four blocks are folded into one (by 384, 256 and 128 bits),
+  then the remaining 16-byte blocks one by one.
+. The last 128 bits are folded to 64 bits, which also appends the 32 zero
+  bits of stem:[M \cdot x^{32}], and a Barrett reduction takes them to the
+  32-bit remainder (<<crc-barrett>>).
+
+The constants are stem:[x^e \bmod P], bit-reversed and shifted left by one
+into 33 bits. With the reflected operands, the exponent is the distance the
+half travels minus 32, so folding a block stem:[D] bits forward takes
+stem:[e = D + 32] for the low half (it travels stem:[D + 64]) and
+stem:[e = D - 32] for the high half. Intel's "Fast CRC Computation for
+Generic Polynomials Using PCLMULQDQ Instruction" derives them. Nova computes
+them at compile time from the exponent (`fold_constant()` in
+`detail/crc32_fold.hpp`) and checks them
+against the published values with `static_assert`.
+
+[cols="1,1,1,2",options="header"]
+|===
+| Distance | stem:[e] low | stem:[e] high | Use
+
+| 128 bits  | 160  | 96   | One block onto the next
+| 256 bits  | 288  | 224  | Lane 1 of a ZMM register onto lane 3
+| 384 bits  | 416  | 352  | Lane 0 of a ZMM register onto lane 3
+| 512 bits  | 544  | 480  | Four XMM (or one ZMM) blocks per step
+| 2048 bits | 2080 | 2016 | Four ZMM registers per step
+|===
+
+[[crc-vpclmul]]
+=== Folding with AVX-512
+
+VPCLMULQDQ does the same multiply in each 128-bit lane of a 512-bit register,
+so one register is four blocks side by side. Four registers fold 2048 bits
+forward per step, 256 bytes. The 3-way XOR of the two products and the data is
+one instruction (`vpternlogq` with truth table `0x96`). At the end:
+
+. The four registers fold into one, 512 bits at a time.
+. Its four lanes fold onto the last one: lane 0 by 384 bits, lane 1 by 256,
+  lane 2 by 128, all in one multiply with a different constant per lane.
+. The resulting 128-bit block continues as in <<crc-folding>>.
+
+[[crc-barrett]]
+=== Barrett reduction
+
+The last step divides a 64-bit polynomial stem:[R] by stem:[P] without a
+division instruction. With the precomputed quotient
+stem:[\mu = \lfloor x^{64} / P \rfloor]:
+
+[stem]
+++++
+q = \left\lfloor \frac{\lfloor R / x^{32} \rfloor \cdot \mu}{x^{32}} \right\rfloor,
+\qquad R \bmod P = R - q \cdot P
+++++
+
+Two multiplies and an XOR. Both stem:[\mu] and stem:[P] are bit-reversed to 33
+bits (`0x1F7011641`, `0x1DB710641`); Nova computes stem:[\mu] at compile time
+with a long division.
+
+[[crc-arm]]
+=== ARMv8 CRC instructions
+
+`crc32x` (`__crc32d`) takes eight bytes into the register in one instruction,
+`crc32b` one byte. They work on the inverted register, as the other
+implementations do. Each instruction depends on the previous, so their
+latency limits the speed; interleaving three streams and combining them with
+PMULL would be the next step.
