@@ -9,6 +9,22 @@ Nova ships several CMake modules to avoid the boilerplate in each project.
 
 // TODO: Other compiler settings.
 
+[[warnings]]
+=== Warnings
+
+`code_analysis(<target> <visibility>)` also enables the compiler warnings, as
+errors unless `SUPPRESS_COMPILER_WERROR` is set. The visibility decides who gets
+them: `PRIVATE` is for the sources of the target, `INTERFACE` for its consumers.
+
+An `INTERFACE` target applies the same settings to several targets:
+
+[source,cmake]
+----
+add_library(code-analysis INTERFACE)
+code_analysis(code-analysis INTERFACE)
+link_libraries(code-analysis)
+----
+
 [[sanitizers]]
 === Sanitizers
 

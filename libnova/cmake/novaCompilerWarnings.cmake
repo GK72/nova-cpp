@@ -1,4 +1,6 @@
-function(enable_compiler_warnings TARGET)
+# Enable compiler warnings for the given target: `PRIVATE` for its sources,
+# `INTERFACE` for its consumers.
+function(enable_compiler_warnings TARGET VISIBILITY)
     set(MSVC_WARNINGS
         /W4     # Baseline reasonable warnings
         /w14242 # 'identfier': conversion from 'type1' to 'type1', possible loss
@@ -75,6 +77,6 @@ function(enable_compiler_warnings TARGET)
         set(PROJECT_WARNINGS ${GCC_WARNINGS})
     endif()
 
-    target_compile_options(${TARGET} INTERFACE ${PROJECT_WARNINGS})
+    target_compile_options(${TARGET} ${VISIBILITY} ${PROJECT_WARNINGS})
 
 endfunction()

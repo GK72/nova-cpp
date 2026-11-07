@@ -36,7 +36,7 @@ endif()
 # Enable code analysis for the given target, i.e., enabling compiler warnings
 # and sanitizers.
 function(code_analysis TARGET VISIBILITY)
-    enable_compiler_warnings(${TARGET})
+    enable_compiler_warnings(${TARGET} ${VISIBILITY})
 
     if(${SANITIZERS} MATCHES "[at]san")
         target_compile_options(${TARGET} ${VISIBILITY} ${SANITIZER_LIST})

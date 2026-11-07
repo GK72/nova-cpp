@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1]
+
+### Fixed
+
+- `code_analysis()` applies the warnings with the given visibility. They were
+  always `INTERFACE`: `code_analysis(<target> PRIVATE)` left the sources of the
+  target out, and the installed package passed the warnings and `-Werror` on to
+  its consumers.
+
+### Changed
+
+- `enable_compiler_warnings()` requires a visibility, the same as
+  `code_analysis()`. For the old behaviour, pass `INTERFACE`.
+
 ## [0.12.0]
 
 `nova::dyn_value` is the one interface to YAML, JSON and TOML documents.
