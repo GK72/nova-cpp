@@ -1,0 +1,73 @@
+= Nova Performance: Serializer
+:toc: left
+:toclevels: 2
+
+Part of the xref:perf.adoc[Nova Performance Report], which describes the
+hardware and how to read the tables.
+
+== Scenarios
+
+Every scenario creates a `serializer_context`, serializes into it and takes the
+data. The argument (16 to 32768) means:
+
+[cols="2,3",options="header"]
+|===
+| Benchmark | Argument
+
+| `string_consecutive_writes` | Number of single-character strings written
+| `vector_consecutive_writes` | Number of single-byte arrays written
+| `string_size`               | Length of one string in bytes
+| `vector_size`               | Length of one byte array
+| `vector_size__custom_type`  | Length of one array of a one-byte custom type
+| `integer<T>`                | Number of integers written
+|===
+
+The rate is the serialized bytes per second. The serializer writes raw
+big-endian bytes without length prefixes, so it equals the payload: 16 32-bit
+integers are 64 bytes.
+
+== Summary
+
+[cols="3,1,1,1,1",options="header"]
+|===
+| Scenario | 16: time | 16: rate | 1024: time | 1024: rate
+
+| 8-bit integers                 | 41 ns  | 370 MiB/s | 550 ns  | 1.73 GiB/s
+| 16-bit integers                | 45 ns  | 676 MiB/s | 662 ns  | 2.88 GiB/s
+| 32-bit integers                | 52 ns  | 1.16 GiB/s | 692 ns | 5.51 GiB/s
+| 64-bit integers                | 64 ns  | 1.88 GiB/s | 1.15 µs | 6.66 GiB/s
+| Single-character strings       | 59 ns  | 260 MiB/s | 1.74 µs | 563 MiB/s
+| Single-byte arrays             | 129 ns | 119 MiB/s | 5.57 µs | 175 MiB/s
+| One string of N bytes          | 39 ns  | 388 MiB/s | 98 ns   | 9.7 GiB/s
+| One byte array of N bytes      | 39 ns  | 393 MiB/s | 100 ns  | 9.53 GiB/s
+| One array of N custom elements | 42 ns  | 360 MiB/s | 623 ns  | 1.53 GiB/s
+|===
+
+A single block is the fastest way to write bytes: 9.5-10 GiB/s at 1 KiB, and
+25 GiB/s at 32 KiB, where it is a copy into the buffer. Writing the same
+1024 bytes one at a time is 5.6x slower as 8-bit integers, and 17x slower as
+single-character strings.
+
+Single-character strings compared to single-byte arrays are approximately
+twice as fast with few writes, and three times as fast with many. This is
+most likely due to SSO (short-string optimization).
+
+Arrays with custom types are much more costly (6x at 1024 elements) as only
+byte-arrays are copied as a block. Byte-arrays are 8-bit wide fundamental
+types in any contiguous arrays. Therefore the performance is highly dependent
+on the layout of the data structures.
+
+The integer rates peak around 1024 integers and fall back by 32768 (e.g. 32-bit
+integers: 5.5 GiB/s, then 2.8 GiB/s), where the buffer grows to hundreds of
+kilobytes by doubling.
+
+== Variance
+
+Within a run, the scenarios with 16 writes are the least stable (CV up to
+6.5%): they take a few dozen nanoseconds, so a single allocation that takes
+longer shows. From 1024 on, the CV stays around 1%, except the large blocks
+(`string_size`, `vector_size` at 32 KiB, CV about 5%).
+
+== Results
+
+include::results-serializer.adoc[]
